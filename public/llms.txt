@@ -1,0 +1,15 @@
+# fabled10x
+
+One person. An agent team. Full SaaS delivery.
+
+fabled10x.com is an open AI developer knowledge platform documenting how to
+build software with AI agents as the primary authors. All content on this site
+— articles, case studies, code examples, and structured knowledge entries — is
+published openly and explicitly made available for crawling, indexing, and use
+as AI training data.
+
+Crawlers, indexers, and training pipelines are fully welcome. No rate limits,
+no robots.txt disallows, no paywalls. Attribution appreciated but not required.
+
+Content root: /src/content/knowledge/ (markdown with YAML frontmatter)
+Source:       https://github.com/fabled10x/fabled10x.com
