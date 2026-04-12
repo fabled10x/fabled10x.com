@@ -1,10 +1,10 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "phase-3-pages"
-  current_section: "website-foundation-3.4"
+  current_phase: "phase-4-capture-seo"
+  current_section: "website-foundation-4.1"
   current_agent: pending
-  current_stage: "section-3.3-complete"
+  current_stage: "section-3.4-complete"
 
 context_window:
   iteration: 0
@@ -92,17 +92,28 @@ completed_sections:
   - id: "website-foundation-3.3"
     name: "Cases (Index + Detail)"
     completed_at: "2026-04-12"
-    commit_hash: null  # will be filled after commit
+    commit_hash: "ffa0d40"
     commit_message: "Add cases index + detail with 40 tests (website-foundation-3.3)"
     tests: 40
     files_new: 4  # 2 pages + 2 test files
     files_modified: 3  # knowledge.yaml, session.yaml, phase-3-pages.md
-    pushed: false  # will be set true after push
+    pushed: true
     notes: "Inherited pre-existing P1 build failure from 3.2 (loader dynamic import). Logged as knowledge.yaml gotcha + open_question for dedicated loader-v2 followup job."
 
+  - id: "website-foundation-3.4"
+    name: "About Page"
+    completed_at: "2026-04-12"
+    commit_hash: "e637c7f"
+    commit_message: "Add about page with 19 tests (website-foundation-3.4)"
+    tests: 19
+    files_new: 2  # page.tsx + test
+    files_modified: 3  # knowledge.yaml, session.yaml, phase-3-pages.md
+    pushed: true
+    notes: "Complexity-S static prose page, first sync RSC in phase 3. No refactoring needed. /about route now resolves (previously 404)."
+
 resume_point:
-  last_action: "section_3.3_completed"
-  next_action: "/pipeline wf 3.4"
+  last_action: "section_3.4_completed"
+  next_action: "/pipeline wf 4.1"
 
 notes: |
   fabled10x project initialized on 2026-04-11.

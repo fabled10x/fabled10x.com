@@ -507,7 +507,7 @@ export default async function CaseDetail({
 
 ---
 
-## Feature 3.4: `/about` Page
+## Feature 3.4: `/about` Page [x]
 
 **Complexity: S** — Static prose page. Brand story + LLL relationship.
 

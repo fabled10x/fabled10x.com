@@ -272,6 +272,22 @@ patterns:
       - "Section 3.3 (cases detail page) — same notFound pattern"
       - "Any future detail page with getXBySlug"
 
+  - id: static_prose_page
+    established_in: "website-foundation-3.4"
+    established_at: "2026-04-12"
+    description: |
+      Pattern for single-route static prose pages (about, terms, privacy, brand):
+      synchronous RSC (no `async`), no content loader, no forward-reference
+      stubs. Container with `as="article" className="py-16 max-w-3xl"` for
+      reading-width override of Container's base max-w-5xl. Static `metadata`
+      export (not generateMetadata). Test file uses render(<Page />) directly
+      — do NOT use the async_server_component_testing helper. next_link_test_mock
+      still applies even if only outbound links are external absolute URLs.
+    reusable_for:
+      - "Future static pages: /terms, /privacy, /press, /brand, /contact (if static)"
+      - "Any single-route page that has no data dependencies"
+    confirmed_reused_in: []
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
