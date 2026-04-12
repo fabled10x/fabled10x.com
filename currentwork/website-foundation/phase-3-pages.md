@@ -1,12 +1,12 @@
 # Phase 3: Pages
 
-**Total Size: M + M + L + S + M + S**
+**Total Size: M + L + L + S**
 **Prerequisites: Phase 1 + Phase 2 complete (content loader + seed content working)**
 **New Types: None**
-**New Files: `src/app/episodes/page.tsx`, `src/app/episodes/[slug]/page.tsx`, `src/app/cases/page.tsx`, `src/app/cases/[slug]/page.tsx`, `src/app/about/page.tsx`, plus card components**
+**New Files: `src/app/episodes/page.tsx`, `src/app/episodes/[slug]/page.tsx`, `src/app/cases/page.tsx`, `src/app/cases/[slug]/page.tsx`, `src/app/about/page.tsx`**
 
 Phase 3 builds every public route that Phase 0 + Phase 1 of the implementation
-doc specifies. All six features in this phase are parallel-able once Phase 2
+doc specifies. All four features in this phase are parallel-able once Phase 2
 lands — they share the loader but not each other.
 
 ---
@@ -118,15 +118,18 @@ export default async function Home() {
 
 ---
 
-## Feature 3.2: `/episodes` Index
+## Feature 3.2: Episodes (Index + Detail) [x]
 
-**Complexity: M** — Grid of episode cards sorted by `publishedAt` desc.
+**Complexity: L** — Episodes index grid sorted by `publishedAt` desc, plus the
+detail page that renders the MDX body, shows metadata, lists source materials,
+and surfaces LLL crosslinks.
 
 ### Problem
 
-Visitors from YouTube need to see the full catalogue, and the SEO long-tail
-depends on episode titles being indexable. One index page with every episode's
-metadata.
+Visitors from YouTube need to see the full catalogue (index), and after a video
+they need show notes, the MDX body, tier/pillar badges, source-material
+callouts, LLL crosslinks, a YouTube link, and contextual email capture (detail).
+The SEO long-tail depends on episode titles being indexable.
 
 ### Implementation
 
@@ -182,36 +185,6 @@ export default async function EpisodesIndex() {
   );
 }
 ```
-
-### Design Decisions
-
-- **Tier + pillar visible on the card** — the four content pillars are a core brand concept ("the four questions") and surfacing them on the index is free SEO + brand reinforcement.
-- **Grid of 1 / 2 columns** — no 3-column breakpoint. With relatively low episode counts expected at launch, density beyond 2 cards wide starts to look thin.
-- **No pagination** — v1 of the site has low episode count. Pagination can be added when the archive crosses ~30 entries.
-- **No client-side filtering** — filtering by tier/pillar is a future polish task. Keep Phase 3 static.
-
-### Files
-
-| Action | File                             |
-|--------|----------------------------------|
-| NEW    | `src/app/episodes/page.tsx`      |
-
----
-
-## Feature 3.3: `/episodes/[slug]` Detail
-
-**Complexity: L** — Episode detail page that renders the MDX body, shows
-metadata, lists source materials, and surfaces LLL crosslinks. This is the
-richest page in Phase 3.
-
-### Problem
-
-Episode detail pages are where viewers go after a video. They need: show notes,
-the MDX body, tier/pillar badges, source-material callouts, LLL crosslinks, a
-YouTube link, and contextual email capture. The `LllCrosslinks` component is
-formally delivered in Feature 4.2 — this feature consumes it.
-
-### Implementation
 
 **NEW** `src/app/episodes/[slug]/page.tsx`:
 
@@ -319,6 +292,10 @@ export default async function EpisodeDetail({
 
 ### Design Decisions
 
+- **Tier + pillar visible on the index card** — the four content pillars are a core brand concept ("the four questions") and surfacing them on the index is free SEO + brand reinforcement.
+- **Grid of 1 / 2 columns** — no 3-column breakpoint. With relatively low episode counts expected at launch, density beyond 2 cards wide starts to look thin.
+- **No pagination** — v1 of the site has low episode count. Pagination can be added when the archive crosses ~30 entries.
+- **No client-side filtering** — filtering by tier/pillar is a future polish task. Keep Phase 3 static.
 - **`dynamicParams = false`** — unknown slugs 404 at build time, which is correct for a static content site. New episodes ship via `git push` + rebuild.
 - **`params: Promise<{...}>`** — Next.js 16 params are async; `await` is required.
 - **Source materials list is a placeholder** — full rendering requires a SourceMaterial loader that's out of scope for this job. We show the IDs so the field is visible and the plumbing exists; a future job replaces the stub with real renders.
@@ -330,20 +307,22 @@ export default async function EpisodeDetail({
 
 | Action | File                                      |
 |--------|-------------------------------------------|
+| NEW    | `src/app/episodes/page.tsx`              |
 | NEW    | `src/app/episodes/[slug]/page.tsx`        |
 
 ---
 
-## Feature 3.4: `/cases` Index
+## Feature 3.3: Cases (Index + Detail) [x]
 
-**Complexity: S** — Cases grid, simpler than episodes because there are few
-cases and they don't fan out as widely.
+**Complexity: L** — Cases index grid plus the detail page with metadata header,
+MDX body, deliverables list, LLL crosslinks, and related episodes list.
 
 ### Problem
 
-Cases are the proof layer behind the channel. Visitors browsing from "what has
-this person actually built" need a list view. Placeholder Party Masters case
-from Phase 2.3 needs somewhere to live.
+Cases are the proof layer behind the channel. Visitors need a list view (index),
+and the detail page renders: overview, problem, deliverables, outcome, MDX body,
+related episodes, and LLL crosslinks. The placeholder Party Masters case from
+Phase 2.2 needs somewhere to live.
 
 ### Implementation
 
@@ -396,34 +375,6 @@ export default async function CasesIndex() {
   );
 }
 ```
-
-### Design Decisions
-
-- **Status label surfaced on the card** — "Active" vs "Shipped" vs "Archived" gives visitors instant context about whether a case is complete.
-- **Identical layout shape to episodes index** — consistency across the two content types reduces visual noise and implementation cost.
-
-### Files
-
-| Action | File                         |
-|--------|------------------------------|
-| NEW    | `src/app/cases/page.tsx`     |
-
----
-
-## Feature 3.5: `/cases/[slug]` Detail
-
-**Complexity: M** — Case detail page with metadata header, MDX body, deliverables
-list, LLL crosslinks, related episodes list.
-
-### Problem
-
-Case detail is the "deep dive" view. Per the implementation doc, each case
-should render: overview, market research, discovery, technical decisions,
-deliverables, outcome, and LLL crosslinks. Most of those are fields on the
-`Case` type — they render as structured sections. The narrative prose lives in
-the MDX body.
-
-### Implementation
 
 **NEW** `src/app/cases/[slug]/page.tsx`:
 
@@ -541,26 +492,29 @@ export default async function CaseDetail({
 
 ### Design Decisions
 
-- **Structured sections before MDX body** — `problem`, `deliverables`, and `outcome` are on the type, so they render deterministically from metadata. The MDX body carries the long narrative (market research, discovery, technical decisions, lessons learned) — exactly the fields that are strings in the type but short-summary in intent.
-- **Related episodes resolved server-side** — `getAllEpisodes()` is cached after first call, so the lookup is cheap. Cross-referencing cases ↔ episodes on detail pages gives visitors a clear path from case study → episode video.
+- **Status label surfaced on the index card** — "Active" vs "Shipped" vs "Archived" gives visitors instant context about whether a case is complete.
+- **Identical layout shape to episodes index** — consistency across the two content types reduces visual noise and implementation cost.
+- **Structured sections before MDX body** — `problem`, `deliverables`, and `outcome` are on the type, so they render deterministically from metadata. The MDX body carries the long narrative (market research, discovery, technical decisions, lessons learned).
+- **Related episodes resolved server-side** — `getAllEpisodes()` is cached after first call, so the lookup is cheap. Cross-referencing cases and episodes on detail pages gives visitors a clear path from case study to episode video.
 - **Contextual email capture with `source={'case-${slug}'}`** — mirrors the episode detail page for consistent attribution.
 
 ### Files
 
 | Action | File                                  |
 |--------|---------------------------------------|
+| NEW    | `src/app/cases/page.tsx`             |
 | NEW    | `src/app/cases/[slug]/page.tsx`       |
 
 ---
 
-## Feature 3.6: `/about` Page
+## Feature 3.4: `/about` Page
 
 **Complexity: S** — Static prose page. Brand story + LLL relationship.
 
 ### Problem
 
 The `/about` page is the explicit home for the LLL relationship. Per the
-implementation doc: "acknowledged openly, not loud. The DHH/Rails ↔ Basecamp
+implementation doc: "acknowledged openly, not loud. The DHH/Rails to Basecamp
 framing." It's also where the Fabled10X premise gets its definitive statement.
 
 ### Implementation
@@ -645,7 +599,7 @@ export default function About() {
 
 > **Note on the forward reference to Phase 4 components**: `EmailCapture` and
 > `LllCrosslinks` are imported by Phase 3 pages but formally delivered in
-> Features 4.1 and 4.2. The section order was chosen for parallelism. If the
+> Feature 4.1. The section order was chosen for parallelism. If the
 > TDD pipeline runs Phase 3 before Phase 4, those two components must exist as
 > minimal stubs (a plain form and an empty crosslink list) at the end of
 > Phase 3 so `npm run build` passes — the real implementations replace the

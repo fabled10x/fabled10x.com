@@ -2,9 +2,9 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "phase-3-pages"
-  current_section: "website-foundation-3.1"
-  current_agent: pipeline
-  current_stage: "section-3.1-finish"
+  current_section: "website-foundation-3.4"
+  current_agent: pending
+  current_stage: "section-3.3-complete"
 
 context_window:
   iteration: 0
@@ -69,9 +69,40 @@ completed_sections:
     files_modified: 0
     pushed: true
 
+  - id: "website-foundation-3.1"
+    name: "Homepage Rebuild"
+    completed_at: "2026-04-12"
+    commit_hash: "f4c6954"
+    commit_message: "Add homepage rebuild with 25 tests (website-foundation-3.1)"
+    tests: 25
+    files_new: 3
+    files_modified: 3
+    pushed: true
+
+  - id: "website-foundation-3.2"
+    name: "Episodes (Index + Detail)"
+    completed_at: "2026-04-12"
+    commit_hash: "26ab862"
+    commit_message: "Add episodes index + detail with 43 tests (website-foundation-3.2)"
+    tests: 43
+    files_new: 6
+    files_modified: 0
+    pushed: true
+
+  - id: "website-foundation-3.3"
+    name: "Cases (Index + Detail)"
+    completed_at: "2026-04-12"
+    commit_hash: null  # will be filled after commit
+    commit_message: "Add cases index + detail with 40 tests (website-foundation-3.3)"
+    tests: 40
+    files_new: 4  # 2 pages + 2 test files
+    files_modified: 3  # knowledge.yaml, session.yaml, phase-3-pages.md
+    pushed: false  # will be set true after push
+    notes: "Inherited pre-existing P1 build failure from 3.2 (loader dynamic import). Logged as knowledge.yaml gotcha + open_question for dedicated loader-v2 followup job."
+
 resume_point:
-  last_action: "section_2.2_completed"
-  next_action: "/pipeline wf 3.1"
+  last_action: "section_3.3_completed"
+  next_action: "/pipeline wf 3.4"
 
 notes: |
   fabled10x project initialized on 2026-04-11.

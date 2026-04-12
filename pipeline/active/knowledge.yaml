@@ -226,6 +226,52 @@ patterns:
     reusable_for:
       - "All pages consuming content loaders (episodes, cases)"
 
+  - id: content_page_pattern
+    established_in: "website-foundation-3.2"
+    established_at: "2026-04-12"
+    confirmed_reused_in: ["website-foundation-3.3"]
+    description: |
+      Content index + detail page pair pattern:
+      Index: async server component, getAllX(), 2-col grid of Link cards
+      with metadata badges. Exports static metadata object.
+      Detail: async server component, getXBySlug(slug), dynamicParams=false,
+      generateStaticParams, generateMetadata with Promise<{slug}> params
+      (Next.js 16 async params). notFound() + return guard for missing entries.
+      <Component /> renders MDX body. Conditional sections for optional fields.
+      EmailCapture at bottom with source='type-{slug}'.
+    reusable_for:
+      - "Section 3.3 (cases index + detail) — CONFIRMED reused: identical pattern with CaseStatus badges"
+      - "Any future content type with index + detail routes"
+
+  - id: cross_loader_related_entity_resolution
+    established_in: "website-foundation-3.3"
+    established_at: "2026-04-12"
+    description: |
+      Detail pages that reference other content types resolve related entries
+      by calling the peer loader and filtering locally. Example:
+      case detail calls getAllEpisodes() and filters where
+      relatedEpisodeIds.includes(ep.meta.id). Module-level cache (from 2.1)
+      makes repeated calls O(1) after first load, so unconditional peer-loader
+      calls are fine. Conditionally render the "Related X" section only when
+      the filtered result is non-empty.
+    reusable_for:
+      - "Any future detail page needing to resolve cross-type references (e.g., episode → related cases in a later polish pass)"
+      - "Any future 'related content' surface that shouldn't persist a join table but can filter in-memory"
+
+  - id: notfound_return_guard
+    established_in: "website-foundation-3.2"
+    established_at: "2026-04-12"
+    description: |
+      In Next.js 16 async server components, notFound() throws in production
+      but test mocks are no-ops. Add explicit return after notFound() to
+      prevent test code from executing past the guard:
+        if (!entry) { notFound(); return; }
+      This avoids the entry! non-null assertion and lets TypeScript narrow
+      correctly after the guard.
+    reusable_for:
+      - "Section 3.3 (cases detail page) — same notFound pattern"
+      - "Any future detail page with getXBySlug"
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
@@ -256,4 +302,36 @@ gotchas:
       use readdir which throws ENOENT on missing dirs. Tests that need real
       filesystem checks should verify directory existence before loader calls.
 
-open_questions: []
+  - id: loader_dynamic_import_breaks_turbopack_build
+    established_in: "website-foundation-3.3"
+    severity: P1
+    description: |
+      npm run build fails on every content detail route that uses
+      generateStaticParams + dynamicParams=false. Root cause: src/lib/content/loader.ts:31
+      uses a fully dynamic `import(filePath)` expression; Turbopack's static
+      tracer cannot resolve the target, so page-data collection workers throw
+      "Cannot find module as expression is too dynamic". Adding
+      /* turbopackIgnore: true */ silences the bundler but then falls through
+      to raw Node.js which can't parse .mdx (ERR_UNKNOWN_FILE_EXTENSION).
+
+      Scope: This is pre-existing from section 3.2 (Episodes). Episodes
+      shipped with this latent failure because the pipeline skips
+      `npm run build` in postflight on the 6GB VPS. Section 3.3 (Cases)
+      inherits it — both /episodes/[slug] and /cases/[slug] fail the same way.
+
+      Tests are unaffected — they inject an importFn test seam that bypasses
+      the Node/Turbopack import() path entirely (test_seam_injection pattern).
+
+      Fix direction (future job): replace dynamic import() with a static
+      import glob or a build-time manifest that Turbopack can trace. Options
+      include @next/mdx's contentlayer-style pattern, or a manifest.ts
+      generated at build time. Until fixed, `green.npm_build_passes` and
+      `postflight.npm_build` remain N/A for any content-backed detail route.
+
+open_questions:
+  - id: "loader_build_incompat"
+    question: "How should loader.ts handle MDX dynamic imports so Turbopack can statically trace them?"
+    raised_in: "website-foundation-3.3"
+    blocks: "Production deployment — all content detail routes fail npm run build"
+    priority: P1
+    suggested_followup: "Dedicated /jobbuild for loader-v2 with static glob or manifest"
