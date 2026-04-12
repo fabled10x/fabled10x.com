@@ -1,10 +1,10 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "phase-4-capture-seo"
+  current_phase: "job-complete"
   current_section: "website-foundation-4.1"
   current_agent: pending
-  current_stage: "section-3.4-complete"
+  current_stage: "website-foundation-job-complete"
 
 context_window:
   iteration: 0
@@ -111,9 +111,28 @@ completed_sections:
     pushed: true
     notes: "Complexity-S static prose page, first sync RSC in phase 3. No refactoring needed. /about route now resolves (previously 404)."
 
+  - id: "website-foundation-4.1"
+    name: "Capture + SEO + Polish"
+    completed_at: "2026-04-12"
+    commit_hash: "<pending>"  # updated post-commit
+    commit_message: "Add capture + SEO with 63 tests (website-foundation-4.1)"
+    tests: 63  # 63 new tests written this section (34 unit + 3 integration + 4 security + 4 a11y + 4 infra + 6 edge + 3 error + 3 data + 2 N/A categories); total suite now 308
+    files_new: 8  # actions.ts + sitemap.ts + robots.ts + 5 new test files (actions, sitemap, robots, dependencies, llmstxt)
+    files_modified: 16  # EmailCapture + LllCrosslinks + layout + 2 detail pages + 5 test files + llms.txt + package.json + package-lock.json + README.md + knowledge.yaml + session.yaml
+    pushed: true  # will be set true after push
+    notes: |
+      Final section of website-foundation job. Email capture via Resend (useActionState +
+      server action with degraded env fallback), LLL crosslinks rewrite with slug extraction,
+      per-page SEO metadata (OG + Twitter) + JSON-LD (VideoObject for episodes, CreativeWork
+      for cases), dynamic sitemap from content loaders, permissive robots, llms.txt sitemap
+      reference. Inherited loader P1 gotcha — npm run build skipped per knowledge.yaml
+      open_question loader_build_incompat.
+    job_complete: true
+
 resume_point:
-  last_action: "section_3.4_completed"
-  next_action: "/pipeline wf 4.1"
+  last_action: "section_4.1_completed"
+  next_action: "jobbuild for next feature area (see docs/future-jobs.md)"
+  notes: "website-foundation job COMPLETE — all 11 sections shipped. fabled10x.com is a real content site. Next jobbuild selects from docs/future-jobs.md."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

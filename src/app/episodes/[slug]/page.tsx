@@ -22,9 +22,22 @@ export async function generateMetadata({
   const { slug } = await params;
   const entry = await getEpisodeBySlug(slug);
   if (!entry) return {};
+  const { meta } = entry;
   return {
-    title: entry.meta.title,
-    description: entry.meta.summary,
+    title: meta.title,
+    description: meta.summary,
+    openGraph: {
+      title: meta.title,
+      description: meta.summary,
+      type: 'article',
+      publishedTime: meta.publishedAt,
+      images: meta.thumbnailUrl ? [meta.thumbnailUrl] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: meta.title,
+      description: meta.summary,
+    },
   };
 }
 
@@ -42,8 +55,22 @@ export default async function EpisodeDetail({
 
   const { meta, Component } = entry;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: meta.title,
+    description: meta.summary,
+    datePublished: meta.publishedAt,
+    contentUrl: meta.youtubeUrl,
+    thumbnailUrl: meta.thumbnailUrl,
+  };
+
   return (
     <Container as="article" className="py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="text-xs uppercase tracking-wide text-muted">
         {CONTENT_TIER_LABELS[meta.tier]} · {meta.series}
       </p>

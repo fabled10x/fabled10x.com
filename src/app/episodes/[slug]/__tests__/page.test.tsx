@@ -226,6 +226,65 @@ describe('EpisodeDetail', () => {
     expect(meta.description).toBe('A test episode summary for testing.');
   });
 
+  // --- Phase 4.1 additions: expanded metadata + JSON-LD ---
+
+  it('unit_episode_generate_metadata_og', async () => {
+    const meta = await generateMetadata(makeParams('test-episode'));
+    const og = meta.openGraph as {
+      type?: string;
+      title?: string;
+      description?: string;
+      publishedTime?: string;
+      images?: unknown;
+    } | undefined;
+    expect(og).toBeDefined();
+    expect(og?.type).toBe('article');
+    expect(og?.title).toBe('Test Episode Title');
+    expect(og?.description).toBe('A test episode summary for testing.');
+    expect(og?.publishedTime).toBe('2026-04-15T12:00:00Z');
+  });
+
+  it('unit_episode_generate_metadata_twitter', async () => {
+    const meta = await generateMetadata(makeParams('test-episode'));
+    const twitter = meta.twitter as { card?: string; title?: string; description?: string } | undefined;
+    expect(twitter).toBeDefined();
+    expect(twitter?.card).toBe('summary_large_image');
+    expect(twitter?.title).toBe('Test Episode Title');
+  });
+
+  it('err_metadata_missing_slug', async () => {
+    mockGetEpisodeBySlug.mockResolvedValue(null);
+    const meta = await generateMetadata(makeParams('nonexistent'));
+    // Returns empty object, doesn't throw
+    expect(meta).toEqual({});
+  });
+
+  it('unit_episode_jsonld_videoobject', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeInTheDocument();
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed['@context']).toBe('https://schema.org');
+    expect(parsed['@type']).toBe('VideoObject');
+  });
+
+  it('unit_episode_jsonld_fields', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed.name).toBe('Test Episode Title');
+    expect(parsed.description).toBe('A test episode summary for testing.');
+    expect(parsed.datePublished).toBe('2026-04-15T12:00:00Z');
+    expect(parsed.contentUrl).toBe('https://youtube.com/watch?v=test123');
+  });
+
+  it('data_jsonld_valid_json', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeInTheDocument();
+    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
+  });
+
   // --- Accessibility ---
 
   it('a11y_heading_hierarchy', async () => {

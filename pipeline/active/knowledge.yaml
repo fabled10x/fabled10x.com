@@ -288,6 +288,119 @@ patterns:
       - "Any single-route page that has no data dependencies"
     confirmed_reused_in: []
 
+  - id: server_action_with_degraded_env
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      Server actions that call external SDKs should read env vars INSIDE the
+      action body (not at module scope) so tests can mutate process.env via
+      beforeEach/afterEach. Validate input with Zod safeParse first (reject
+      bad input before touching the SDK). If required env vars are missing,
+      log via console.error and return a user-friendly degraded error state
+      — do not crash on import. Wrap SDK calls in try/catch that returns the
+      same discriminated error state. NEVER log the raw SDK error object —
+      SDK error messages may contain the api key. Use `catch {}` (parameterless)
+      when you need to swallow the error for security.
+
+      Discriminated return type pattern:
+        type ActionState =
+          | { status: 'idle' }
+          | { status: 'success' }
+          | { status: 'error'; message: string };
+
+      Example: src/components/capture/actions.ts
+    reusable_for:
+      - "Future free-tools or storefront actions that call Stripe, Postmark, etc."
+      - "Any server action consumed by useActionState"
+
+  - id: useactionstate_form_pattern
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      Client forms that post to a server action should use React 19's
+      useActionState(action, initialState) returning [state, formAction, isPending].
+      <form action={formAction}> wires submission. Success state replaces the
+      form entirely (a subscribed user shouldn't re-see the form). Error state
+      renders message below form but keeps form mounted. Submit button uses
+      disabled={isPending} with label swap ('Sending…' / original label).
+      sr-only label with htmlFor={unique-id} for a11y. source context passed
+      via <input type="hidden" name="source" value={...}> (keeps action
+      signature standard FormData-only).
+
+      Testing: mock the action module with vi.mock('../actions', ...) and
+      stub with a vi.fn that returns a Promise. userEvent.type + userEvent.click
+      + waitFor for the success/error transition. For double-submit testing,
+      use a Promise that doesn't resolve until the test resolves it manually.
+
+      Mock resend SDK: vi.mock('resend', () => ({ Resend: vi.fn(() => ({ contacts: { create: mockCreate } })) }))
+    reusable_for:
+      - "Any future form posting to a server action (cohort enrollment, storefront checkout, testimonials submit)"
+
+  - id: jsonld_inline_in_detail_page
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      For per-entry structured data, build a JSON-LD object inline in the
+      detail page render function and emit as:
+        <script type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      Place at the TOP of the returned JSX, before the main content. This is
+      the canonical Next.js 16 pattern. Use schema.org @type that best fits:
+      VideoObject for episodes (datePublished + contentUrl + thumbnailUrl),
+      CreativeWork for cases (creator Organization + about client).
+
+      Testing: container.querySelector('script[type="application/ld+json"]'),
+      then JSON.parse(script.innerHTML). Assert on parsed fields.
+    reusable_for:
+      - "Any future detail page (tools, testimonials, storefront products) that needs structured data"
+
+  - id: dynamic_sitemap_from_loaders
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      Next.js 16 sitemap convention: export async function default from
+      src/app/sitemap.ts returning MetadataRoute.Sitemap. Call content loaders
+      with Promise.all for parallel fetching. Guard optional dates with
+      conditional spread: ...(entry.publishedAt ? { lastModified: new Date(...) } : {})
+      to avoid emitting undefined/Invalid Date. Static routes first, then
+      dynamic content routes. Framework automatically serves /sitemap.xml.
+
+      Testing: mock loaders with vi.mock, call sitemap() directly, assert on
+      returned array. Edge cases: empty loaders (only static), missing
+      publishedAt (no lastModified key emitted).
+    reusable_for:
+      - "Any future content type added to fabled10x — extend sitemap.ts with additional loader call"
+      - "Future free-tools/storefront sitemap additions"
+
+  - id: metadataroute_robots_pattern
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      src/app/robots.ts: export default function returning MetadataRoute.Robots.
+      Permissive stance for fabled10x: { rules: [{ userAgent: '*', allow: '/' }], sitemap: 'https://fabled10x.com/sitemap.xml' }.
+      Sync function — no async work needed. Framework serves /robots.txt.
+    reusable_for:
+      - "Any future Next.js project needing robots.txt; customize rules per policy"
+
+  - id: url_slug_extraction_with_fallback
+    established_in: "website-foundation-4.1"
+    established_at: "2026-04-12"
+    description: |
+      Helper pattern for turning an outbound URL into a human-readable label:
+        function extractEntrySlug(url: string): string {
+          try {
+            const parsed = new URL(url);
+            const last = parsed.pathname.split('/').filter(Boolean).pop();
+            return last ? last.replace(/-/g, ' ') : parsed.hostname;
+          } catch {
+            return url;
+          }
+        }
+      Falls back to: root URL → hostname; malformed → raw string.
+      Render with `className="capitalize"` for title-case display.
+    reusable_for:
+      - "Any future component rendering external URLs that need to show a label"
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
@@ -351,3 +464,38 @@ open_questions:
     blocks: "Production deployment — all content detail routes fail npm run build"
     priority: P1
     suggested_followup: "Dedicated /jobbuild for loader-v2 with static glob or manifest"
+
+website-foundation-4.1:
+  completed_at: "2026-04-12"
+  patterns_established:
+    - id: server_action_with_degraded_env
+      file: src/components/capture/actions.ts
+      reusable_for: "Future free-tools / storefront / cohort actions that call external SDKs"
+    - id: useactionstate_form_pattern
+      file: src/components/capture/EmailCapture.tsx
+      reusable_for: "Any future form posting to a server action"
+    - id: jsonld_inline_in_detail_page
+      file: "src/app/episodes/[slug]/page.tsx (VideoObject), src/app/cases/[slug]/page.tsx (CreativeWork)"
+      reusable_for: "Any future detail page needing structured data"
+    - id: dynamic_sitemap_from_loaders
+      file: src/app/sitemap.ts
+      reusable_for: "Any future content type added to fabled10x"
+    - id: metadataroute_robots_pattern
+      file: src/app/robots.ts
+      reusable_for: "Any future Next.js project needing robots.txt"
+    - id: url_slug_extraction_with_fallback
+      file: src/components/crosslinks/LllCrosslinks.tsx
+      reusable_for: "Any component rendering external URLs that need to show a label"
+  gotchas:
+    - "Mock resend SDK at module level via vi.mock — its default export is `Resend` class; mock contacts.create for green tests"
+    - "process.env mutation in tests: always use beforeEach to set and afterEach to restore via process.env = { ...originalEnv }"
+    - "console.log in server actions must NOT pass raw objects when tests will .flat().join(' ') — pass strings directly. Never log Resend SDK errors because they may contain the api key"
+    - "useActionState success state unmounts the form — test cleanup waitFor should check for success message, not button state (stale reference)"
+    - "sitemap lastModified for optional dates: use conditional spread to avoid emitting undefined/Invalid Date"
+  reusable_utilities:
+    - function: extractEntrySlug
+      file: src/components/crosslinks/LllCrosslinks.tsx
+      purpose: "Turn outbound URL into human-readable label; handles malformed URLs + root URLs"
+    - function: captureEmail
+      file: src/components/capture/actions.ts
+      purpose: "Server action that validates email via Zod and subscribes to Resend audience; degraded state when env vars missing"

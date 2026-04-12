@@ -41,27 +41,21 @@ shippable to the VPS in standalone mode.
 - **Brand doc** — `docs/fabled10x-brand-identity.md` (voice, tone, visual direction — "boutique consultancy, muted confident colors, strong typography, narrative quality").
 - **Next.js 16 MDX guide** — `node_modules/next/dist/docs/01-app/02-guides/mdx.md` (local docs required reading per `AGENTS.md`).
 
-## Feature Overview (17 Features, 4 Phases)
+## Feature Overview (11 Features, 4 Phases)
 
 | #   | Feature                                                                           | Phase                   | Size | Status  |
 |-----|-----------------------------------------------------------------------------------|-------------------------|------|---------|
 | 1.1 | `Case` content schema + barrel update                                             | 1 - Foundation          | S    | Shipped |
 | 1.2 | Zod runtime validators for Episode / SourceMaterial / Case                        | 1 - Foundation          | M    | Shipped |
 | 1.3 | Brand design system (Tailwind theme tokens, typography, palette, dark mode)       | 1 - Foundation          | M    | Shipped |
-| 1.4 | Site shell (Header, Nav, Footer, layout primitives, error + not-found boundaries) | 1 - Foundation          | M    | Planned |
-| 2.1 | `@next/mdx` pipeline wiring (next.config, mdx-components.tsx, pageExtensions)     | 2 - Content Loader      | M    | Planned |
-| 2.2 | Content loader utilities — discovery, dynamic import, Zod validation              | 2 - Content Loader      | L    | Planned |
-| 2.3 | Seed content: 1 episode MDX + Party Masters placeholder case + source artifacts   | 2 - Content Loader      | M    | Planned |
+| 1.4 | Site shell (Header, Nav, Footer, layout primitives, error + not-found boundaries) | 1 - Foundation          | M    | Shipped |
+| 2.1 | MDX pipeline + content loaders (wiring, discovery, import, Zod validation)        | 2 - Content Loader      | L    | Shipped |
+| 2.2 | Seed content: 1 episode MDX + Party Masters placeholder case                      | 2 - Content Loader      | M    | Shipped |
 | 3.1 | `/` homepage rebuild (brand, latest episode, section entries, LLL callout, CTA)   | 3 - Pages               | M    | Planned |
-| 3.2 | `/episodes` index                                                                 | 3 - Pages               | M    | Planned |
-| 3.3 | `/episodes/[slug]` detail (show notes, source materials, crosslinks, badges)      | 3 - Pages               | L    | Planned |
-| 3.4 | `/cases` index                                                                    | 3 - Pages               | S    | Planned |
-| 3.5 | `/cases/[slug]` detail                                                            | 3 - Pages               | M    | Planned |
-| 3.6 | `/about` page (brand story + LLL relationship)                                    | 3 - Pages               | S    | Planned |
-| 4.1 | Resend email capture (form component + server action + env handling)              | 4 - Capture + SEO       | M    | Planned |
-| 4.2 | `<LllCrosslinks>` component reused on episode + case detail pages                 | 4 - Capture + SEO       | S    | Planned |
-| 4.3 | SEO metadata (per-page `generateMetadata`, OpenGraph, Twitter cards, JSON-LD)     | 4 - Capture + SEO       | M    | Planned |
-| 4.4 | `app/sitemap.ts` + `app/robots.ts` + llms.txt polish + a11y/perf sweep            | 4 - Capture + SEO       | M    | Planned |
+| 3.2 | `/episodes` index + `/episodes/[slug]` detail                                     | 3 - Pages               | L    | Planned |
+| 3.3 | `/cases` index + `/cases/[slug]` detail                                           | 3 - Pages               | L    | Planned |
+| 3.4 | `/about` page (brand story + LLL relationship)                                    | 3 - Pages               | S    | Planned |
+| 4.1 | Capture + SEO + polish (email, crosslinks, metadata, sitemap, robots, a11y)       | 4 - Capture + SEO       | L    | Shipped |
 
 **Size guide**: S = few hours, single file. M = half day, 2-3 files. L = full day, 4+ files. XL = multi-day, new content type + loader + UI.
 
@@ -75,19 +69,19 @@ Phase 1: Foundation (schemas, design, shell, validators)
 │   1.4 ─┘
 │
 v
-Phase 2: Content Loader (MDX pipeline, utilities, seed data)
+Phase 2: Content Loader (MDX pipeline, loaders, seed data)
 │
-│   2.1 → 2.2 → 2.3   ← strictly sequential within phase
+│   2.1 → 2.2   ← sequential (loader must exist before seed content is verified)
 │
 v
 Phase 3: Pages (homepage + every public route)
 │
-│   3.1, 3.2, 3.3, 3.4, 3.5, 3.6   ← all parallel-able after phase 2
+│   3.1, 3.2, 3.3, 3.4   ← all parallel-able after phase 2
 │
 v
 Phase 4: Capture + SEO + Polish
 │
-    4.1, 4.2, 4.3, 4.4   ← all parallel-able after phase 3
+    4.1   ← single section covers email, crosslinks, SEO, sitemap, a11y
 ```
 
 Hard dependencies only cross phase boundaries. Within a phase, most features
@@ -182,19 +176,13 @@ Each feature maps to one section ID used by `/discovery`, `/red`, `/green`, `/re
 | `website-foundation-1.2`       | Zod validators                        |
 | `website-foundation-1.3`       | Brand design system                   |
 | `website-foundation-1.4`       | Site shell                            |
-| `website-foundation-2.1`       | MDX pipeline wiring                   |
-| `website-foundation-2.2`       | Content loader utilities              |
-| `website-foundation-2.3`       | Seed content                          |
+| `website-foundation-2.1`       | MDX pipeline + content loaders        |
+| `website-foundation-2.2`       | Seed content                          |
 | `website-foundation-3.1`       | Homepage                              |
-| `website-foundation-3.2`       | Episodes index                        |
-| `website-foundation-3.3`       | Episode detail                        |
-| `website-foundation-3.4`       | Cases index                           |
-| `website-foundation-3.5`       | Case detail                           |
-| `website-foundation-3.6`       | About page                            |
-| `website-foundation-4.1`       | Resend email capture                  |
-| `website-foundation-4.2`       | LLL crosslinks component              |
-| `website-foundation-4.3`       | SEO metadata                          |
-| `website-foundation-4.4`       | sitemap/robots/llms.txt/a11y polish   |
+| `website-foundation-3.2`       | Episodes (index + detail)             |
+| `website-foundation-3.3`       | Cases (index + detail)                |
+| `website-foundation-3.4`       | About page                            |
+| `website-foundation-4.1`       | Capture + SEO + polish                |
 
 These IDs are consumed by `pipeline/active/session.yaml` and used as directory
 names under `pipeline/active/`.

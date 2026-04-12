@@ -21,6 +21,19 @@ export const metadata: Metadata = {
     template: '%s · fabled10x',
   },
   description: 'One person. An agent team. Full SaaS delivery.',
+  openGraph: {
+    type: 'website',
+    siteName: 'fabled10x',
+    images: ['/og-default.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    creator: '@Fabled10X',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

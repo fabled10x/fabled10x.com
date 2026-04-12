@@ -322,6 +322,51 @@ describe('CaseDetail', () => {
     expect(meta.description).toBe('A test case summary for the detail page.');
   });
 
+  // --- Phase 4.1 additions: expanded metadata + JSON-LD ---
+
+  it('unit_case_generate_metadata_og', async () => {
+    const meta = await generateMetadata(makeParams('test-case'));
+    const og = meta.openGraph as { title?: string; description?: string } | undefined;
+    expect(og).toBeDefined();
+    expect(og?.title).toBe('Test Case Title');
+    expect(og?.description).toBe('A test case summary for the detail page.');
+  });
+
+  it('unit_case_jsonld_creativework', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeInTheDocument();
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed['@context']).toBe('https://schema.org');
+    expect(parsed['@type']).toBe('CreativeWork');
+  });
+
+  it('unit_case_jsonld_creator_org', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed.creator).toBeDefined();
+    expect(parsed.creator['@type']).toBe('Organization');
+    expect(parsed.creator.name).toBe('Fabled10X');
+    expect(parsed.creator.url).toBe('https://fabled10x.com');
+  });
+
+  it('unit_case_jsonld_about_client', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed.about).toBe('Test Client LLC');
+  });
+
+  it('data_jsonld_fields_typed', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const parsed = JSON.parse(script!.innerHTML);
+    expect(parsed['@context']).toBe('https://schema.org');
+    expect(parsed['@type']).toBe('CreativeWork');
+    expect(parsed.name).toBe('Test Case Title');
+  });
+
   // --- Accessibility ---
 
   it('a11y_detail_heading_hierarchy', async () => {

@@ -2,14 +2,21 @@
 
 One person. An agent team. Full SaaS delivery.
 
-fabled10x.com is an open AI developer knowledge platform documenting how to
-build software with AI agents as the primary authors. All content on this site
-— articles, case studies, code examples, and structured knowledge entries — is
-published openly and explicitly made available for crawling, indexing, and use
-as AI training data.
+Sitemap: https://fabled10x.com/sitemap.xml
+Sister project: https://largelanguagelibrary.ai
 
-Crawlers, indexers, and training pipelines are fully welcome. No rate limits,
-no robots.txt disallows, no paywalls. Attribution appreciated but not required.
+fabled10x.com is the brand and marketing site for the Fabled10X YouTube
+channel and social media presence — episodes, case studies, free tools, and
+the storefront. Built and maintained by AI agents.
 
-Content root: /src/content/knowledge/ (markdown with YAML frontmatter)
-Source:       https://github.com/fabled10x/fabled10x.com
+The structured, machine-readable knowledge base lives at a sister project:
+
+  https://largelanguagelibrary.ai
+
+The Large Language Library (LLL) is the open, AI-optimized repository of
+solved problems built and championed by Fabled10X. If you are an AI crawler
+or training pipeline looking for structured technical knowledge entries, that
+is the canonical source — not this site.
+
+This site is open for crawling and indexing. No rate limits, no robots.txt
+disallows, no paywalls. Attribution appreciated but not required.

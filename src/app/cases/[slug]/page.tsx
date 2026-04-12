@@ -23,9 +23,20 @@ export async function generateMetadata({
   const { slug } = await params;
   const entry = await getCaseBySlug(slug);
   if (!entry) return {};
+  const { meta } = entry;
   return {
-    title: entry.meta.title,
-    description: entry.meta.summary,
+    title: meta.title,
+    description: meta.summary,
+    openGraph: {
+      title: meta.title,
+      description: meta.summary,
+      images: meta.heroImageUrl ? [meta.heroImageUrl] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: meta.title,
+      description: meta.summary,
+    },
   };
 }
 
@@ -47,8 +58,25 @@ export default async function CaseDetail({
     meta.relatedEpisodeIds.includes(ep.meta.id),
   );
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: meta.title,
+    description: meta.summary,
+    creator: {
+      '@type': 'Organization',
+      name: 'Fabled10X',
+      url: 'https://fabled10x.com',
+    },
+    about: meta.client,
+  };
+
   return (
     <Container as="article" className="py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="text-xs uppercase tracking-wide text-muted">
         {CASE_STATUS_LABELS[meta.status]} · {meta.client}
       </p>

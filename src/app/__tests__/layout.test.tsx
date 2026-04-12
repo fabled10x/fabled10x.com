@@ -42,6 +42,34 @@ describe('layout metadata', () => {
       'One person. An agent team. Full SaaS delivery.'
     );
   });
+
+  // --- Unit: expanded SEO metadata (phase 4.1) ---
+
+  it('unit_layout_metadata_opengraph', () => {
+    expect(metadata.openGraph).toBeDefined();
+    const og = metadata.openGraph as {
+      type?: string;
+      siteName?: string;
+      images?: Array<string | { url: string }> | string | { url: string };
+    };
+    expect(og.type).toBe('website');
+    expect(og.siteName).toBe('fabled10x');
+    expect(og.images).toBeDefined();
+  });
+
+  it('unit_layout_metadata_twitter', () => {
+    expect(metadata.twitter).toBeDefined();
+    const twitter = metadata.twitter as { card?: string; creator?: string };
+    expect(twitter.card).toBe('summary_large_image');
+    expect(twitter.creator).toMatch(/Fabled10X/i);
+  });
+
+  it('unit_layout_metadata_robots', () => {
+    expect(metadata.robots).toBeDefined();
+    const robots = metadata.robots as { index?: boolean; follow?: boolean };
+    expect(robots.index).toBe(true);
+    expect(robots.follow).toBe(true);
+  });
 });
 
 describe('layout shell', () => {
