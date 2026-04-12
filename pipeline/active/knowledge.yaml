@@ -146,6 +146,86 @@ patterns:
     reusable_for:
       - "Per-segment error boundaries in Phase 3"
 
+  - id: mdx_content_loader
+    established_in: "website-foundation-2.1"
+    established_at: "2026-04-12"
+    description: |
+      Generic content loader in src/lib/content/loader.ts. loadContent<T>()
+      discovers .mdx files via readdir, dynamically imports each, validates
+      the named `meta` export against a Zod schema, returns {meta, slug,
+      Component}[]. Validation errors throw with file path + Zod message for
+      build-time failure. Accepts injectable readdirFn and importFn for
+      testability (node:fs/promises mocking unreliable in vitest ESM).
+    reusable_for:
+      - "Any future content type needing filesystem-based MDX loading"
+      - "Section 2.2 (seed content) — provides the files that loader discovers"
+      - "Phase 3 pages — consume getAllEpisodes/getCaseBySlug accessors"
+
+  - id: module_level_cache
+    established_in: "website-foundation-2.1"
+    established_at: "2026-04-12"
+    description: |
+      episodes.ts and cases.ts use module-level cache variables
+      (let cache = null) with a loadAll() guard. Safe because content is
+      immutable within a build. Pattern: declare cache at module scope,
+      populate on first call, return cached value on subsequent calls.
+    reusable_for:
+      - "Any future content loader that reads static files"
+
+  - id: test_seam_injection
+    established_in: "website-foundation-2.1"
+    established_at: "2026-04-12"
+    description: |
+      When vitest ESM mocking of Node.js built-in modules (node:fs/promises)
+      is unreliable, use injectable function parameters as test seams.
+      loader.ts accepts readdirFn and importFn. Production callers omit
+      these (defaults to real readdir/import). Tests inject mocks directly.
+    reusable_for:
+      - "Any future module that needs to mock node: built-in modules"
+
+  - id: async_server_component_testing
+    established_in: "website-foundation-3.1"
+    established_at: "2026-04-12"
+    description: |
+      Async server components (async function Page()) can be tested in
+      Vitest jsdom by calling the function, awaiting the JSX, and passing
+      it to render(). Pattern:
+        async function renderPage() {
+          const jsx = await Page();
+          return render(jsx);
+        }
+      Mock async data fetchers via vi.mock + mockResolvedValue. This
+      avoids Suspense complexity in test environments.
+    reusable_for:
+      - "All Phase 3 pages (episodes, cases, about) that use async data loading"
+      - "Any future async server component"
+
+  - id: forward_dependency_stub
+    established_in: "website-foundation-3.1"
+    established_at: "2026-04-12"
+    description: |
+      When a section imports a component from a future section, create a
+      minimal stub satisfying the import and type signature. Stub should
+      be as simple as possible. Example: EmailCapture stub in Phase 3
+      is a form shell at src/components/capture/EmailCapture.tsx with
+      props { source: string }. Phase 4.1 replaces the stub with the
+      real implementation. In parent tests, mock the stub component to
+      isolate the parent from the stub implementation.
+    reusable_for:
+      - "Phase 3 pages importing EmailCapture and LllCrosslinks from Phase 4"
+
+  - id: loaded_entry_field_access
+    established_in: "website-foundation-3.1"
+    established_at: "2026-04-12"
+    description: |
+      LoadedEntry<T> (from src/lib/content/loader.ts) has shape
+      { meta: T, slug: string, Component: ComponentType }. Access typed
+      fields via .meta.fieldName, not .fieldName directly. The planning
+      docs may show shorthand (e.g., entry.title) that doesn't match
+      the actual type — always use entry.meta.title.
+    reusable_for:
+      - "All pages consuming content loaders (episodes, cases)"
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
@@ -167,5 +247,13 @@ gotchas:
       parsing — most invalid strings are rejected, but test fixtures must
       use inputs that genuinely fail WHATWG parse (e.g., strings with
       spaces, empty strings). z.enum(CONST_TUPLE) is unchanged in Zod 4.
+
+  - id: content_dirs_dont_preexist
+    established_in: "website-foundation-2.2"
+    description: |
+      src/content/episodes/ and src/content/cases/ directories don't exist
+      until seed content creates them. The loaders (episodes.ts, cases.ts)
+      use readdir which throws ENOENT on missing dirs. Tests that need real
+      filesystem checks should verify directory existence before loader calls.
 
 open_questions: []

@@ -1,14 +1,14 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "phase-1-foundation"
-  current_section: "website-foundation-1.4"
+  current_phase: "phase-3-pages"
+  current_section: "website-foundation-3.1"
   current_agent: pipeline
-  current_stage: "section-1.4-finish"
+  current_stage: "section-3.1-finish"
 
 context_window:
-  iteration: 1
-  total_items: 6
+  iteration: 0
+  total_items: 0
   completed_items: 0
 
 completed_sections:
@@ -39,10 +39,39 @@ completed_sections:
     files_new: 2
     files_modified: 2
     pushed: true
+  - id: "website-foundation-1.4"
+    name: "Site Shell"
+    completed_at: "2026-04-11"
+    commit_hash: "4cc308b"
+    commit_message: "Add site shell with 34 tests (website-foundation-1.4)"
+    tests: 34
+    files_new: 9
+    files_modified: 7
+    pushed: true
+
+  - id: "website-foundation-2.1"
+    name: "MDX Pipeline + Content Loaders"
+    completed_at: "2026-04-12"
+    commit_hash: "33a6f8a"
+    commit_message: "Add MDX pipeline + content loaders with 27 tests (website-foundation-2.1)"
+    tests: 27
+    files_new: 8
+    files_modified: 2
+    pushed: true
+
+  - id: "website-foundation-2.2"
+    name: "Seed Content"
+    completed_at: "2026-04-12"
+    commit_hash: "4e9c53a"
+    commit_message: "Add seed content with 11 tests (website-foundation-2.2)"
+    tests: 11
+    files_new: 3
+    files_modified: 0
+    pushed: true
 
 resume_point:
-  last_action: "section_1.4_discovery_completed"
-  next_action: "red phase (write failing tests)"
+  last_action: "section_2.2_completed"
+  next_action: "/pipeline wf 3.1"
 
 notes: |
   fabled10x project initialized on 2026-04-11.
