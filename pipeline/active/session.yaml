@@ -1,0 +1,42 @@
+session:
+  id: "2026-04-11-001"
+  started_at: "2026-04-11T00:00:00Z"
+  current_phase: "phase-1-foundation"
+  current_section: "website-foundation-1.3"
+  current_agent: pipeline
+  current_stage: "section-1.3-finish"
+
+context_window:
+  iteration: 0
+  total_items: 0
+  completed_items: 0
+
+completed_sections:
+  - id: "website-foundation-1.1"
+    name: "Case Content Schema"
+    completed_at: "2026-04-11"
+    commit_hash: "dea757a"
+    commit_message: "Add Case content schema with 14 tests (website-foundation-1.1)"
+    tests: 14
+    files_new: 2
+    files_modified: 1
+    pushed: true
+  - id: "website-foundation-1.2"
+    name: "Zod Runtime Validators"
+    completed_at: "2026-04-11"
+    commit_hash: "0f822fb"
+    commit_message: "Add Zod validators with 22 tests (website-foundation-1.2)"
+    tests: 22
+    files_new: 2  # validators.ts, validators.test.ts
+    files_modified: 3  # index.ts, package.json, package-lock.json
+    pushed: true
+
+resume_point:
+  last_action: "section_1.2_completed"
+  next_action: "/pipeline wf 1.3 (Brand design system)"
+
+notes: |
+  fabled10x project initialized on 2026-04-11.
+  Skills ported from partymasters (see pipeline/TECH-DECISIONS.md).
+  Next step: run `/jobbuild` against docs/fabled10x-website-implementation-plan.md
+  to seed the first job under currentwork/.

@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* Brand palette — muted confident colors per brand-identity doc */
+  --color-ink: #0a0a0a;          /* near-black text on light */
+  --color-parchment: #faf8f3;    /* warm off-white background */
+  --color-ember: #c2410c;        /* accent — rusted orange (the "fabled" side) */
+  --color-steel: #475569;        /* secondary text, borders */
+  --color-mist: #e2e8f0;         /* subtle dividers, hover states */
+  --color-signal: #0891b2;       /* link color — teal ("10X" tech side) */
+
+  --color-background: var(--color-parchment);
+  --color-foreground: var(--color-ink);
+  --color-muted: var(--color-steel);
+  --color-accent: var(--color-ember);
+  --color-link: var(--color-signal);
+
+  --font-display: var(--font-geist-sans);
+  --font-body: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @theme inline {
+    --color-background: #0d0d0f;
+    --color-foreground: #e8e8e3;
+    --color-muted: #94a3b8;
+    --color-mist: #1e293b;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
 }

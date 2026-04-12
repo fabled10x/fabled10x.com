@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "fabled10x",
-  description: "One person. An agent team. Full SaaS delivery.",
+  metadataBase: new URL('https://fabled10x.com'),
+  title: {
+    default: 'fabled10x',
+    template: '%s · fabled10x',
+  },
+  description: 'One person. An agent team. Full SaaS delivery.',
 };
 
 export default function RootLayout({

@@ -1,0 +1,129 @@
+knowledge:
+  version: 1
+  project: fabled10x
+  description: |
+    Cross-section knowledge store. Skills read/write here when a pattern,
+    constraint, or decision applies to multiple sections. Keeps context
+    portable between pipeline runs.
+
+project_context:
+  purpose: |
+    fabled10x is the brand/marketing site for the Fabled10X YouTube channel
+    and social media presence. Primary outputs: episode index, project case
+    studies, free interactive tools, storefront. Secondary job: promote the
+    sister project, The Large Language Library (largelanguagelibrary.ai),
+    which hosts the public AI-optimized knowledge base. The KB lives there,
+    not here.
+  stack:
+    framework: Next.js 16.2.3 (App Router)
+    runtime: React 19.2.4
+    styling: Tailwind CSS 4
+    testing: Vitest + Testing Library + MSW
+    persistence: static (MDX / content files)
+    deployment: TBD
+  content_model:
+    location: src/content/schemas/
+    types:
+      - ContentTier (flagship | playbook | shorts | livestream | community)
+      - ContentPillar (delivery | workflow | business | future)
+      - Episode (links to source materials and external LLL entry URLs)
+      - SourceMaterial (build artifact shown as episode show notes)
+
+conventions:
+  test_files: src/**/__tests__/**/*.test.{ts,tsx}
+  test_setup: src/__tests__/setup.ts
+  path_alias: "@/ → src/"
+  mocks: src/__tests__/mocks/
+
+patterns:
+  - id: content_type_module
+    established_in: "website-foundation-1.1"
+    established_at: "2026-04-11"
+    description: |
+      One content type per file under src/content/schemas/{name}.ts with
+      four-part structure: `const X_VALUES = [...] as const` tuple, derived
+      union type `(typeof X_VALUES)[number]`, sibling `Record<Union, string>`
+      label/metadata map, and the record interface. Barrel re-exports from
+      src/content/schemas/index.ts. Colocated tests at
+      src/content/schemas/__tests__/{name}.test.ts.
+    reusable_for:
+      - "Any future content type that has enumerated statuses or kinds"
+      - "Sibling sections website-foundation-1.2 (Zod validators — imports the const tuples as schema sources)"
+      - "Later sections that load and render Case records (3.4, 3.5)"
+    examples:
+      - "src/content/schemas/case.ts"
+      - "src/content/schemas/content-tier.ts"
+      - "src/content/schemas/source-material.ts"
+
+  - id: brand_token_system
+    established_in: "website-foundation-1.3"
+    established_at: "2026-04-11"
+    description: |
+      Brand tokens defined in src/app/globals.css using Tailwind 4 @theme
+      inline blocks. Six named brand colors (ink, parchment, ember, steel,
+      mist, signal) with five semantic aliases (background, foreground,
+      muted, accent, link). Dark mode overrides via nested @media
+      (prefers-color-scheme: dark) { @theme inline { ... } }. Downstream
+      components reference tokens via Tailwind utility classes (bg-background,
+      text-foreground, text-muted, text-accent, text-link, border-mist, etc.)
+      — no raw hex values in component files.
+    reusable_for:
+      - "Section 1.4 (site shell) — Header, Footer, Container use brand colors via Tailwind classes"
+      - "All Phase 3 pages — brand tokens establish the visual system"
+      - "Section 4.1 (email capture) — form styling uses brand accent/link colors"
+
+  - id: css_token_testing
+    established_in: "website-foundation-1.3"
+    established_at: "2026-04-11"
+    description: |
+      CSS custom properties cannot be tested via jsdom getComputedStyle
+      (no real CSS engine). Tests read the CSS file with fs.readFileSync
+      and assert on string content (toContain). This pattern lives in
+      src/app/__tests__/globals-css.test.ts. Layout metadata is tested by
+      importing the exported metadata object directly from layout.tsx.
+      next/font/google must be mocked in Vitest (Geist is not a function
+      error without the mock). Mock pattern:
+      vi.mock('next/font/google', () => ({
+        Geist: () => ({ variable: '--font-geist-sans', className: 'geist-sans' }),
+        Geist_Mono: () => ({ variable: '--font-geist-mono', className: 'geist-mono' }),
+      }));
+    reusable_for:
+      - "Any future test that imports from layout.tsx needs the same next/font/google mock"
+      - "Section 1.4 tests that render components using brand tokens"
+
+  - id: validator_module
+    established_in: "website-foundation-1.2"
+    established_at: "2026-04-11"
+    description: |
+      Zod validators live in a SEPARATE file (validators.ts) from the TS
+      interfaces so type-only consumers don't pull runtime zod. Schemas
+      import CONST tuples from sibling schema files (CONTENT_TIERS, etc.)
+      via z.enum(TUPLE). Export Input helper types via z.input<typeof Schema>.
+      Re-exported from barrel (src/content/schemas/index.ts).
+    reusable_for:
+      - "Any future content type that needs runtime validation at the content boundary"
+      - "Section 2.2 (content loader) — will call .parse() on these schemas"
+
+gotchas:
+  - id: barrel_integrity_in_git
+    established_in: "website-foundation-1.1"
+    description: |
+      When src/content/schemas/index.ts is untracked in git but re-exports
+      from sibling modules that are also untracked, committing only the new
+      sibling + the barrel produces a broken commit (missing imports). Either
+      commit the pre-existing siblings together with the new one, or commit
+      the baseline siblings in a separate prior commit. Section 1.1 chose
+      the former.
+
+  - id: zod_4_api_forms
+    established_in: "website-foundation-1.2"
+    description: |
+      Zod 4 (installed as zod@4.3.6) has canonical top-level validators:
+      z.url() replaces z.string().url(); z.iso.datetime() replaces
+      z.string().datetime(). Both old and new forms work, but new code
+      should use z.url() and z.iso.datetime(). z.url() uses WHATWG URL
+      parsing — most invalid strings are rejected, but test fixtures must
+      use inputs that genuinely fail WHATWG parse (e.g., strings with
+      spaces, empty strings). z.enum(CONST_TUPLE) is unchanged in Zod 4.
+
+open_questions: []

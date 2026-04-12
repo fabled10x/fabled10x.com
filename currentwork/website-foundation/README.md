@@ -46,8 +46,8 @@ shippable to the VPS in standalone mode.
 | #   | Feature                                                                           | Phase                   | Size | Status  |
 |-----|-----------------------------------------------------------------------------------|-------------------------|------|---------|
 | 1.1 | `Case` content schema + barrel update                                             | 1 - Foundation          | S    | Shipped |
-| 1.2 | Zod runtime validators for Episode / SourceMaterial / Case                        | 1 - Foundation          | M    | Planned |
-| 1.3 | Brand design system (Tailwind theme tokens, typography, palette, dark mode)       | 1 - Foundation          | M    | Planned |
+| 1.2 | Zod runtime validators for Episode / SourceMaterial / Case                        | 1 - Foundation          | M    | Shipped |
+| 1.3 | Brand design system (Tailwind theme tokens, typography, palette, dark mode)       | 1 - Foundation          | M    | Shipped |
 | 1.4 | Site shell (Header, Nav, Footer, layout primitives, error + not-found boundaries) | 1 - Foundation          | M    | Planned |
 | 2.1 | `@next/mdx` pipeline wiring (next.config, mdx-components.tsx, pageExtensions)     | 2 - Content Loader      | M    | Planned |
 | 2.2 | Content loader utilities — discovery, dynamic import, Zod validation              | 2 - Content Loader      | L    | Planned |
