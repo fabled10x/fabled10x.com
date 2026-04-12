@@ -104,6 +104,48 @@ patterns:
       - "Any future content type that needs runtime validation at the content boundary"
       - "Section 2.2 (content loader) — will call .parse() on these schemas"
 
+  - id: site_shell_components
+    established_in: "website-foundation-1.4"
+    established_at: "2026-04-11"
+    description: |
+      Site shell components live in src/components/site/ with barrel export
+      from index.ts. Container is a polymorphic width-constraint primitive
+      (accepts as prop: div|section|main|article). Header and Footer are
+      composed from Container. All components use brand tokens via Tailwind
+      utility classes — no raw hex values. NAV_ITEMS is a local constant
+      in Header.tsx (Episodes, Cases, About). Layout wraps children in
+      <Header /><main className="flex-1">{children}</main><Footer />.
+    reusable_for:
+      - "Phase 3 pages — all render inside this shell automatically"
+      - "Future nav items — add to NAV_ITEMS array in Header.tsx"
+      - "Container reuse — any page section that needs width constraint"
+
+  - id: next_link_test_mock
+    established_in: "website-foundation-1.4"
+    established_at: "2026-04-11"
+    description: |
+      next/link must be mocked in Vitest jsdom tests. Mock pattern:
+      vi.mock('next/link', () => ({
+        default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+          <a href={href}>{children}</a>
+        ),
+      }));
+      Uses typed props (not any) to satisfy ESLint no-explicit-any rule.
+    reusable_for:
+      - "Any future component test that renders next/link"
+
+  - id: nextjs_16_error_boundary
+    established_in: "website-foundation-1.4"
+    established_at: "2026-04-11"
+    description: |
+      Next.js 16.2.0+ uses unstable_retry as the primary error boundary
+      prop (added in v16.2.0). reset() still exists but is secondary.
+      error.tsx must have 'use client' directive. Props:
+      { error: Error & { digest?: string }; unstable_retry: () => void }
+      Tested by passing mock error and mock retry function as props.
+    reusable_for:
+      - "Per-segment error boundaries in Phase 3"
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
