@@ -715,3 +715,87 @@ build-in-public-docs-1.2:
       priority: low
 
 open_questions_added: []  # no new open questions; loader_build_incompat (P1) still applies, no new blockers
+
+build-in-public-docs-2.2:
+  completed_at: "2026-04-12"
+  patterns_established:
+    - id: build_log_route_trio
+      file: "src/app/build-log/page.tsx, jobs/[slug]/page.tsx, jobs/[slug]/[phase]/page.tsx"
+      description: |
+        Three sibling routes consuming the bpd-1.1 loader trio (getAllJobs/
+        getJobBySlug/getJobPhase) with the canonical content_page_pattern from
+        wf 3.2/3.3: Container as='main' className='py-12', dynamicParams=false,
+        generateStaticParams enumerating all valid params, generateMetadata
+        with Promise<{slug,phase?}> async params, notfound_return_guard
+        (`if (!entry) { notFound(); return; }`), Promise.all on loader pairs
+        for clarity (cache makes the second call O(1)).
+      reusable_for: "bpd 2.3 status board (consumes pipeline-state loaders); bpd 3.1 SEO+sitemap polish (will widen these metadata exports)"
+    - id: server_component_props_card
+      file: "src/components/build-log/{StatusBadge,JobCard,PhaseNav}.tsx"
+      description: |
+        Pure RSC pattern for read-only display components: typed Props interface,
+        single named export, no 'use client', Tailwind brand-token classes only,
+        Record<EnumUnion, string> for label/class mapping where exhaustiveness
+        is desired (TS catches enum drift). Conditional rendering via
+        `{prop && (...)}` for optional sections; component returns null when
+        an entire collection is empty (PhaseNav with phases: []).
+      reusable_for: "bpd 2.3 JobsRollupTable, future read-only display components in build-log or other public surfaces"
+    - id: barrel_re_export_for_components
+      file: "src/components/build-log/index.ts"
+      description: |
+        Pattern: index.ts re-exports every component file alongside the existing
+        ones (MarkdownDocument from 2.1; StatusBadge/JobCard/PhaseNav added in
+        2.2). Verified by infra_barrel_re_exports_three_new_components test
+        importing `* as buildLogBarrel` and asserting toHaveProperty on each
+        named export. Lightweight one-line-per-export convention.
+      reusable_for: "Any future components added to src/components/build-log/ (e.g., bpd 2.3 JobsRollupTable)"
+    - id: private_helper_via_mock_capture
+      file: "src/app/build-log/page.tsx + page.test.tsx"
+      description: |
+        firstParagraph helper kept private to the page module (never exported)
+        per planning doc. Tested indirectly: the test mocks JobCard to render
+        a div with `data-excerpt={excerpt}`, then asserts on the captured
+        attribute for various input shapes (multi-paragraph, whitespace-heavy,
+        empty string, single paragraph). Avoids exporting test-only surface.
+      reusable_for: "Any private page helper that needs verification without breaking encapsulation"
+    - id: dynamic_params_export_assertion
+      file: "src/app/build-log/jobs/[slug]/__tests__/page.test.tsx and [phase]/__tests__/page.test.tsx"
+      description: |
+        Static export of `dynamicParams = false` is verified by importing it as
+        a named module export and asserting `expect(dynamicParams).toBe(false)`.
+        Doubles as both a security test (sec_tampering_slug_route_bounded_by_static_params)
+        and an infrastructure test (infra_dynamic_params_false_exported) — single
+        assertion with two test_ids in test-cases.yaml.
+      reusable_for: "Any future page route using generateStaticParams + dynamicParams=false"
+
+  gotchas:
+    - "External parallel work (storefront-auth-1.1) modified session.yaml + added Product schema imports to validators.test.ts during the bpd 2.2 run, leaving 2 test files failing at full-suite scope. The bpd 2.2 commit must NOT include those files — stage with explicit per-file `git add` rather than `git add -A`. Section-scoped npm test (npm test src/{components,app,lib}/build-log) confirms 143/143 passing for our scope."
+    - "infra_barrel_re_exports_three_new_components is co-located in StatusBadge.test.tsx (single-file barrel test) rather than a dedicated index.test.tsx — keeps the test count low and the assertion close to one of the re-exported modules."
+    - "Phase title format ('Phase {N}: {title}' or `phase.slug` fallback) appears in 3 places: PhaseNav label, [phase] page H1, [phase] generateMetadata title prefix. Refactor evaluated extracting to a formatPhaseLabel helper but kept inline per CLAUDE.md guidance ('three similar lines is better than a premature abstraction'). The format is stable so future drift risk is low; revisit if a 4th call site appears."
+    - "JobCard's `unit_job_card_omits_alias_when_undefined` test uses destructuring trick `const { alias: _omit, ...rest } = baseRollup; void _omit;` to satisfy TypeScript + ESLint while removing an optional property without delete. Acceptable in test files; avoid in source."
+    - "page test fixture for headerless phase used `header: {}` — both phaseNumber and title undefined — to exercise the slug-fallback render path. The conditional in PhaseNav requires BOTH phaseNumber !== undefined AND title to render the formatted label."
+
+  reusable_utilities:
+    - function: StatusBadge
+      file: src/components/build-log/StatusBadge.tsx
+      purpose: "Pill component mapping JobRollupEntry['status'] (4 values) to brand-tokened bg/text classes + human label. Record<Union, string> exhaustiveness."
+    - function: JobCard
+      file: src/components/build-log/JobCard.tsx
+      purpose: "Job summary card with title link, optional alias, status badge, line-clamped excerpt, feature counts + percent. Consumed by /build-log index."
+    - function: PhaseNav
+      file: src/components/build-log/PhaseNav.tsx
+      purpose: "Nav strip listing all phases of a job; active phase styled + aria-current='page'. Falls back to phase.slug label when header.title missing. Returns null on empty phases."
+    - function: firstParagraph (private to /build-log page)
+      file: src/app/build-log/page.tsx
+      purpose: "Extracts first \\n\\s*\\n-delimited paragraph, collapses internal whitespace, trims. Used for JobCard excerpt from job.context."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/lib/content/episodes.ts:24 + src/lib/content/cases.ts:24"
+      description: "Object.freeze cache assignment — still open from bpd-1.1/1.2. Not blocking."
+      priority: low
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open (not addressed by 2.2 — 2.2 routes use the SAME pattern but won't break until npm run build is attempted)
+      next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest"

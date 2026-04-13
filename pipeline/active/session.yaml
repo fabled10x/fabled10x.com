@@ -1,14 +1,14 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "build-in-public-docs"
-  current_section: "build-in-public-docs-2.2"
-  current_agent: pending
-  current_stage: "build-in-public-docs-2.1-complete"
+  current_phase: "storefront-auth"
+  current_section: "storefront-auth-1.1"
+  current_agent: discovery
+  current_stage: "storefront-auth-1.1-discovery-complete"
 
 context_window:
-  iteration: 0
-  total_items: 0
+  iteration: 1
+  total_items: 9
   completed_items: 0
 
 completed_sections:
@@ -157,12 +157,12 @@ completed_sections:
   - id: "build-in-public-docs-2.1"
     name: "<MarkdownDocument> Component"
     completed_at: "2026-04-12"
-    commit_hash: null  # populated after git_commit beat
+    commit_hash: "5fc65d7"
     commit_message: "Add MarkdownDocument component with 24 tests (build-in-public-docs-2.1)"
     tests: 24  # 11 unit + 2 integration + 2 security + 3 a11y + 3 edge + 1 err + 1 data + 1 infra; total suite 432 (was 408)
     files_new: 3  # MarkdownDocument.tsx, __tests__/MarkdownDocument.test.tsx, index.ts (barrel)
     files_modified: 3  # globals.css (+ .build-log-prose @layer block), package.json, package-lock.json (6 new deps + 25 transitive)
-    pushed: true  # will flip after git push
+    pushed: true
     notes: |
       Third section of bpd job. Pure React Server Component wrapping
       react-markdown v9 + remark-gfm + rehype-{slug,autolink-headings,highlight}
@@ -180,6 +180,35 @@ completed_sections:
       (consistent with bpd 1.1/1.2 and pre-existing wf issue).
       Blocker cleared: bpd 2.2 and bpd 2.3 can now parallelize; both consume
       MarkdownDocument via `import { MarkdownDocument } from '@/components/build-log'`.
+
+  - id: "build-in-public-docs-2.2"
+    name: "/build-log Index + Job + Phase Pages"
+    completed_at: "2026-04-12"
+    commit_hash: pending
+    commit_message: pending
+    tests: 51  # 22 unit + 10 integration + 2 security + 4 a11y + 2 infra + 6 edge + 3 err + 2 data; section-scoped 143/143; full suite 483 + 51 = 534 if storefront-auth-1.1 product files were complete
+    files_new: 9  # 3 components + 6 test files
+    files_modified: 1  # src/components/build-log/index.ts (barrel)
+    pushed: false  # set true after push
+    notes: |
+      Fourth section of bpd job. Three Next.js App Router pages
+      (/build-log, /build-log/jobs/[slug], /build-log/jobs/[slug]/[phase])
+      mounting four components (StatusBadge, JobCard, PhaseNav, plus the
+      MarkdownDocument from 2.1). Pure RSC throughout — no 'use client'.
+      Followed canonical content_page_pattern (wf 3.2/3.3): Container,
+      dynamicParams=false, generateStaticParams, generateMetadata with
+      Promise<{params}> async params, notfound_return_guard, Promise.all
+      on loader pairs (cache makes second call O(1)).
+      firstParagraph helper kept private to index page; tested via mocked
+      JobCard data-excerpt capture.
+      Inherited loader_build_incompat P1 — npm run build skipped consistent
+      with bpd 1.1/1.2/2.1.
+      Concurrent storefront-auth-1.1 work modified session.yaml + added
+      Product schema imports to validators.test.ts during the run; commit
+      explicitly stages only this section's files.
+      Blocker cleared: bpd 2.3 (status board) is now the next bpd section;
+      bpd 3.1 (SEO + sitemap + nav) widens these metadata exports and
+      adds the /build-log Header nav link.
 
   - id: "build-in-public-docs-1.2"
     name: "Pipeline State Loader + Rollup"

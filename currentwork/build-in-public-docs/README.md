@@ -78,7 +78,7 @@ This job reuses these `wf` outputs and cannot start its TDD cycles until they ex
 | 1.1 | Schemas + Job-Tree Loader — `Job`/`JobPhase`/`JobFeature`/`SessionStatus`/`KnowledgeFile` schemas + Zod validators + `getAllJobs`/`getJobBySlug`/`getJobPhase` + README/phase parsers (merged from old 1.1 + 1.2) | 1 - Foundation    | L    | Planned |
 | 1.2 | Pipeline state loader — `getSessionStatus`, `getKnowledgeFile`, `getJobsRollup` (reads YAMLs, joins against completed_sections) | 1 - Foundation    | M    | Planned |
 | 2.1 | `<MarkdownDocument>` component — react-markdown + remark-gfm + rehype-{slug,autolink,highlight}                        | 2 - Pages         | S    | Planned |
-| 2.2 | `/build-log` index + `/build-log/jobs/[slug]` + `/build-log/jobs/[slug]/[phase]` — one content type, three routes, four components (`JobCard`, `StatusBadge`, `PhaseNav`, plus index/job/phase pages) (merged from old 2.2 + 2.3) | 2 - Pages         | L    | Planned |
+| 2.2 | `/build-log` index + `/build-log/jobs/[slug]` + `/build-log/jobs/[slug]/[phase]` — one content type, three routes, four components (`JobCard`, `StatusBadge`, `PhaseNav`, plus index/job/phase pages) (merged from old 2.2 + 2.3) | 2 - Pages         | L    | Complete |
 | 2.3 | `/build-log/status` status board — session + knowledge + jobs rollup + `<JobsRollupTable>`                             | 2 - Pages         | M    | Planned |
 | 3.1 | SEO + Sitemap + Nav + a11y Polish — per-page `generateMetadata` + OpenGraph + Twitter + `TechArticle`/`CollectionPage` JSON-LD + sitemap append + Header nav link + `llms.txt` mention + homepage callout + Lighthouse sweep (merged from old 3.1 + 3.2) | 3 - Polish        | L    | Planned |
 
