@@ -14,11 +14,27 @@ to-be-built `/products/downloads/*` matcher.
 
 ---
 
-## Feature 2.1: Postgres + Drizzle Setup
+## Feature 2.1: Postgres + Drizzle Setup ✅ COMPLETE (2026-04-13)
 
 **Complexity: L** — Install Drizzle, define the four tables, generate the
 init migration, wire a Postgres client, ship `docker-compose.yml` for local
 dev, and add npm scripts for the common DB operations.
+
+**Shipped checklist:**
+- [x] `npm install postgres drizzle-orm` + `drizzle-kit --save-dev`
+- [x] `docker-compose.yml` — postgres:16-alpine, healthcheck, named volume, env-driven creds
+- [x] `drizzle.config.ts` — dialect postgresql, schema/out paths, DATABASE_URL
+- [x] `src/db/schema.ts` — 4 tables (users, sessions, verification_tokens, purchases) with UNIQUE + FK cascade + composite PK + index + 8 inferred types
+- [x] `src/db/client.ts` — postgres.js + Drizzle wrapper + globalThis singleton for HMR + DATABASE_URL guard
+- [x] `src/db/migrations/0000_init.sql` — drizzle-kit generated, `CREATE EXTENSION IF NOT EXISTS "pgcrypto"` prepended
+- [x] npm scripts: db:generate, db:migrate, db:studio, db:up, db:down
+- [x] `.env.example` — DB + Auth.js + Stripe placeholders (gitignore whitelisted via `!.env.example`)
+- [x] `src/db/__tests__/schema.test.ts` — 24 tests (7 unit + 6 integration + 11 edge/data/security), skipIf(!DATABASE_URL) gate
+- [x] `.gitignore` — docker volume data rule documented (`data/`, `postgres-data/`)
+- [x] Root `README.md` — "Local database setup" section (env, db:up, db:migrate, dev)
+
+**Tests shipped:** 42 new (8 unit + 6 integration + 3 security + 14 infra + 5 edge + 1 err + 5 data)
+**Full suite:** 712/712 passing with `DATABASE_URL` set; integration tests skip cleanly when unset.
 
 ### Problem
 

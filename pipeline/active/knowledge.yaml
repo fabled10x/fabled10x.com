@@ -1150,3 +1150,111 @@ cohort-enrollment-1.1:
       severity: P1
       status: still open but does NOT affect this section (ce-1.1 doesn't touch loaders)
       next_action: "unchanged"
+
+storefront-auth-2.1:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: drizzle_schema_pgtable_v0_45
+      description: |
+        Drizzle v0.45+ pgTable tableConfig callback returns an ARRAY (not an object
+        like older docs). Composite PK: `(table) => [primaryKey({ columns: [...] })]`.
+        Index: `(table) => [index('name').on(table.col)]`. Mix both in the same array.
+        The planning-doc code used the older object-return form — adjusted to the
+        array form for 0.45 compatibility.
+      file: "src/db/schema.ts"
+      reusable_for: "Any future section adding Drizzle tables (2.2 Auth.js adapter, 3.2 webhook if new tables added)"
+
+    - id: globalthis_db_singleton
+      description: |
+        Next.js dev mode HMR reloads server modules; module-scope `let cache` pattern
+        used by loaders (wf 2.2, sa 1.1) would create a new postgres connection pool
+        per reload, exhausting Postgres connections within a few saves. Solution:
+        `globalThis as unknown as { pg: ... | undefined }` pattern, memoizing only
+        in non-production. DATABASE_URL guard at module-top throws loud if unset —
+        fail-early beats lazy-error at first query.
+      file: "src/db/client.ts"
+      reusable_for: "Any singleton that must survive HMR reloads (Stripe client in 3.1, Resend client if abstracted in 2.2)"
+
+    - id: skipif_database_url_integration_harness
+      description: |
+        Pattern: `describe.skipIf(!process.env.DATABASE_URL)` at the top of an
+        integration-DB describe block, with `beforeAll(async () => { const mod =
+        await import('@/db/client'); db = mod.db; })` for late-binding the client.
+        Without DATABASE_URL: 17 integration tests cleanly skip, 7 unit tests still
+        pass (schema inspection via getTableConfig). With DATABASE_URL: all run
+        against real Postgres. FK-safe truncate helper in beforeEach: delete order
+        purchases → sessions → verification_tokens → users. Extracted as
+        `truncateAll` arrow function (refactor phase).
+      file: "src/db/__tests__/schema.test.ts"
+      reusable_for: "2.2 Auth.js DB tests, 3.2 webhook purchase tests, 3.3 download ownership tests, 4.1 account-page purchase-list tests"
+
+    - id: pgcrypto_extension_manual_prepend
+      description: |
+        drizzle-kit generate does NOT auto-emit `CREATE EXTENSION pgcrypto` even
+        when the schema uses `sql\`gen_random_uuid()\``. Must be prepended manually
+        to the migration file after generation. Also note: `drizzle-kit generate`
+        auto-names migrations (e.g., `0000_true_master_mold.sql`) unless `--name`
+        flag is used. Use `drizzle-kit generate --name init` to produce stable
+        `0000_init.sql` filename that tests can reference.
+      file: "src/db/migrations/0000_init.sql"
+      reusable_for: "Any future migration using gen_random_uuid() defaults"
+
+    - id: env_example_gitignore_whitelist
+      description: |
+        .gitignore has `.env*` which otherwise ignores `.env.example`. Add
+        `!.env.example` immediately after as a whitelist exception. Verified with
+        `git check-ignore -v .env.example` (before: matched line 34; after: matched
+        line 36 whitelist).
+      file: ".gitignore"
+      reusable_for: "Any future env-template file that needs to be committed"
+
+    - id: loader_build_incompat_RESOLVED
+      description: |
+        First section where `npm run build` succeeded CLEANLY with content-detail
+        routes (cases/[slug], episodes/[slug], products/[slug]) prerendering. The
+        loader_build_incompat P1 that blocked 9 consecutive sections (wf-3.2
+        through sa-1.2) appears resolved — likely due to a prior update (possibly
+        bpd-3.1 was the first to surface clean, this is the second). All 52 static
+        pages prerender without warnings. Recommendation: close or downgrade
+        loader_build_incompat in knowledge.yaml open_questions after 2.2 also
+        passes.
+      file: "(build-system observation, not a code file)"
+      reusable_for: "All future sections — npm run build is now a meaningful gate again"
+
+  gotchas:
+    - id: env_example_gitignored_by_default
+      description: |
+        .env.example won't appear in `git status` or `git add` output when
+        `.env*` is in .gitignore. Silent failure — no error, file just doesn't
+        get committed. Always run `git check-ignore -v .env.example` before
+        committing a new env template, or add `!.env.example` to .gitignore.
+
+    - id: drizzle_kit_generate_auto_names
+      description: |
+        `drizzle-kit generate` without --name produces migrations with random
+        descriptive names like `0000_true_master_mold.sql`. Use `--name init`
+        (or similar) to get stable `0000_init.sql` matching test expectations.
+        If regenerating is needed, must delete the prior file AND its meta/
+        directory before regenerating.
+
+    - id: postgres_js_package_json_exports
+      description: |
+        `node -e "console.log(require('postgres/package.json').version)"` fails with
+        ERR_PACKAGE_PATH_NOT_EXPORTED because postgres.js doesn't expose
+        ./package.json via exports. Use `cat node_modules/postgres/package.json
+        | grep version` for introspection.
+
+  reusable_utilities:
+    - function: "truncateAll (arrow in schema.test.ts)"
+      file: "src/db/__tests__/schema.test.ts"
+      purpose: "FK-safe truncation of all 4 tables; use as-is in 2.2/3.2/3.3/4.1 integration tests that need a clean DB state."
+
+  cross_section_cleanup_opportunities_added:
+    - opportunity: "If 2.2+ introduce more integration-DB test files, extract truncateAll to a shared test-helper at src/db/__tests__/_helpers.ts"
+      rationale: "DRY across sections when 2+ files use the same truncate pattern. Single file is fine for now (sa-2.1 only)."
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: "LIKELY RESOLVED — npm run build succeeded cleanly for the first time with content-detail routes present. Observation, not verified fix. Confirm in 2.2 when next build runs."
+      next_action: "If 2.2 build also passes, downgrade severity and update open_questions entry to `resolved`."
