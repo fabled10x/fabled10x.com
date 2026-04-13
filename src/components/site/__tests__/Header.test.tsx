@@ -1,15 +1,36 @@
 import { vi } from 'vitest';
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children: React.ReactNode;
+    href: string;
+  } & Record<string, unknown>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(),
+}));
+
 import { render, screen } from '@testing-library/react';
+import { usePathname } from 'next/navigation';
 import { Header } from '../Header';
 
+const mockUsePathname = vi.mocked(usePathname);
+
 describe('Header', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUsePathname.mockReturnValue('/');
+  });
+
   // --- Unit ---
 
   it('unit_header_brand_mark', () => {
@@ -22,7 +43,7 @@ describe('Header', () => {
     render(<Header />);
     const nav = screen.getByRole('navigation');
     const items = nav.querySelectorAll('li');
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
   });
 
   it('unit_header_nav_hrefs', () => {
@@ -68,8 +89,65 @@ describe('Header', () => {
     expect(items).toEqual([
       { href: '/episodes', label: 'Episodes' },
       { href: '/cases', label: 'Cases' },
+      { href: '/build-log', label: 'Build log' },
       { href: '/about', label: 'About' },
     ]);
+  });
+
+  // --- Phase 3.1: Build-log nav + active state ---
+
+  it('unit_header_has_build_log_link', () => {
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).toHaveAttribute('href', '/build-log');
+  });
+
+  it('unit_header_nav_items_count_updated', () => {
+    render(<Header />);
+    const nav = screen.getByRole('navigation');
+    const items = nav.querySelectorAll('li');
+    expect(items).toHaveLength(4);
+  });
+
+  it('int_header_active_on_build_log', () => {
+    mockUsePathname.mockReturnValue('/build-log');
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('int_header_active_on_nested_build_log', () => {
+    mockUsePathname.mockReturnValue('/build-log/jobs/website-foundation');
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('int_header_not_active_on_other_routes', () => {
+    mockUsePathname.mockReturnValue('/episodes');
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).not.toHaveAttribute('aria-current', 'page');
+  });
+
+  it('a11y_header_nav_build_log_has_label', () => {
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).toHaveAccessibleName('Build log');
+  });
+
+  it('a11y_header_nav_aria_current_when_active', () => {
+    mockUsePathname.mockReturnValue('/build-log/status');
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('edge_header_active_state_with_null_pathname', () => {
+    mockUsePathname.mockReturnValue(null as unknown as string);
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Build log' });
+    expect(link).not.toHaveAttribute('aria-current', 'page');
   });
 
   // --- Integration ---

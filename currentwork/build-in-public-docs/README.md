@@ -80,7 +80,7 @@ This job reuses these `wf` outputs and cannot start its TDD cycles until they ex
 | 2.1 | `<MarkdownDocument>` component — react-markdown + remark-gfm + rehype-{slug,autolink,highlight}                        | 2 - Pages         | S    | Planned |
 | 2.2 | `/build-log` index + `/build-log/jobs/[slug]` + `/build-log/jobs/[slug]/[phase]` — one content type, three routes, four components (`JobCard`, `StatusBadge`, `PhaseNav`, plus index/job/phase pages) (merged from old 2.2 + 2.3) | 2 - Pages         | L    | Complete |
 | 2.3 | `/build-log/status` status board — session + knowledge + jobs rollup + `<JobsRollupTable>`                             | 2 - Pages         | M    | Complete |
-| 3.1 | SEO + Sitemap + Nav + a11y Polish — per-page `generateMetadata` + OpenGraph + Twitter + `TechArticle`/`CollectionPage` JSON-LD + sitemap append + Header nav link + `llms.txt` mention + homepage callout + Lighthouse sweep (merged from old 3.1 + 3.2) | 3 - Polish        | L    | Planned |
+| 3.1 | SEO + Sitemap + Nav + a11y Polish — per-page `generateMetadata` + OpenGraph + Twitter + `TechArticle`/`CollectionPage` JSON-LD + sitemap append + Header nav link + `llms.txt` mention + homepage callout + Lighthouse sweep (merged from old 3.1 + 3.2) | 3 - Polish        | L    | Complete |
 
 **Size guide**: S = few hours, single file. M = half day, 2-3 files. L = full day, 4+ files. XL = multi-day, new content type + loader + UI.
 

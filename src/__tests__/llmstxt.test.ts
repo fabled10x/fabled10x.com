@@ -7,4 +7,9 @@ describe('public/llms.txt', () => {
     const content = readFileSync(join(process.cwd(), 'public/llms.txt'), 'utf8');
     expect(content).toMatch(/Sitemap:\s+https:\/\/fabled10x\.com\/sitemap\.xml/);
   });
+
+  it('infra_llmstxt_mentions_build_log', () => {
+    const content = readFileSync(join(process.cwd(), 'public/llms.txt'), 'utf8');
+    expect(content).toMatch(/\/build-log/);
+  });
 });

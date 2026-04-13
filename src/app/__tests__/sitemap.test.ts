@@ -6,13 +6,31 @@ vi.mock('@/lib/content/episodes', () => ({
 vi.mock('@/lib/content/cases', () => ({
   getAllCases: vi.fn(),
 }));
+vi.mock('@/lib/build-log/jobs', () => ({
+  getAllJobs: vi.fn(),
+}));
 
 import { getAllEpisodes } from '@/lib/content/episodes';
 import { getAllCases } from '@/lib/content/cases';
+import { getAllJobs } from '@/lib/build-log/jobs';
 import sitemap from '../sitemap';
 
 const mockGetAllEpisodes = vi.mocked(getAllEpisodes);
 const mockGetAllCases = vi.mocked(getAllCases);
+const mockGetAllJobs = vi.mocked(getAllJobs);
+
+const MOCK_JOB = {
+  slug: 'website-foundation',
+  title: 'Website Foundation',
+  alias: 'wf',
+  context: 'ctx',
+  features: [],
+  phases: [
+    { slug: 'phase-1-foundation', filename: 'phase-1-foundation.md', header: {}, body: '' },
+    { slug: 'phase-2-content-loader', filename: 'phase-2-content-loader.md', header: {}, body: '' },
+  ],
+  readmeBody: '# Website Foundation',
+};
 
 const MOCK_EPISODE = {
   meta: {
@@ -64,8 +82,10 @@ describe('sitemap', () => {
   beforeEach(() => {
     mockGetAllEpisodes.mockReset();
     mockGetAllCases.mockReset();
+    mockGetAllJobs.mockReset();
     mockGetAllEpisodes.mockResolvedValue([MOCK_EPISODE]);
     mockGetAllCases.mockResolvedValue([MOCK_CASE]);
+    mockGetAllJobs.mockResolvedValue([MOCK_JOB] as unknown as Awaited<ReturnType<typeof getAllJobs>>);
   });
 
   // --- Unit ---
@@ -121,13 +141,67 @@ describe('sitemap', () => {
   it('edge_sitemap_no_episodes_no_cases', async () => {
     mockGetAllEpisodes.mockResolvedValue([]);
     mockGetAllCases.mockResolvedValue([]);
+    mockGetAllJobs.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllJobs>>);
     const result = await sitemap();
-    expect(result).toHaveLength(4); // static routes only
+    // 4 pre-existing static routes + 2 new build-log static routes (index, status)
+    expect(result).toHaveLength(6);
     const urls = result.map((r) => r.url);
     expect(urls).toContain('https://fabled10x.com/');
     expect(urls).toContain('https://fabled10x.com/episodes');
     expect(urls).toContain('https://fabled10x.com/cases');
     expect(urls).toContain('https://fabled10x.com/about');
+    expect(urls).toContain('https://fabled10x.com/build-log');
+    expect(urls).toContain('https://fabled10x.com/build-log/status');
+  });
+
+  // --- Phase 3.1: Build-log routes ---
+
+  it('int_sitemap_includes_build_log_index', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/build-log');
+  });
+
+  it('int_sitemap_includes_build_log_status', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/build-log/status');
+  });
+
+  it('int_sitemap_includes_job_urls', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/build-log/jobs/website-foundation');
+  });
+
+  it('int_sitemap_includes_phase_urls', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/build-log/jobs/website-foundation/phase-1-foundation');
+    expect(urls).toContain('https://fabled10x.com/build-log/jobs/website-foundation/phase-2-content-loader');
+  });
+
+  it('infra_sitemap_no_duplicate_urls', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    const unique = new Set(urls);
+    expect(unique.size).toBe(urls.length);
+  });
+
+  it('edge_sitemap_empty_jobs', async () => {
+    mockGetAllJobs.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllJobs>>);
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/build-log');
+    expect(urls).toContain('https://fabled10x.com/build-log/status');
+    expect(urls.filter((u) => u.includes('/build-log/jobs/'))).toEqual([]);
+  });
+
+  it('data_sitemap_all_absolute', async () => {
+    const result = await sitemap();
+    result.forEach((entry) => {
+      expect(entry.url).toMatch(/^https:\/\/fabled10x\.com\//);
+    });
   });
 
   it('edge_sitemap_missing_publishedAt', async () => {

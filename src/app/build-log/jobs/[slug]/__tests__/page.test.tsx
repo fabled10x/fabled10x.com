@@ -169,4 +169,76 @@ describe('/build-log/jobs/[slug] page', () => {
   it('sec_tampering_slug_route_bounded_by_static_params', () => {
     expect(dynamicParams).toBe(false);
   });
+
+  // --- Phase 3.1: Metadata + JSON-LD ---
+
+  it('unit_job_metadata_openGraph_type', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job' }) });
+    expect((meta.openGraph as { type?: string } | undefined)?.type).toBe('article');
+  });
+
+  it('unit_job_metadata_openGraph_url_matches_slug', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job' }) });
+    expect(meta.openGraph?.url).toBe('/build-log/jobs/demo-job');
+  });
+
+  it('unit_job_metadata_twitter_card', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job' }) });
+    expect((meta.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
+  });
+
+  it('unit_job_metadata_alternates_canonical', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job' }) });
+    expect(meta.alternates?.canonical).toBe('/build-log/jobs/demo-job');
+  });
+
+  it('int_job_renders_json_ld_tech_article', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const { container } = await renderPage('demo-job');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload['@type']).toBe('TechArticle');
+  });
+
+  it('int_job_json_ld_headline_is_title', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob({ title: 'Demo Job' }));
+    const { container } = await renderPage('demo-job');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.headline).toBe('Demo Job');
+  });
+
+  it('int_job_json_ld_isPartOf_collection', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const { container } = await renderPage('demo-job');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.isPartOf?.['@type']).toBe('CollectionPage');
+    expect(payload.isPartOf?.url).toBe('https://fabled10x.com/build-log');
+  });
+
+  it('infra_job_json_ld_valid_json', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const { container } = await renderPage('demo-job');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
+  });
+
+  it('edge_job_generateMetadata_unknown_slug_returns_empty', async () => {
+    mockGetJobBySlug.mockResolvedValue(undefined);
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'bogus' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('data_job_metadata_canonical_relative', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job' }) });
+    expect(meta.alternates?.canonical).not.toMatch(/^https?:\/\//);
+    expect(meta.alternates?.canonical).toMatch(/^\//);
+  });
 });

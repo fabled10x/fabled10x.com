@@ -1,13 +1,15 @@
 import type { MetadataRoute } from 'next';
 import { getAllEpisodes } from '@/lib/content/episodes';
 import { getAllCases } from '@/lib/content/cases';
+import { getAllJobs } from '@/lib/build-log/jobs';
 
 const BASE_URL = 'https://fabled10x.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [episodes, cases] = await Promise.all([
+  const [episodes, cases, jobs] = await Promise.all([
     getAllEpisodes(),
     getAllCases(),
+    getAllJobs(),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -15,6 +17,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/episodes`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/cases`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
+    { url: `${BASE_URL}/build-log`, changeFrequency: 'daily', priority: 0.7 },
+    {
+      url: `${BASE_URL}/build-log/status`,
+      changeFrequency: 'daily',
+      priority: 0.6,
+    },
   ];
 
   const episodeRoutes: MetadataRoute.Sitemap = episodes.map((ep) => ({
@@ -35,5 +43,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...episodeRoutes, ...caseRoutes];
+  const buildLogJobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
+    url: `${BASE_URL}/build-log/jobs/${job.slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  const buildLogPhaseRoutes: MetadataRoute.Sitemap = jobs.flatMap((job) =>
+    job.phases.map((phase) => ({
+      url: `${BASE_URL}/build-log/jobs/${job.slug}/${phase.slug}`,
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    })),
+  );
+
+  return [
+    ...staticRoutes,
+    ...episodeRoutes,
+    ...caseRoutes,
+    ...buildLogJobRoutes,
+    ...buildLogPhaseRoutes,
+  ];
 }

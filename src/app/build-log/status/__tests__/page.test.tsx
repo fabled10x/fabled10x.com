@@ -287,4 +287,40 @@ describe('/build-log/status page', () => {
       'm-5.5',
     ]);
   });
+
+  // --- Phase 3.1: Metadata + JSON-LD ---
+
+  it('unit_status_metadata_openGraph_url', () => {
+    expect(metadata.openGraph?.url).toBe('/build-log/status');
+  });
+
+  it('unit_status_metadata_twitter_card', () => {
+    expect((metadata.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
+  });
+
+  it('unit_status_metadata_alternates_canonical', () => {
+    expect(metadata.alternates?.canonical).toBe('/build-log/status');
+  });
+
+  it('int_status_renders_json_ld_collection_page', async () => {
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload['@type']).toBe('CollectionPage');
+  });
+
+  it('int_status_json_ld_name', async () => {
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.name).toBe('Pipeline status');
+  });
+
+  it('int_status_json_ld_url', async () => {
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.url).toBe('https://fabled10x.com/build-log/status');
+  });
 });

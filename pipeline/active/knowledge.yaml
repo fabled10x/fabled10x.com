@@ -1038,3 +1038,63 @@ storefront-auth-1.2:
       severity: P1
       status: still open (sa-1.2 uses the SAME pattern as all prior sections; does not break until npm run build is attempted)
       next_action: "Dedicated /jobbuild for loader-v2 — blocks production deploy for ALL routes, sa phase 2 deploy still upstream"
+
+build-in-public-docs-3.1:
+  completed_at: "2026-04-13"
+  commit_message: "Add SEO + sitemap + nav polish with 57 tests (build-in-public-docs-3.1)"
+
+  patterns_established:
+    - description: "CollectionPage JSON-LD for index/listing pages — module-level const, rendered as first child of page via <script type='application/ld+json'>"
+      file: "src/app/build-log/page.tsx"
+      reusable_for: "Any future index/listing surface that wants schema.org structured data (e.g., /free-tools index, /products index)"
+
+    - description: "TechArticle JSON-LD with isPartOf chain — nests phase → job → CollectionPage for breadcrumb-style structured data"
+      file: "src/app/build-log/jobs/[slug]/[phase]/page.tsx"
+      reusable_for: "Hierarchical content structures (cohort modules, course chapters, etc.) that need structured-data parent linkage"
+
+    - description: "NavLink client subcomponent pattern — isolates usePathname() in a client boundary while Header stays a Server Component"
+      file: "src/components/site/NavLink.tsx"
+      reusable_for: "Any nav/menu/sidebar item that needs active-state highlighting without converting the whole ancestor to 'use client'"
+
+    - description: "Sitemap append pattern for new route families — extend existing getAllEpisodes/getAllCases Promise.all with getAllJobs; map to static route array; jobs.flatMap((j) => j.phases.map(...)) for 2-level route nesting"
+      file: "src/app/sitemap.ts"
+      reusable_for: "Future jobs that add route families (storefront products by category, cohort sessions, etc.)"
+
+    - description: "Relative canonical URLs + absolute JSON-LD URLs — metadataBase in layout.tsx resolves relative openGraph.url + alternates.canonical; JSON-LD 'url' must be absolute per schema.org"
+      file: "src/app/build-log/jobs/[slug]/page.tsx"
+      reusable_for: "Consistent approach across any future SSR page shipping both Metadata API and JSON-LD"
+
+  gotchas:
+    - "Existing Header.test.tsx next/link mock stripped props — aria-current from NavLink didn't reach rendered <a>. Fix: spread ...rest in the mock default-export signature. Applies to ANY future test that tests props passed to Next Link."
+    - "Pre-existing phase-page security test asserted container.querySelector('script') is null — broke when JSON-LD added. Fix: narrow selector to 'script:not([type=\"application/ld+json\"])'. Future sections adding JSON-LD to any page with this test pattern will need the same fix."
+    - "public/og-default.png does NOT exist (wf 4.3 was supposed to ship it but didn't). Current bpd-3.1 metadata OMITS openGraph.images. When the OG image is created, add images: ['/og-default.png'] to 4 build-log pages."
+    - "Existing tests with hardcoded section counts break when homepage gains new sections — int_three_sections (3→4), edge_no_latest_episode (2→3), a11y_sections_structure (>=2→>=3). Future homepage additions need similar count updates."
+    - "edge_sitemap_no_episodes_no_cases test asserted `length === 4` (static routes only). Breaks when new static routes are appended to sitemap. Keep in sync with BASE_URL + static route count."
+
+  reusable_utilities:
+    - function: "NavLink"
+      file: "src/components/site/NavLink.tsx"
+      purpose: "Client-side nav link with pathname-based active state. Props: { href, label, activePrefix? }. aria-current='page' when pathname?.startsWith(prefix)."
+
+    - function: "jobDescription(job)"
+      file: "src/app/build-log/jobs/[slug]/page.tsx"
+      purpose: "Extract 160-char description from job.context first line; fallback to job.title. LOCAL helper (not exported) — replicate shape for other entity description builders."
+
+    - function: "phaseTitleOf(ph)"
+      file: "src/app/build-log/jobs/[slug]/[phase]/page.tsx"
+      purpose: "Build 'Phase N: Title' string from JobPhase header; falls back to ph.slug if header incomplete. LOCAL helper."
+
+  decision_rationale:
+    json_ld_absolute_urls: "schema.org validators require fully-qualified URLs in structured data; relative paths do not validate. metadataBase only resolves openGraph/alternates, not inline JSON-LD."
+    navlink_extracted_not_inlined: "Option A (add 'use client' to Header) loses SSR streaming for the whole header. Option B (NavLink subcomponent) keeps the 'use client' boundary narrow to the interactive leaves only."
+    og_image_omitted: "Shipping a fake placeholder og-default.png would mislead social crawlers. Better to omit the field until a real image is created."
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open (bpd-3.1 does NOT touch loaders — npm run build PASSED in this section; first bpd section to do so)
+      next_action: "unchanged — dedicated /jobbuild for loader-v2"
+    - id: og_default_png_missing
+      severity: P2 (cosmetic)
+      status: new — flagged in dependencies.yaml during discovery
+      next_action: "When real OG image is created for build-log, update openGraph.images in all 4 /build-log pages and add corresponding test assertions"

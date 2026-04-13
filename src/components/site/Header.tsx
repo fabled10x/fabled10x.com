@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { Container } from './Container';
+import { NavLink } from './NavLink';
 
 const NAV_ITEMS = [
   { href: '/episodes', label: 'Episodes' },
   { href: '/cases', label: 'Cases' },
+  { href: '/build-log', label: 'Build log' },
   { href: '/about', label: 'About' },
 ] as const;
 
@@ -21,12 +23,7 @@ export function Header() {
           <ul className="flex gap-8">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="text-sm text-muted hover:text-foreground"
-                >
-                  {item.label}
-                </Link>
+                <NavLink href={item.href} label={item.label} />
               </li>
             ))}
           </ul>

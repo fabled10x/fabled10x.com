@@ -67,6 +67,25 @@ export default async function Home() {
           </ul>
         </Container>
       </section>
+
+      <section className="border-t border-mist">
+        <Container as="div" className="py-16">
+          <h2 className="font-display text-2xl font-semibold">Inside the build</h2>
+          <p className="mt-4 max-w-2xl text-muted">
+            This entire site is built by the same agent workflow we document on
+            the channel. Watch the plans, the phases, and the running pipeline
+            in real-ish time.
+          </p>
+          <p className="mt-6">
+            <Link
+              href="/build-log"
+              className="text-link hover:text-accent font-medium"
+            >
+              Read the build log →
+            </Link>
+          </p>
+        </Container>
+      </section>
     </>
   );
 }

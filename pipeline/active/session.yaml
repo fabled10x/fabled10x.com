@@ -5,7 +5,7 @@ session:
   current_section: "storefront-auth-2.1"
   current_agent: pending
   current_stage: "storefront-auth-1.2-complete"
-  concurrent_jobs: []
+  concurrent_jobs: []  # build-in-public-docs-3.1 shipped 2026-04-13; see completed_sections
 
 context_window:
   iteration: 0
@@ -346,6 +346,34 @@ completed_sections:
       Blocker cleared: storefront-auth Phase 1 (Catalog) is COMPLETE and
       shippable standalone. Phase 2.1 (Postgres + Drizzle) is the next
       sa section — first persistence layer in fabled10x.
+
+  - id: "build-in-public-docs-3.1"
+    name: "SEO + Sitemap + Nav + a11y Polish"
+    completed_at: "2026-04-13"
+    commit_hash: "pending"
+    commit_message: "Add SEO + sitemap + nav polish with 57 tests (build-in-public-docs-3.1)"
+    tests: 57
+    files_new: 1  # src/components/site/NavLink.tsx
+    files_modified: 8  # 4 build-log pages + sitemap.ts + Header.tsx + page.tsx + llms.txt
+    test_files_modified: 8  # corresponding test files
+    pushed: false
+    notes: |
+      Final bpd section — job COMPLETE (6/6 features shipped). Pure polish
+      mods (no new schemas/routes/APIs/forms/DB). 4 build-log pages now ship
+      CollectionPage (index, status) / TechArticle (job, phase) JSON-LD +
+      OG + Twitter + canonical metadata. Sitemap extended with build-log
+      routes. Header gains 'Build log' link with pathname-based active state
+      via new NavLink client subcomponent (kept Header as Server Component).
+      Homepage gets 'Inside the build' CTA. llms.txt mentions /build-log.
+      First bpd section to complete npm run build cleanly (loader_build_incompat
+      P1 does not affect this section). User isolation rule observed:
+      session.current_phase/current_section remain pinned to storefront-auth,
+      git staging used explicit filenames only. Manual Lighthouse + keyboard
+      walkthrough deferred (tracked in knowledge.yaml as open task for next
+      visit to build-log routes). Two test-infra edits captured in knowledge:
+      (1) Header.test.tsx next/link mock needed ...rest spread to forward
+      aria-current, (2) phase page sec_information_disclosure test selector
+      narrowed to exclude application/ld+json. Both preserve test intent.
 
 resume_point:
   last_action: "section_storefront_auth_1.2_completed"

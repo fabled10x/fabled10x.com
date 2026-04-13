@@ -35,7 +35,7 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getAllJobs } from '@/lib/build-log/jobs';
 import { getJobsRollup } from '@/lib/build-log/pipeline-state';
-import BuildLogIndexPage from '../page';
+import BuildLogIndexPage, { metadata } from '../page';
 import type { Job, JobRollupEntry } from '@/content/schemas';
 
 const mockGetAllJobs = vi.mocked(getAllJobs);
@@ -192,5 +192,90 @@ describe('/build-log index page', () => {
     const h1s = container.querySelectorAll('h1');
     expect(h1s).toHaveLength(1);
     void within;
+  });
+
+  // --- Phase 3.1: Metadata + JSON-LD ---
+
+  it('unit_index_metadata_openGraph_url', () => {
+    expect(metadata.openGraph?.url).toBe('/build-log');
+  });
+
+  it('unit_index_metadata_openGraph_type', () => {
+    expect((metadata.openGraph as { type?: string } | undefined)?.type).toBe('website');
+  });
+
+  it('unit_index_metadata_twitter_card', () => {
+    expect((metadata.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
+  });
+
+  it('unit_index_metadata_alternates_canonical', () => {
+    expect(metadata.alternates?.canonical).toBe('/build-log');
+  });
+
+  it('int_index_renders_json_ld_collection_page', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload['@type']).toBe('CollectionPage');
+  });
+
+  it('int_index_json_ld_name', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.name).toBe('Build log');
+  });
+
+  it('int_index_json_ld_url', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.url).toBe('https://fabled10x.com/build-log');
+  });
+
+  it('infra_index_json_ld_valid_json', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
+  });
+
+  it('err_index_page_renders_when_no_jobs', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    expect(screen.getByText(/Initializing/i)).toBeInTheDocument();
+  });
+
+  it('data_json_ld_urls_absolute_index', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.url).toMatch(/^https:\/\/fabled10x\.com\//);
+    if (payload.isPartOf?.url) {
+      expect(payload.isPartOf.url).toMatch(/^https:\/\/fabled10x\.com/);
+    }
+  });
+
+  it('a11y_index_page_single_h1_after_metadata', async () => {
+    mockGetAllJobs.mockResolvedValue([]);
+    mockGetJobsRollup.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const h1s = container.querySelectorAll('h1');
+    expect(h1s).toHaveLength(1);
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
   });
 });

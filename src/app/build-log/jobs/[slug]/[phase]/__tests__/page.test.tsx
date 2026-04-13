@@ -215,10 +215,96 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     const { container } = await renderPage('demo-job', 'phase-evil');
     const md = screen.getByTestId('markdown-document');
     expect(md.getAttribute('data-body')).toBe('<script>alert(1)</script>');
-    expect(container.querySelector('script')).toBeNull();
+    // Narrow to executable scripts — JSON-LD is data, not executable
+    expect(container.querySelector('script:not([type="application/ld+json"])')).toBeNull();
   });
 
   it('infra_dynamic_params_false_exported', () => {
     expect(dynamicParams).toBe(false);
+  });
+
+  // --- Phase 3.1: Metadata + JSON-LD ---
+
+  it('unit_phase_metadata_openGraph_type', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect((meta.openGraph as { type?: string } | undefined)?.type).toBe('article');
+  });
+
+  it('unit_phase_metadata_openGraph_url_matches_phase', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect(meta.openGraph?.url).toBe('/build-log/jobs/demo-job/phase-1-foundation');
+  });
+
+  it('unit_phase_metadata_twitter_card', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect((meta.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
+  });
+
+  it('int_phase_renders_json_ld_tech_article', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload['@type']).toBe('TechArticle');
+  });
+
+  it('int_phase_json_ld_headline_contains_phase', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob({ title: 'Demo Job' }));
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.headline).toContain('Phase 1: Foundation');
+    expect(payload.headline).toContain('Demo Job');
+  });
+
+  it('int_phase_json_ld_isPartOf_job', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.isPartOf?.['@type']).toBe('TechArticle');
+    expect(payload.isPartOf?.url).toBe('https://fabled10x.com/build-log/jobs/demo-job');
+  });
+
+  it('infra_phase_json_ld_valid_json', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
+  });
+
+  it('edge_phase_generateMetadata_unknown_phase_returns_empty', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'bogus-phase' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('edge_phase_generateMetadata_unknown_job_returns_empty', async () => {
+    mockGetJobBySlug.mockResolvedValue(undefined);
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'bogus', phase: 'any' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('err_phase_page_still_calls_notFound_when_missing', async () => {
+    mockGetJobBySlug.mockResolvedValue(undefined);
+    mockGetJobPhase.mockResolvedValue(undefined);
+    await PhasePage({ params: Promise.resolve({ slug: 'bogus', phase: 'bogus' }) });
+    expect(mockNotFound).toHaveBeenCalled();
+  });
+
+  it('a11y_phase_page_single_h1_after_metadata', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const h1s = container.querySelectorAll('h1');
+    expect(h1s).toHaveLength(1);
   });
 });

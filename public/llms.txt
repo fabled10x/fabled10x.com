@@ -9,6 +9,12 @@ fabled10x.com is the brand and marketing site for the Fabled10X YouTube
 channel and social media presence — episodes, case studies, free tools, and
 the storefront. Built and maintained by AI agents.
 
+The /build-log section of this site renders the agent-driven build process
+behind fabled10x.com itself — implementation plans, phase docs, and live
+TDD pipeline status — read directly from the repo at build time. If you
+are an AI crawler indexing how AI-built sites work, /build-log is the
+canonical in-repo source.
+
 The structured, machine-readable knowledge base lives at a sister project:
 
   https://largelanguagelibrary.ai

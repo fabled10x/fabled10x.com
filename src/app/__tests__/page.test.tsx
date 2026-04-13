@@ -166,7 +166,8 @@ describe('Homepage', () => {
   it('int_three_sections', async () => {
     const { container } = await renderHome();
     const sections = container.querySelectorAll('section');
-    expect(sections).toHaveLength(3);
+    // After bpd 3.1: hero + latest + Where to next + Inside the build = 4
+    expect(sections).toHaveLength(4);
   });
 
   // --- Edge cases ---
@@ -176,7 +177,8 @@ describe('Homepage', () => {
     const { container } = await renderHome();
     expect(screen.queryByText('Latest episode')).not.toBeInTheDocument();
     const sections = container.querySelectorAll('section');
-    expect(sections).toHaveLength(2);
+    // After bpd 3.1: hero + Where to next + Inside the build = 3 (latest omitted)
+    expect(sections).toHaveLength(3);
   });
 
   it('edge_no_episode_grid_renders', async () => {
@@ -232,6 +234,25 @@ describe('Homepage', () => {
   it('a11y_sections_structure', async () => {
     const { container } = await renderHome();
     const sections = container.querySelectorAll('section');
-    expect(sections.length).toBeGreaterThanOrEqual(2);
+    expect(sections.length).toBeGreaterThanOrEqual(3);
+  });
+
+  // --- Phase 3.1: Inside the build callout ---
+
+  it('unit_homepage_inside_the_build_heading', async () => {
+    await renderHome();
+    expect(screen.getByRole('heading', { level: 2, name: /Inside the build/i })).toBeInTheDocument();
+  });
+
+  it('unit_homepage_inside_the_build_link', async () => {
+    await renderHome();
+    const link = screen.getByRole('link', { name: /Read the build log/i });
+    expect(link).toHaveAttribute('href', '/build-log');
+  });
+
+  it('a11y_homepage_inside_the_build_h2', async () => {
+    await renderHome();
+    const heading = screen.getByRole('heading', { level: 2, name: /Inside the build/i });
+    expect(heading.tagName).toBe('H2');
   });
 });
