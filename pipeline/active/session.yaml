@@ -3,12 +3,13 @@ session:
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
   current_section: "storefront-auth-1.2"
-  current_agent: pending
-  current_stage: "storefront-auth-1.1-complete"
+  current_agent: discovery
+  current_stage: "storefront-auth-1.2-discovery-complete"
+  concurrent_jobs: []
 
 context_window:
-  iteration: 0
-  total_items: 0
+  iteration: 1
+  total_items: 14
   completed_items: 0
 
 completed_sections:
@@ -278,10 +279,40 @@ completed_sections:
       can start; 1.2 consumes getAllProducts/getProductBySlug + Product type
       from this section's exports.
 
+  - id: "build-in-public-docs-2.3"
+    name: "/build-log/status Status Board"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 30  # 10 unit + 3 integration + 4 a11y + 3 infra + 7 edge + 3 data; full suite 552 (was 522 baseline)
+    files_new: 4  # JobsRollupTable.tsx, JobsRollupTable.test.tsx, status/page.tsx, status/page.test.tsx
+    files_modified: 1  # src/components/build-log/index.ts (barrel)
+    pushed: false  # set true after push
+    notes: |
+      Final feature of bpd Phase 2 (Pages). One server-rendered page
+      (/build-log/status) plus one composable RSC (JobsRollupTable). Pure
+      UI assembly over already-shipped loaders (getSessionStatus +
+      getKnowledgeFile + getJobsRollup from bpd 1.2) and components
+      (StatusBadge from bpd 2.2, MarkdownDocument from bpd 2.1, Container
+      from wf 1.4). All 30 tests green on first /green run; zero refactor
+      changes needed (planning code was already idiomatic).
+      Section is purely public — no API, no auth, no forms, no schema work.
+      Most wiring/serializer/permission/contract beats N/A. Markdown XSS
+      defense inherited from bpd 2.1 (rehype-raw omitted).
+      Concurrent storefront-auth-1.2 discovery shared this run; commit
+      explicitly stages only this section's source files (JobsRollupTable.tsx
+      + test, status/page.tsx + test, components/build-log/index.ts barrel)
+      plus shared state (session.yaml, knowledge.yaml, currentwork/build-in-public-docs/README.md).
+      Inherited loader_build_incompat P1 — npm run build skipped (consistent
+      with all bpd sections + sa-1.1).
+      Blocker cleared: bpd Phase 2 (Pages) is COMPLETE. bpd 3.1 (SEO + sitemap
+      + nav + a11y polish) is the next bpd section; widens the metadata
+      exports of all four bpd 2.x routes and adds the Header nav link.
+
 resume_point:
-  last_action: "section_storefront_auth_1.1_completed"
-  next_action: "/pipeline sa 1.2 (/products index + /products/[slug] detail + ProductCard + BuyButton stubbed disabled)"
-  notes: "storefront-auth job started (1/10 features shipped: 1.1 Product Content Pipeline). Next: 1.2 catalog routes consuming the loader from 1.1. Phase 2+ (auth/Stripe/account) blocked on 1.2 → Phase 1 ships standalone."
+  last_action: "section_build_in_public_docs_2.3_completed"
+  next_action: "Resume storefront-auth-1.2 discovery (already in progress) OR run /pipeline bpd 3.1 for next bpd section"
+  notes: "build-in-public-docs Phase 2 complete (5/6 features shipped: 1.1, 1.2, 2.1, 2.2, 2.3). Phase 3 (3.1 polish) remaining for bpd. storefront-auth-1.2 discovery is mid-flight in pipeline/active/storefront-auth-1.2/ — return to that for the active job."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

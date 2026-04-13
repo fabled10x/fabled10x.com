@@ -888,3 +888,73 @@ storefront-auth-1.1:
       severity: P1
       status: still open (storefront-auth-1.1 uses the SAME manifest workaround as cases/episodes; will not break until npm run build is attempted)
       next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest — now blocking storefront-auth Phase 1 production deploy as well"
+
+build-in-public-docs-2.3:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: rsc_status_dashboard_pattern
+      file: "src/app/build-log/status/page.tsx"
+      description: |
+        Async RSC dashboard pattern: Promise.all over multiple cached loaders
+        (getSessionStatus + getKnowledgeFile + getJobsRollup), Container as='main',
+        per-section <section aria-labelledby="{id}"> with <h2 id="{id}">. Build-time
+        rendering — no client state, no React Query, no loading skeletons. Errors
+        propagate to Next.js error boundary. Empty/null/undefined are handled
+        explicitly: empty completedSections renders empty-state copy; empty
+        current_section/agent/stage strings render as '—' via `{value || <span>—</span>}`;
+        notes section omits when both session.notes and knowledge.projectContext.purpose
+        are falsy.
+      reusable_for: "Future RSC dashboards reading multiple cached loaders (e.g. bpd 3.x extensions, future status surfaces)"
+    - id: dl_dt_dd_for_key_value_grid
+      file: "src/app/build-log/status/page.tsx (current-state section)"
+      description: |
+        Definition list (<dl><dt><dd>) for key/value metadata pairs instead of
+        a 2-column table. Better screen-reader semantics, simpler layout via
+        `grid grid-cols-1 md:grid-cols-2 gap-4`. Empty-string values render as
+        a muted '—' span so the grid stays aligned regardless of data state.
+      reusable_for: "Any read-only metadata display where the data is genuinely key/value (not tabular). Avoid tables for 2-column layouts."
+    - id: progressbar_aria_pattern
+      file: "src/components/build-log/JobsRollupTable.tsx (lines 28-44)"
+      description: |
+        Accessible progress bar without an extra dependency: <div role='progressbar'
+        aria-valuenow={n} aria-valuemin={0} aria-valuemax={100} aria-label={...}>
+        wrapping a width-styled inner div. Distinguishes null (renders '—') from 0
+        (renders 0% bar). aria-label includes both job title and percentage so SR
+        announces meaningful context.
+      reusable_for: "Any progress visualization across the site (deploy status, content completion, etc.)"
+    - id: intentional_two_line_helper_duplication
+      file: "src/app/build-log/status/page.tsx + src/lib/build-log/pipeline-state.ts"
+      description: |
+        extractSectionId(entry) helper exists in both files (same 2-line typeof
+        discriminator) by explicit planning decision. Threshold: a 2-line
+        typeof-narrow helper is below the abstraction threshold; a shared module
+        would add an import for negative net readability. Per CLAUDE.md "three
+        similar lines is better than a premature abstraction" — extended to
+        cross-file two-line helpers when extraction would pay no dividend.
+      reusable_for: "Future cases where a 2-line discriminator/narrowing helper recurs in 2 places — keep the duplication."
+
+  gotchas:
+    - "External parallel work (storefront-auth-1.2 discovery) re-modified pipeline/active/session.yaml mid-section to restore storefront-auth context and add a `concurrent_jobs:` array tracking bpd 2.3. Resolution: keep the bpd-2.3 stage updated under concurrent_jobs[0].stage during phase transitions; commit explicitly stages only this section's source files plus shared state. Confirms the pattern from bpd-2.2/sa-1.1: per-file `git add`, never `git add -A`."
+    - "RSC test pattern: import the async page as `import StatusPage from '../page'`, then `const jsx = await StatusPage(); return render(jsx);` in the test helper. Mocks must include any child components used (JobsRollupTable, MarkdownDocument) so the page can render in jsdom without their full impls. Reuses the bpd 2.2 pattern."
+    - "infra_status_page_default_export_is_async test uses `expect(StatusPage.constructor.name).toBe('AsyncFunction')` — works because the function reference still exposes its declared async-ness. Drift risk: if Next.js's compile pipeline ever wraps the export in a sync proxy this will break, but as of Next 16 the export is preserved as-is."
+    - "edge_state_status_page_empty_session_strings_render_em_dash relies on `'' || <span>` returning the span (empty string is falsy in JSX). Same trick used for currentSection/Agent/Stage. Tests verify dd.textContent === '—' (a single character) since the span has no other children."
+    - "(knowledge.projectContext?.purpose || session.notes) gate covers BOTH conditions — but the inner render only mounts MarkdownDocument when session.notes is truthy. If purpose is non-empty and notes is empty, the section renders empty (just the h2). Acceptable for v1 since planning didn't spec rendering purpose; tighten in 3.1 if needed."
+
+  reusable_utilities:
+    - function: JobsRollupTable
+      file: src/components/build-log/JobsRollupTable.tsx
+      purpose: "Pure RSC table mapping readonly JobRollupEntry[] → row-per-job with title link, alias, status badge, accessible progress bar, and tabular-num features count. Composes StatusBadge from bpd 2.2."
+    - function: extractSectionId (private to status/page.tsx)
+      file: src/app/build-log/status/page.tsx
+      purpose: "2-line typeof discriminator: returns entry directly if string, entry.section if object. Mirrors the same helper in pipeline-state.ts; intentional duplication per planning rationale."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/lib/content/episodes.ts:24 + src/lib/content/cases.ts:24"
+      description: "Object.freeze cache assignment — STILL OPEN (carried from bpd-1.1, bpd-1.2, bpd-2.2, sa-1.1). 2.3 didn't touch episodes/cases loaders so no change."
+      priority: low
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open (bpd-2.3 inherits the gotcha — npm run build SKIPPED in green/refactor/postflight; consistent with all bpd sections + sa-1.1)
+      next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest — now blocks bpd phase 3 deploy + sa phase 2 deploy"
