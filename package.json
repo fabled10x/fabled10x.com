@@ -21,9 +21,11 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.10.0",
+    "yaml": "^2.8.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@mdx-js/rollup": "^3.1.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

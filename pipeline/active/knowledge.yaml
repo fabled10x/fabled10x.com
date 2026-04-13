@@ -581,4 +581,71 @@ build-in-public-docs-1.1:
     - "interfaces.yaml says JobFeatureSchema.name max(200); runtime is max(500). Discovery artifact represents pre-implementation planning state — not retroactively updated to preserve audit trail."
     - "test-cases.yaml plans `integration_session_yaml_parses` and `_knowledge_yaml_parses` to use live-file parsing via the yaml package. Because yaml installs in 1.2 per planning doc, 1.1 used hand-built JS-object fixtures (LIVE_SESSION_FIXTURE, LIVE_KNOWLEDGE_FIXTURE) matching the live structure. Live-file integration moves to 1.2."
 
+build-in-public-docs-1.2:
+  completed_at: "2026-04-12"
+  patterns_established:
+    - id: completed_sections_shape_mismatch_mapper
+      file: src/lib/build-log/pipeline-state.ts
+      description: |
+        Real session.yaml uses `- id: "section-id"` with `completed_at:` key
+        for completed_sections entries; CompletedSectionEntrySchema (bpd-1.1
+        validators.ts) expects `{ section, completedAt? }`. The loader's
+        mapCompletedEntry renames `id` → `section` and `completed_at` →
+        `completedAt` at the loader boundary, and spreads `...rest` to
+        preserve commit metadata (commit_hash, tests count, files_new, etc.)
+        for downstream consumers. Planning-doc template passed entries
+        through unchanged — this mismatch surfaced during green verify.
+      reusable_for: "Any future YAML loader that maps external snake_case object shapes into typed schemas with shape normalization at the boundary"
+    - id: passthrough_spread_preservation
+      file: src/lib/build-log/pipeline-state.ts
+      description: |
+        mapKnowledge destructures the known top-level keys (knowledge,
+        project_context, open_questions) and `...rest` spreads everything
+        else. Combined with KnowledgeFileSchema.passthrough(), unknown
+        top-level keys like `website-foundation-4.1`, `build-in-public-docs-1.1`
+        (section-id rollup entries added by /finish) survive Zod parse and
+        remain accessible on the typed result.
+      reusable_for: "Any loader consuming a passthrough-schema file where downstream readers need access to unmodeled keys"
+    - id: compute_status_helper_dry
+      file: src/lib/build-log/pipeline-state.ts
+      description: |
+        Four-branch rollup status derivation extracted to computeStatus(total, completed)
+        returning Pick<JobRollupEntry, 'percentComplete' | 'status'>. Caller
+        spreads the pair into the full entry literal. Reduces rollupForJob from
+        ~60 LOC with 4 redundant object constructions to ~20 LOC with 1 literal + spread.
+      reusable_for: "Any function with branching that produces a subset of a larger output shape — use Pick<T, K> + spread"
+
+  gotchas:
+    - "Planning doc `completedSections: raw.completed_sections ?? []` (line 681) is INCOMPLETE — session.yaml entries are object-form with `id:` key, not `section:`. Always write a per-entry mapper at the loader boundary when schema and source shapes differ by a single key name."
+    - "When Zod schema uses .passthrough() for extra keys, the mapper must ALSO preserve them — otherwise they get stripped before reaching the schema. Use destructure-known-keys + ...rest pattern."
+    - "Dynamic `await import('yaml')` in an infra smoke test is the cleanest way to prove a package is installed without pulling its types at the test file's top level."
+    - "integration_get_job_community_showcase in jobs.test.ts originally pinned `features.length >= 6` to the README's feature count. Condensing community-showcase to 5 features broke the test. De-brittled to `>= 1` during bpd-1.2 finish — the test's intent was 'features parse correctly', not 'exactly N features exist'."
+    - "When vi.doMock('../jobs', ...) is combined with vi.resetModules() in beforeEach, the mock applies to the import-under-test in the same it() block only. Each test that needs a mocked getAllJobs must re-apply vi.doMock."
+
+  reusable_utilities:
+    - function: getSessionStatus
+      file: src/lib/build-log/pipeline-state.ts
+      purpose: "Cached async loader for pipeline/active/session.yaml — parse+map+Zod-validate+freeze. Consumed by bpd-2.3 status board."
+    - function: getKnowledgeFile
+      file: src/lib/build-log/pipeline-state.ts
+      purpose: "Cached async loader for pipeline/active/knowledge.yaml — preserves passthrough keys for downstream rendering."
+    - function: getJobsRollup
+      file: src/lib/build-log/pipeline-state.ts
+      purpose: "Joins getAllJobs + getSessionStatus.completedSections to compute per-job { totalFeatures, completedFeatures, percentComplete, status }. Consumed by bpd-2.3 JobsRollupTable."
+    - function: mapCompletedEntry
+      file: src/lib/build-log/pipeline-state.ts
+      purpose: "Internal helper: normalize completed_sections entry shape (id/completed_at ↔ section/completedAt) while preserving extra keys via ...rest. Pattern applies to any `loaded shape ≠ schema shape` scenario with minor renames."
+    - function: computeStatus
+      file: src/lib/build-log/pipeline-state.ts
+      purpose: "Pure: derive rollup { percentComplete, status } from (total, completed) counts. Four-branch logic including zero-features 'unknown' status."
+
+  drive_by_fixes:
+    - file: "src/lib/build-log/__tests__/jobs.test.ts:364-371"
+      description: "De-brittled integration_get_job_community_showcase from `features.length >= 6` to `>= 1`. Inherited failure after community-showcase was condensed from 6 to 5 features. Test's real intent (features parse correctly) preserved."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/lib/content/episodes.ts:24 + src/lib/content/cases.ts:24"
+      description: "Object.freeze cache assignment — still open from bpd-1.1. Deferred from bpd-1.2 refactor due to readonly type cascade into consumer APIs."
+      priority: low
+
 open_questions_added: []  # no new open questions; loader_build_incompat (P1) still applies, no new blockers
