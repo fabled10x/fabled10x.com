@@ -401,6 +401,57 @@ patterns:
     reusable_for:
       - "Any future component rendering external URLs that need to show a label"
 
+  - id: markdown_renderer_rsc
+    established_in: "build-in-public-docs-2.1"
+    established_at: "2026-04-12"
+    description: |
+      Runtime markdown rendering for build-log content (job READMEs + phase
+      files) uses react-markdown v9 inside a pure React Server Component —
+      NO 'use client' directive. The component takes `body: string` and
+      renders via ReactMarkdown with a fixed plugin stack:
+        remarkPlugins: [remarkGfm]
+        rehypePlugins: [rehypeSlug,
+          [rehypeAutolinkHeadings, { behavior: 'append',
+            properties: { className: ['build-log-anchor'],
+                          'aria-label': 'Permalink' } }],
+          rehypeHighlight]
+      Two `components` overrides transform element types without touching
+      the HTML string: `h1: → h2` demotes input H1s so the page's own H1
+      (from Container) stays the sole H1 in the outline, and
+      `table: → <div.build-log-table-wrapper.overflow-x-auto><table>…` wraps
+      wide GFM tables so they scroll horizontally on mobile instead of
+      breaking the layout. Styling lives in src/app/globals.css via a
+      `.build-log-prose` `@layer components` block that references the
+      existing brand tokens (--color-foreground, --color-mist, etc.).
+      Server-side rendering keeps ~150KB of react-markdown + plugins off
+      the client bundle; only highlight.js/styles/github-dark.css
+      (<5KB CSS) ships to the browser.
+    reusable_for:
+      - "Sections bpd 2.2 (/build-log index + job + phase pages) and bpd 2.3 (/build-log/status) which both mount MarkdownDocument to render markdown bodies from disk"
+      - "Any future section that needs to render trusted markdown from disk (e.g., an /about-long-form page or /changelog route)"
+      - "Pattern template: component overrides via react-markdown's `components` prop instead of rewriting HTML strings"
+    examples:
+      - "src/components/build-log/MarkdownDocument.tsx"
+
+  - id: rehype_raw_omitted_xss_defense
+    established_in: "build-in-public-docs-2.1"
+    established_at: "2026-04-12"
+    description: |
+      Defense-in-depth decision: do NOT add rehype-raw to the rehypePlugins
+      array. rehype-raw enables raw-HTML-in-markdown passthrough which is
+      an XSS vector — any `<script>` tag or `<img onerror="...">` in source
+      markdown would produce a live DOM node. Current build-log content is
+      trusted (checked into the repo) but future loader changes might admit
+      untrusted sources; blocking raw HTML at the renderer layer means the
+      renderer is safe regardless of content provenance. Two security tests
+      enforce this: `sec_info_disclosure_script_tag_escaped` (script tag in
+      body produces no live <script>) and `sec_tampering_rehype_raw_not_enabled`
+      (`<div class="evil">` produces no .evil DOM node). If any future section
+      reaches for rehype-raw, a design review is required.
+    reusable_for:
+      - "All future markdown-rendering components (bpd 2.2, 2.3, and any future section rendering untrusted markdown)"
+      - "Reference for any future code review catching `rehype-raw` imports"
+
 gotchas:
   - id: barrel_integrity_in_git
     established_in: "website-foundation-1.1"
@@ -456,6 +507,21 @@ gotchas:
       include @next/mdx's contentlayer-style pattern, or a manifest.ts
       generated at build time. Until fixed, `green.npm_build_passes` and
       `postflight.npm_build` remain N/A for any content-backed detail route.
+
+  - id: rehype_highlight_needs_theme_css
+    established_in: "build-in-public-docs-2.1"
+    description: |
+      rehype-highlight itself ships ZERO CSS — it only injects `class="hljs
+      language-{lang}"` spans. You MUST separately import a highlight.js
+      CSS theme or code blocks render colorless. Tentative default:
+        import 'highlight.js/styles/github-dark.css';
+      (at top of the component file). The final theme pick is deferred per
+      planning doc §Open Items after brand tokens settle; a swap is a
+      one-line import change. Symptom when forgotten: tests pass
+      (hljs-* class detection still works), but the rendered UI shows
+      unstyled code blocks. JSDOM tests do not apply external CSS so the
+      unit suite cannot catch this regression; verify via manual smoke
+      and Lighthouse in bpd 3.1.
 
 open_questions:
   - id: "loader_build_incompat"

@@ -2,9 +2,9 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "build-in-public-docs"
-  current_section: "build-in-public-docs-2.1"
+  current_section: "build-in-public-docs-2.2"
   current_agent: pending
-  current_stage: "build-in-public-docs-1.2-complete"
+  current_stage: "build-in-public-docs-2.1-complete"
 
 context_window:
   iteration: 0
@@ -154,15 +154,42 @@ completed_sections:
       add Object.freeze to episodes.ts/cases.ts cache assignments
       (captured in knowledge.yaml).
 
+  - id: "build-in-public-docs-2.1"
+    name: "<MarkdownDocument> Component"
+    completed_at: "2026-04-12"
+    commit_hash: null  # populated after git_commit beat
+    commit_message: "Add MarkdownDocument component with 24 tests (build-in-public-docs-2.1)"
+    tests: 24  # 11 unit + 2 integration + 2 security + 3 a11y + 3 edge + 1 err + 1 data + 1 infra; total suite 432 (was 408)
+    files_new: 3  # MarkdownDocument.tsx, __tests__/MarkdownDocument.test.tsx, index.ts (barrel)
+    files_modified: 3  # globals.css (+ .build-log-prose @layer block), package.json, package-lock.json (6 new deps + 25 transitive)
+    pushed: true  # will flip after git push
+    notes: |
+      Third section of bpd job. Pure React Server Component wrapping
+      react-markdown v9 + remark-gfm + rehype-{slug,autolink-headings,highlight}
+      + highlight.js (github-dark.css theme). Component overrides: h1→h2 demote
+      (preserves page outline since parent pages mount their own h1), table→
+      wrapped in div.overflow-x-auto for mobile-safe GFM table rendering.
+      CSS styling via .build-log-prose @layer components block in globals.css
+      (~82 lines) using existing wf 1.3 brand tokens.
+      Defense-in-depth: rehype-raw explicitly omitted — raw HTML in markdown
+      is escaped as text, not executed. Verified by sec_* tests.
+      Complexity S — all 24 tests green on first green-phase run.
+      Single refactor improvement: added src/components/build-log/index.ts
+      barrel export matching src/components/site/ convention.
+      Inherited P1 loader_build_incompat — npm run build skipped again
+      (consistent with bpd 1.1/1.2 and pre-existing wf issue).
+      Blocker cleared: bpd 2.2 and bpd 2.3 can now parallelize; both consume
+      MarkdownDocument via `import { MarkdownDocument } from '@/components/build-log'`.
+
   - id: "build-in-public-docs-1.2"
     name: "Pipeline State Loader + Rollup"
     completed_at: "2026-04-12"
-    commit_hash: null  # set after commit
-    commit_message: null  # set after commit
+    commit_hash: "b1ff02c"
+    commit_message: "Add pipeline state loader with 27 tests (build-in-public-docs-1.2)"
     tests: 27  # 13 unit + 3 integration + 6 edge + 3 err + 3 data + 2 infra (vitest splits 27 spec tests into 30 rendered entries); total suite 408 (was 378)
     files_new: 2  # pipeline-state.ts + pipeline-state.test.ts
     files_modified: 3  # package.json, package-lock.json (yaml dep), jobs.test.ts (de-brittle inherited assertion)
-    pushed: false  # set after push
+    pushed: true
     notes: |
       Second section of bpd. Single-file loader (src/lib/build-log/pipeline-state.ts)
       with 3 exports (getSessionStatus / getKnowledgeFile / getJobsRollup) and 5
@@ -184,9 +211,9 @@ completed_sections:
       Cross-section cleanup for episodes.ts/cases.ts Object.freeze carried forward.
 
 resume_point:
-  last_action: "section_bpd_1.2_completed"
-  next_action: "/discovery bpd 2.1 (<MarkdownDocument> component) — installs react-markdown + remark-gfm + rehype-{slug,autolink-headings,highlight} + highlight.js"
-  notes: "build-in-public-docs job: 2/6 features shipped (1.1 Schemas + Job-Tree Loader, 1.2 Pipeline State Loader). Next: 2.1 <MarkdownDocument> blocks all Phase 2 pages."
+  last_action: "section_bpd_2.1_completed"
+  next_action: "/discovery bpd 2.2 (/build-log index + /build-log/jobs/[slug] + /build-log/jobs/[slug]/[phase])"
+  notes: "build-in-public-docs job: 3/6 features shipped (1.1 Schemas + Job-Tree Loader, 1.2 Pipeline State Loader, 2.1 <MarkdownDocument>). Next: 2.2 jobs routes mount the MarkdownDocument renderer from 2.1. 2.2 and 2.3 are parallelizable."
 
 notes: |
   fabled10x project initialized on 2026-04-11.
