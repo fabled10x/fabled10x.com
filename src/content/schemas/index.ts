@@ -4,5 +4,6 @@ export * from './episode';
 export * from './source-material';
 export * from './case';
 export * from './product';
+export * from './cohort';
 export * from './build-log';
 export * from './validators';

@@ -4,12 +4,12 @@ session:
   current_phase: "storefront-auth"
   current_section: "storefront-auth-2.1"
   current_agent: pending
-  current_stage: "storefront-auth-1.2-complete"
-  concurrent_jobs: []  # build-in-public-docs-3.1 shipped 2026-04-13; see completed_sections
+  current_stage: "cohort-enrollment-1.1-complete"
+  concurrent_jobs: []  # ce-1.1 shipped 2026-04-13
 
 context_window:
-  iteration: 0
-  total_items: 0
+  iteration: 1
+  total_items: 15
   completed_items: 0
 
 completed_sections:
@@ -375,10 +375,43 @@ completed_sections:
       aria-current, (2) phase page sec_information_disclosure test selector
       narrowed to exclude application/ld+json. Both preserve test intent.
 
+  - id: "cohort-enrollment-1.1"
+    name: "Cohort Schema + CohortSchema Zod Validator"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 19  # 13 unit (CohortSchema + barrel) + 3 edge + 1 err + 2 data; full suite 670 + 19 = 689 pre-concurrent-sa-2.1
+    files_new: 1  # src/content/schemas/cohort.ts
+    files_modified: 3  # schemas/index.ts (barrel +1 line), validators.ts (CohortSchema + CohortInput +38 lines), __tests__/validators.test.ts (imports + 19 tests)
+    pushed: false  # will be set true after push
+    notes: |
+      First section of cohort-enrollment (ce) job — schema/validator for the
+      Cohort content type. Pure declarative work mirroring the established
+      content_type_module (wf-1.1) + validator_module (wf-1.2) patterns
+      exactly, with two cohort-specific divergences:
+        (1) currency uses regex /^[a-z]+$/ (rejects uppercase) rather than
+            Product's .toLowerCase() coercion — explicit error surface.
+        (2) stripePriceId regex allows placeholder 'price_REPLACE_ME_*'
+            in addition to real 'price_xxx' — operator can pre-provision
+            MDX before filling in the Stripe Price ID; checkout helper
+            (Phase 4.3) rejects placeholder at call time.
+      Section is schema-only — no UI, no API, no DB. Most wiring/audit/
+      security/permission/contract beats marked N/A per the
+      schema_only_pipeline_scope pattern.
+      Concurrent storefront-auth-2.1 work is active in the working tree
+      (src/__tests__/gitignore.test.ts, readme-db.test.ts,
+      src/db/__tests__/migration.test.ts are sa-2.1 red-phase tests).
+      Commit explicitly stages only this section's source files + shared
+      state (session.yaml, knowledge.yaml) + this job's currentwork/ dir.
+      Inherited loader_build_incompat P1 — does NOT affect ce-1.1
+      (no loaders touched). npm run build skipped per VPS OOM pattern
+      regardless.
+      Blocker cleared: ce-1.2 (Cohort Loader + Seed MDX) can start.
+
 resume_point:
-  last_action: "section_storefront_auth_1.2_completed"
-  next_action: "/pipeline sa 2.1 (Postgres + Drizzle setup — schema, migrations, client, docker-compose.yml)"
-  notes: "storefront-auth Phase 1 COMPLETE (2/10 features shipped: 1.1 Product Content Pipeline, 1.2 Catalog Routes). /products renders statically with disabled BuyButton. Phase 2 begins with 2.1 — first persistence layer in the project (Postgres + Drizzle, docker-compose for local dev). build-in-public-docs Phase 2 also complete (5/6); bpd 3.1 is the remaining bpd section — can be run in parallel or after sa Phase 2."
+  last_action: "section_cohort_enrollment_1.1_completed"
+  next_action: "/pipeline sa 2.1 (Postgres + Drizzle setup — schema, migrations, client, docker-compose.yml). ce-1.2 (Cohort Loader + 2 seed MDX) also ready — can run in parallel."
+  notes: "cohort-enrollment Phase 1 progress: 1/3 features shipped (1.1 Cohort Schema + Validator). storefront-auth Phase 1 COMPLETE (2/10); Phase 2 begins with 2.1 — first persistence layer. build-in-public-docs Phase 2 also complete (5/6); bpd 3.1 done — bpd job shipped 6/6."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

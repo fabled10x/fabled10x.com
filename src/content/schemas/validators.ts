@@ -4,6 +4,7 @@ import { CONTENT_PILLARS } from './content-pillar';
 import { SOURCE_MATERIAL_KINDS } from './source-material';
 import { CASE_STATUSES } from './case';
 import { PRODUCT_CATEGORIES, PRODUCT_LICENSE_TYPES } from './product';
+import { COHORT_STATUSES, type Cohort } from './cohort';
 
 export const EpisodeSchema = z.object({
   id: z.string().min(1),
@@ -76,10 +77,49 @@ export const ProductSchema = z.object({
   publishedAt: z.iso.datetime(),
 });
 
+export const CohortSchema = z.object({
+  id: z.string().min(1),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/, 'slug must be kebab-case'),
+  title: z.string().min(1).max(200),
+  series: z.string().min(1).max(120),
+  tagline: z.string().min(1).max(200),
+  summary: z.string().min(20).max(800),
+  status: z.enum(COHORT_STATUSES),
+  pillar: z.enum(CONTENT_PILLARS),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be YYYY-MM-DD'),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'endDate must be YYYY-MM-DD'),
+  durationWeeks: z.number().int().min(1).max(52),
+  capacity: z.number().int().min(1).max(500),
+  priceCents: z.number().int().min(0),
+  currency: z
+    .string()
+    .length(3)
+    .regex(/^[a-z]+$/, 'currency must be lowercase ISO 4217'),
+  stripePriceId: z
+    .string()
+    .regex(
+      /^(price_[A-Za-z0-9]+|price_REPLACE_ME_[A-Za-z0-9_-]+)$/,
+      'stripePriceId must look like price_xxx (or the placeholder price_REPLACE_ME_...)',
+    ),
+  commitmentHoursPerWeek: z.number().int().min(1).max(60),
+  lllEntryUrls: z.array(z.url()).default([]),
+  relatedEpisodeIds: z.array(z.string()).default([]),
+  relatedCaseIds: z.array(z.string()).default([]),
+  publishedAt: z.iso.datetime(),
+}) satisfies z.ZodType<Cohort>;
+
 export type EpisodeInput = z.input<typeof EpisodeSchema>;
 export type SourceMaterialInput = z.input<typeof SourceMaterialSchema>;
 export type CaseInput = z.input<typeof CaseSchema>;
 export type ProductInput = z.input<typeof ProductSchema>;
+export type CohortInput = z.input<typeof CohortSchema>;
 
 // ── Build-log schemas (build-in-public-docs-1.1) ────────────────────
 

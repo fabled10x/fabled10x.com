@@ -11,6 +11,7 @@ import {
   SessionStatusSchema,
   KnowledgeFileSchema,
   ProductSchema,
+  CohortSchema,
 } from '@/content/schemas/validators';
 
 import {
@@ -27,9 +28,26 @@ import {
   PRODUCT_LICENSE_TYPES as PRODUCT_LICENSE_TYPES_BARREL,
   PRODUCT_CATEGORY_LABELS as PRODUCT_CATEGORY_LABELS_BARREL,
   PRODUCT_LICENSE_LABELS as PRODUCT_LICENSE_LABELS_BARREL,
+  CohortSchema as CohortSchemaBarrel,
+  COHORT_STATUSES as COHORT_STATUSES_BARREL,
+  COHORT_STATUS_LABELS as COHORT_STATUS_LABELS_BARREL,
+  COHORT_STATUS_DESCRIPTIONS as COHORT_STATUS_DESCRIPTIONS_BARREL,
 } from '@/content/schemas';
 
-import type { Job, ProductInput, ProductCategory, ProductLicenseType } from '@/content/schemas';
+import type {
+  Job,
+  ProductInput,
+  ProductCategory,
+  ProductLicenseType,
+  CohortInput,
+  CohortStatus,
+} from '@/content/schemas';
+
+import {
+  COHORT_STATUSES,
+  COHORT_STATUS_LABELS,
+  COHORT_STATUS_DESCRIPTIONS,
+} from '@/content/schemas/cohort';
 
 import {
   PRODUCT_CATEGORIES,
@@ -1136,6 +1154,313 @@ describe('Product data integrity', () => {
     ];
     for (const f of expectedFields) {
       expect(result).toHaveProperty(f);
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// cohort-enrollment-1.1: Cohort schema + validator
+// ════════════════════════════════════════════════════════════════════
+
+const VALID_COHORT_MINIMAL: CohortInput = {
+  id: 'cohort-ai-delivery-2026-q3',
+  slug: 'ai-delivery-2026-q3',
+  title: 'AI Delivery Cohort — Fall 2026',
+  series: 'AI Delivery Cohort',
+  tagline: 'Ship a real client project with an agent team in six weeks.',
+  summary:
+    'A six-week cohort where a small group of operators each ship a real paid client project with an AI agent team. Weekly live sessions plus Slack.',
+  status: 'announced',
+  pillar: 'delivery',
+  startDate: '2026-09-15',
+  endDate: '2026-10-27',
+  durationWeeks: 6,
+  capacity: 15,
+  priceCents: 249900,
+  currency: 'usd',
+  stripePriceId: 'price_1ABCxyz0123456789',
+  commitmentHoursPerWeek: 8,
+  publishedAt: '2026-04-12T00:00:00Z',
+};
+
+// ── Unit Tests ──────────────────────────────────────────────────────
+
+describe('CohortSchema', () => {
+  it('unit_cohort_valid_minimal: parses a minimal valid Cohort with defaults applied', () => {
+    const result = CohortSchema.parse(VALID_COHORT_MINIMAL);
+    expect(result.id).toBe('cohort-ai-delivery-2026-q3');
+    expect(result.slug).toBe('ai-delivery-2026-q3');
+    expect(result.status).toBe('announced');
+    expect(result.pillar).toBe('delivery');
+    expect(result.durationWeeks).toBe(6);
+    expect(result.capacity).toBe(15);
+    // Defaults applied for omitted array fields
+    expect(result.lllEntryUrls).toEqual([]);
+    expect(result.relatedEpisodeIds).toEqual([]);
+    expect(result.relatedCaseIds).toEqual([]);
+  });
+
+  it('unit_cohort_missing_stripePriceId: rejects missing stripePriceId; safeParse reports stripePriceId path', () => {
+    const partial = { ...VALID_COHORT_MINIMAL };
+    delete (partial as Record<string, unknown>).stripePriceId;
+    const result = CohortSchema.safeParse(partial);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      expect(paths).toContain('stripePriceId');
+    }
+  });
+
+  it('unit_cohort_startDate_wrong_format: rejects non-YYYY-MM-DD startDate; error path mentions startDate', () => {
+    for (const bad of ['2026/09/15', '09-15-2026', '2026-9-15', '2026-09-15T00:00:00Z', 'Sept 15 2026', '']) {
+      const result = CohortSchema.safeParse({ ...VALID_COHORT_MINIMAL, startDate: bad });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join('.'));
+        expect(paths).toContain('startDate');
+      }
+    }
+    // Valid YYYY-MM-DD passes
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, startDate: '2026-09-15' }),
+    ).not.toThrow();
+  });
+
+  it('unit_cohort_currency_uppercase_rejected: rejects uppercase currency (no silent lowercase coercion)', () => {
+    for (const bad of ['USD', 'Usd', 'UsD', 'EUR']) {
+      expect(() =>
+        CohortSchema.parse({ ...VALID_COHORT_MINIMAL, currency: bad }),
+      ).toThrow();
+    }
+    // Lowercase passes
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, currency: 'eur' }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, currency: 'gbp' }),
+    ).not.toThrow();
+  });
+
+  it('unit_cohort_durationWeeks_min_boundary: durationWeeks=0 errors (min 1); durationWeeks=1 passes', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 0 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: -1 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 1 }),
+    ).not.toThrow();
+  });
+
+  it('unit_cohort_durationWeeks_max_boundary: durationWeeks=60 errors (max 52); durationWeeks=52 passes', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 60 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 53 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 52 }),
+    ).not.toThrow();
+  });
+
+  it('unit_cohort_capacity_min_boundary: capacity=0 errors (min 1); capacity=1 passes', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: 0 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: -5 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: 1 }),
+    ).not.toThrow();
+  });
+
+  it('unit_cohort_pillar_invalid_enum: rejects pillar values outside CONTENT_PILLARS', () => {
+    for (const bad of ['marketing', 'engineering', 'Delivery', '', 'DELIVERY']) {
+      expect(() =>
+        CohortSchema.parse({ ...VALID_COHORT_MINIMAL, pillar: bad }),
+      ).toThrow();
+    }
+    // Every valid pillar value passes
+    for (const valid of ['delivery', 'workflow', 'business', 'future']) {
+      expect(() =>
+        CohortSchema.parse({ ...VALID_COHORT_MINIMAL, pillar: valid }),
+      ).not.toThrow();
+    }
+  });
+
+  it('unit_cohort_status_full_rejected: status="full" errors (dropped in favor of "enrolled"); every COHORT_STATUSES value passes', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, status: 'full' }),
+    ).toThrow();
+    // Every valid status in the canonical tuple passes
+    for (const valid of COHORT_STATUSES) {
+      expect(() =>
+        CohortSchema.parse({ ...VALID_COHORT_MINIMAL, status: valid }),
+      ).not.toThrow();
+    }
+  });
+
+  it('unit_cohort_stripePriceId_placeholder_allowed: placeholder price_REPLACE_ME_* format passes validator', () => {
+    // Placeholder pattern accepted at validator boundary; checkout-time helper rejects it.
+    expect(() =>
+      CohortSchema.parse({
+        ...VALID_COHORT_MINIMAL,
+        stripePriceId: 'price_REPLACE_ME_ai-delivery-2026-q3',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({
+        ...VALID_COHORT_MINIMAL,
+        stripePriceId: 'price_REPLACE_ME_workflow-mastery-2026-q4',
+      }),
+    ).not.toThrow();
+    // Real price ID also passes
+    expect(() =>
+      CohortSchema.parse({
+        ...VALID_COHORT_MINIMAL,
+        stripePriceId: 'price_1ABCxyz0123',
+      }),
+    ).not.toThrow();
+    // Bad formats still rejected
+    for (const bad of ['prod_abc', 'PRICE_abc', 'price_', 'price abc', 'price_!@#']) {
+      expect(() =>
+        CohortSchema.parse({ ...VALID_COHORT_MINIMAL, stripePriceId: bad }),
+      ).toThrow();
+    }
+  });
+
+  it('unit_cohort_summary_min_length: summary <20 chars errors; exactly 20 chars passes; 800 chars passes; 801 errors', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, summary: 'short' }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, summary: 'x'.repeat(19) }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, summary: 'x'.repeat(20) }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, summary: 'x'.repeat(800) }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, summary: 'x'.repeat(801) }),
+    ).toThrow();
+  });
+
+  it('unit_cohort_label_maps_round_trip: every COHORT_STATUSES value has a COHORT_STATUS_LABELS + COHORT_STATUS_DESCRIPTIONS entry', () => {
+    for (const status of COHORT_STATUSES) {
+      expect(COHORT_STATUS_LABELS[status as CohortStatus]).toBeDefined();
+      expect(typeof COHORT_STATUS_LABELS[status as CohortStatus]).toBe('string');
+      expect(COHORT_STATUS_LABELS[status as CohortStatus].length).toBeGreaterThan(0);
+
+      expect(COHORT_STATUS_DESCRIPTIONS[status as CohortStatus]).toBeDefined();
+      expect(typeof COHORT_STATUS_DESCRIPTIONS[status as CohortStatus]).toBe('string');
+      expect(COHORT_STATUS_DESCRIPTIONS[status as CohortStatus].length).toBeGreaterThan(0);
+    }
+    expect(Object.keys(COHORT_STATUS_LABELS).length).toBe(COHORT_STATUSES.length);
+    expect(Object.keys(COHORT_STATUS_DESCRIPTIONS).length).toBe(COHORT_STATUSES.length);
+  });
+});
+
+// ── Barrel re-exports ───────────────────────────────────────────────
+
+describe('@/content/schemas barrel: Cohort re-exports', () => {
+  it('unit_cohort_barrel_exports: CohortSchema, COHORT_STATUSES, COHORT_STATUS_LABELS, COHORT_STATUS_DESCRIPTIONS importable via barrel', () => {
+    expect(CohortSchemaBarrel).toBe(CohortSchema);
+    expect(COHORT_STATUSES_BARREL).toBe(COHORT_STATUSES);
+    expect(COHORT_STATUS_LABELS_BARREL).toBe(COHORT_STATUS_LABELS);
+    expect(COHORT_STATUS_DESCRIPTIONS_BARREL).toBe(COHORT_STATUS_DESCRIPTIONS);
+  });
+});
+
+// ── Edge Case Tests ─────────────────────────────────────────────────
+
+describe('Cohort edge cases: Input boundaries', () => {
+  it('edge_cohort_empty_arrays_default: lllEntryUrls/relatedEpisodeIds/relatedCaseIds default to [] when omitted', () => {
+    const result = CohortSchema.parse(VALID_COHORT_MINIMAL);
+    expect(result.lllEntryUrls).toEqual([]);
+    expect(result.relatedEpisodeIds).toEqual([]);
+    expect(result.relatedCaseIds).toEqual([]);
+  });
+
+  it('edge_cohort_durationWeeks_boundary_52: durationWeeks at min=1 and max=52 both pass', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 1 }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, durationWeeks: 52 }),
+    ).not.toThrow();
+  });
+
+  it('edge_cohort_capacity_upper_boundary: capacity=500 passes; capacity=501 errors', () => {
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: 500 }),
+    ).not.toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: 501 }),
+    ).toThrow();
+    expect(() =>
+      CohortSchema.parse({ ...VALID_COHORT_MINIMAL, capacity: 1000 }),
+    ).toThrow();
+  });
+});
+
+// ── Error Recovery Tests ────────────────────────────────────────────
+
+describe('Cohort error recovery', () => {
+  it('err_cohort_invalid_data_safeparse: safeParse on malformed object returns { success: false } with multiple issues', () => {
+    // Object missing several required fields AND with invalid values for several others
+    const malformed = {
+      id: '',
+      slug: 'INVALID SLUG',
+      title: '',
+      summary: 'too short',
+      status: 'full',
+      pillar: 'marketing',
+      startDate: '09/15/2026',
+      currency: 'USD',
+      durationWeeks: 0,
+      capacity: 0,
+      stripePriceId: 'prod_abc',
+      // missing: series, tagline, endDate, priceCents, commitmentHoursPerWeek, publishedAt
+    };
+    const result = CohortSchema.safeParse(malformed);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // At least 5 distinct issues accumulated — caller can render field-level errors
+      expect(result.error.issues.length).toBeGreaterThanOrEqual(5);
+    }
+  });
+});
+
+// ── Data Integrity Tests ────────────────────────────────────────────
+
+describe('Cohort data integrity', () => {
+  it('data_cohort_round_trip: parse→re-parse is idempotent; defaults stabilize after first pass', () => {
+    const first = CohortSchema.parse(VALID_COHORT_MINIMAL);
+    const second = CohortSchema.parse(first);
+    expect(second).toEqual(first);
+    // Defaults are present and stable
+    expect(first.lllEntryUrls).toEqual([]);
+    expect(second.lllEntryUrls).toEqual([]);
+  });
+
+  it('data_cohort_satisfies_interface: CohortSchema output is assignable to Cohort type (compile-time + runtime smoke)', () => {
+    // Compile-time: this block type-checks only if CohortSchema.parse returns
+    // a structure assignable to Cohort (via `satisfies z.ZodType<Cohort>`).
+    // Runtime: verifies every required Cohort field is present in parsed output.
+    const parsed = CohortSchema.parse(VALID_COHORT_MINIMAL);
+    const expectedFields = [
+      'id', 'slug', 'title', 'series', 'tagline', 'summary', 'status', 'pillar',
+      'startDate', 'endDate', 'durationWeeks', 'capacity', 'priceCents', 'currency',
+      'stripePriceId', 'commitmentHoursPerWeek', 'lllEntryUrls',
+      'relatedEpisodeIds', 'relatedCaseIds', 'publishedAt',
+    ];
+    for (const f of expectedFields) {
+      expect(parsed).toHaveProperty(f);
     }
   });
 });

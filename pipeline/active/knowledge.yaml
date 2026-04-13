@@ -1098,3 +1098,55 @@ build-in-public-docs-3.1:
       severity: P2 (cosmetic)
       status: new — flagged in dependencies.yaml during discovery
       next_action: "When real OG image is created for build-log, update openGraph.images in all 4 /build-log pages and add corresponding test assertions"
+
+# ════════════════════════════════════════════════════════════════════
+# cohort-enrollment-1.1 (2026-04-13)
+# ════════════════════════════════════════════════════════════════════
+
+cohort-enrollment-1.1:
+  completed_at: "2026-04-13"
+  section_name: "Cohort Schema + CohortSchema Zod Validator"
+  summary: |
+    First section of cohort-enrollment (ce) job. Pure schema/validator work
+    mirroring the established content_type_module + validator_module patterns
+    exactly (wf-1.1 + wf-1.2 + sa-1.1 precedent). 19 tests appended to
+    existing validators.test.ts; no regressions, lint clean.
+
+  patterns_confirmed:
+    - description: "placeholder_stripe_price_id_dual_regex"
+      file: "src/content/schemas/validators.ts"
+      reusable_for: "Any future paid content type (cohort, subscription, upgrade) that lets operators pre-provision MDX with a placeholder before filling in the real Stripe Price ID. Pattern: `z.string().regex(/^(price_[A-Za-z0-9]+|price_REPLACE_ME_[A-Za-z0-9_-]+)$/)`. Content boundary accepts placeholder (deterministic shape check); runtime checkout helper rejects placeholder (semantic check)."
+    - description: "label_map_plus_description_map"
+      file: "src/content/schemas/cohort.ts"
+      reusable_for: "Content types whose status enum drives both a badge label AND a longer CTA/description string. Two Record<Status, string> maps (COHORT_STATUS_LABELS + COHORT_STATUS_DESCRIPTIONS) keep the enum as single source of truth while isolating badge copy from paragraph copy."
+
+  decision_rationale:
+    currency_regex_not_toLowerCase: |
+      Planning doc specified rejecting uppercase currency ('USD' → error). Product
+      uses `.toLowerCase()` which silently coerces. Cohort chose strict regex
+      `/^[a-z]+$/` because cohort pricing is a longer-term commitment and the
+      explicit error surface (at content-boundary) is preferred over silent
+      transform. Both patterns are acceptable — pick per feature's error surface
+      needs.
+    barrel_only_self_not_cohort_application: |
+      Planning doc sketched adding both './cohort' AND './cohort-application'
+      barrel lines in this section as a single MODIFY. But cohort-application.ts
+      is created in 3.1; re-exporting a non-existent module is a build error.
+      Only './cohort' added now; 3.1 adds its own line.
+    default_arrays_before_publishedAt: |
+      `.default([])` on lllEntryUrls / relatedEpisodeIds / relatedCaseIds allows
+      operators to omit these in MDX frontmatter when empty — reduces frontmatter
+      noise. publishedAt kept required: operators MUST explicitly choose a
+      publish date.
+
+  gotchas:
+    - "Destructure-with-underscore-rename (`const { field: _omit, ...partial } = obj`) triggers @typescript-eslint/no-unused-vars despite the underscore prefix. Use `const partial = { ...obj }; delete (partial as Record<string, unknown>).field;` instead — matches ProductSchema precedent."
+    - "Concurrent section interference: sa-2.1 red-phase tests (gitignore/readme-db/migration) appeared in the working tree between ce-1.1 Green verification and Refactor baseline. Full-suite test runs show these as failing; commit staging must be scoped to ce-1.1 files only (standard concurrent-job pattern)."
+
+  reusable_utilities: []  # no utilities extracted — section is pure declarations
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open but does NOT affect this section (ce-1.1 doesn't touch loaders)
+      next_action: "unchanged"
