@@ -799,3 +799,92 @@ build-in-public-docs-2.2:
       severity: P1
       status: still open (not addressed by 2.2 — 2.2 routes use the SAME pattern but won't break until npm run build is attempted)
       next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest"
+
+storefront-auth-1.1:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: product_content_type_module
+      file: "src/content/schemas/product.ts"
+      description: |
+        Mirrors the wf 1.1 Case content-type pattern exactly: `as const` enum
+        tuples, derived union via indexed-access, label maps keyed by union,
+        single interface with optional fields marked `?:`. Adds two enum
+        dimensions (PRODUCT_CATEGORIES, PRODUCT_LICENSE_TYPES) where Case
+        had one (CASE_STATUSES) — same pattern, scaled.
+      reusable_for: "Any future content type with multiple categorical dimensions (e.g., Tool, Service, Course)"
+    - id: validator_with_transform_and_anti_traversal
+      file: "src/content/schemas/validators.ts (ProductSchema)"
+      description: |
+        ProductSchema introduces two patterns new to fabled10x validators:
+        (1) `.toLowerCase()` Zod transform on currency — accepts mixed-case
+        MDX input ('USD'/'usd'/'Usd'), normalizes to lowercase per Stripe API.
+        (2) Anti-traversal regex on assetFilename: `/^[a-zA-Z0-9._-]+$/` with
+        custom error message 'filename must not contain path separators' —
+        defense-in-depth at content-load time (Phase 3.3 download handler
+        ALSO validates with path.resolve, but the validator catches at
+        boundary, not at purchase-delivery time).
+      reusable_for: "Any future validator that accepts user/MDX-author input where path-safe filenames are required, or where API contracts demand normalized casing"
+    - id: loader_with_freeze_and_descending_sort
+      file: "src/lib/content/products.ts"
+      description: |
+        First fabled10x loader to apply Object.freeze on cache assignment
+        from the start (paid-forward cleanup from build-in-public-docs-1.2
+        knowledge entry) AND first to type the cache as
+        `ReadonlyArray<LoadedEntry<Product>>` — a stricter contract than
+        cases.ts/episodes.ts (which return mutable LoadedEntry<T>[]).
+        Sort uses `b.publishedAt.localeCompare(a.publishedAt)` directly
+        (no `?? ''` defensive fallback) because publishedAt is REQUIRED in
+        ProductSchema (unlike Episode.publishedAt which is optional).
+      reusable_for: "All future content loaders should adopt this stricter contract; the cleanup-opportunity for cases.ts/episodes.ts is now even more justified"
+    - id: integration_test_via_vi_importActual
+      file: "src/lib/content/__tests__/products.test.ts"
+      description: |
+        New pattern for testing the real loader against real seed MDX while
+        keeping unit tests on a mocked loader: vi.mock('../loader') at top
+        for unit tests, then `await vi.importActual<typeof import('../loader')>('../loader')`
+        inside specific 'integration_*' tests to reach the unmocked module.
+        Avoids splitting tests across two files. Used for
+        integration_loader_returns_two_seeds (real loadContent + real manifest).
+      reusable_for: "Any test file that wants both mocked unit tests and real-implementation integration tests in the same module"
+
+  gotchas:
+    - "Concurrent finish race condition: build-in-public-docs-2.2 was running its finish phase simultaneously, leaving session.yaml + knowledge.yaml with both sections' pending entries on disk. Resolved by explicit per-file `git add` (no -A) and accepting that whichever section commits the shared state files first lands both entries; the other section sees no diff for those files in their commit."
+    - "ProductSchema slug regex /^[a-z0-9-]+$/ accepts trailing hyphens (e.g., 'foo-'); same as Episode/Case schemas. Not flagged in tests because seed slugs don't trigger it. If product slugs need stricter validation (no leading/trailing hyphens) per a future content review, tighten to the bpd JobSchema SLUG regex /^[a-z0-9]+(-[a-z0-9]+)*$/."
+    - "stripePriceId regex /^price_[A-Za-z0-9]+$/ does NOT allow underscores in the suffix. Initial seed used 'price_REPLACE_ME_BEFORE_SHIPPING' which failed validation; corrected to 'price_REPLACEMEBEFORESHIPPING'. Real Stripe price IDs (e.g., 'price_1ABCxyz0123456789') match the regex; the placeholder also matches. Validator-acceptable + Stripe-rejectable is the intentional friction (Stripe 400s at Checkout if the placeholder reaches them)."
+    - "The bpd-1.2 mapCompletedEntry helper expects either string-form OR object-form completedSections entries with `section:`/`completedAt:` keys. session.yaml uses `id:`/`completed_at:` keys (the project convention) — this divergence is handled at the loader boundary by mapCompletedEntry (already implemented in pipeline-state.ts). storefront-auth-1.1's completed_section entry follows the existing project convention; do not switch to schema convention."
+
+  reusable_utilities:
+    - function: getAllProducts
+      file: src/lib/content/products.ts
+      purpose: "Returns ReadonlyArray<LoadedEntry<Product>> sorted by publishedAt DESC. Module-level cached + Object.freeze. Consumed by 1.2 catalog index + detail + 4.2 sitemap."
+    - function: getProductBySlug
+      file: src/lib/content/products.ts
+      purpose: "Returns LoadedEntry<Product> | null for a given slug. Delegates to getAllProducts then .find. Consumed by 1.2 detail page + 3.x checkout/download flows + 4.x account pages."
+    - function: ProductSchema
+      file: src/content/schemas/validators.ts
+      purpose: "Zod validator for Product MDX meta exports. 7 attack-vector hardenings. Consumed by loader at content boundary and by any future code that accepts external Product input (e.g., admin import scripts)."
+    - function: PRODUCT_CATEGORIES + PRODUCT_LICENSE_TYPES
+      file: src/content/schemas/product.ts
+      purpose: "`as const` tuples — single source of truth for category/license enum values. Used by ProductSchema (z.enum) + label maps. Adding a new value here propagates through the type system + validator + UI labels (when 1.2 ships)."
+
+  cross_section_cleanup_opportunities_added:
+    - target: "src/lib/content/products.ts vs cases.ts vs episodes.ts"
+      description: "Three loaders now share ~25 lines of identical boilerplate (manifest+cache+sort pattern). Could extract createContentLoader<T>({directory, schema, manifest, sortFn}) factory in src/lib/content/loader.ts. Defer until a 4th loader appears OR roll into the loader-v2 followup that resolves loader_build_incompat (P1)."
+      priority: medium
+      decision: defer
+    - target: "src/content/{products,cases,episodes}/manifest.ts MdxModule type"
+      description: "Identical 4-line MdxModule interface duplicated 3 times. Could extract to src/lib/content/loader.ts or src/content/manifest-types.ts."
+      priority: low
+      decision: defer
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/lib/content/episodes.ts:24 + src/lib/content/cases.ts:24"
+      description: "Object.freeze cache assignment — STILL OPEN (carried from bpd-1.1, bpd-1.2, bpd-2.2). storefront-auth-1.1 applied the pattern from the start (products.ts uses ReadonlyArray<LoadedEntry<Product>> + Object.freeze)."
+      priority: low
+      note: "Application in products.ts is now precedent — the cleanup for cases/episodes is no longer just paid-forward; it's catching up to the new norm."
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open (storefront-auth-1.1 uses the SAME manifest workaround as cases/episodes; will not break until npm run build is attempted)
+      next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest — now blocking storefront-auth Phase 1 production deploy as well"

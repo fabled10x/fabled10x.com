@@ -10,6 +10,7 @@ import {
   JobSchema,
   SessionStatusSchema,
   KnowledgeFileSchema,
+  ProductSchema,
 } from '@/content/schemas/validators';
 
 import {
@@ -21,9 +22,21 @@ import {
   JobPhaseSchema as JobPhaseSchemaBarrel,
   SessionStatusSchema as SessionStatusSchemaBarrel,
   KnowledgeFileSchema as KnowledgeFileSchemaBarrel,
+  ProductSchema as ProductSchemaBarrel,
+  PRODUCT_CATEGORIES as PRODUCT_CATEGORIES_BARREL,
+  PRODUCT_LICENSE_TYPES as PRODUCT_LICENSE_TYPES_BARREL,
+  PRODUCT_CATEGORY_LABELS as PRODUCT_CATEGORY_LABELS_BARREL,
+  PRODUCT_LICENSE_LABELS as PRODUCT_LICENSE_LABELS_BARREL,
 } from '@/content/schemas';
 
-import type { Job } from '@/content/schemas';
+import type { Job, ProductInput, ProductCategory, ProductLicenseType } from '@/content/schemas';
+
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_LICENSE_TYPES,
+  PRODUCT_CATEGORY_LABELS,
+  PRODUCT_LICENSE_LABELS,
+} from '@/content/schemas/product';
 
 // ── Build-log fixtures (exported for 1.2 reuse) ─────────────────────
 
@@ -774,5 +787,355 @@ describe('Build-log data integrity', () => {
     expect(() => JobSchema.parse(validJobFixture())).not.toThrow();
     expect(() => SessionStatusSchema.parse(LIVE_SESSION_FIXTURE)).not.toThrow();
     expect(() => KnowledgeFileSchema.parse(LIVE_KNOWLEDGE_FIXTURE)).not.toThrow();
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// storefront-auth-1.1: Product schema + validator
+// ════════════════════════════════════════════════════════════════════
+
+const VALID_PRODUCT_MINIMAL: ProductInput = {
+  id: 'prod-workflow-templates',
+  slug: 'workflow-templates',
+  title: 'Agent Workflow Templates',
+  tagline: 'The exact TDD pipeline templates behind every Fabled10X build.',
+  summary: 'A downloadable set of agent skill manifests, discovery YAML templates, and TDD phase prompts.',
+  category: 'workflow-templates',
+  licenseType: 'single-user',
+  priceCents: 4900,
+  currency: 'usd',
+  stripePriceId: 'price_1ABCxyz0123456789',
+  assetFilename: 'workflow-templates.zip',
+  lllEntryUrls: [],
+  relatedCaseIds: ['party-masters'],
+  publishedAt: '2026-04-12T00:00:00Z',
+};
+
+const VALID_PRODUCT_FULL: ProductInput = {
+  ...VALID_PRODUCT_MINIMAL,
+  heroImageUrl: 'https://fabled10x.com/images/workflow-templates-hero.jpg',
+};
+
+// ── Unit Tests ──────────────────────────────────────────────────────
+
+describe('ProductSchema', () => {
+  it('unit_product_minimal: accepts a minimal valid record (no optional heroImageUrl)', () => {
+    const result = ProductSchema.parse(VALID_PRODUCT_MINIMAL);
+    expect(result.id).toBe('prod-workflow-templates');
+    expect(result.slug).toBe('workflow-templates');
+    expect(result.category).toBe('workflow-templates');
+    expect(result.licenseType).toBe('single-user');
+    expect(result.priceCents).toBe(4900);
+    expect(result.currency).toBe('usd');
+    expect(result.heroImageUrl).toBeUndefined();
+  });
+
+  it('unit_product_full: accepts a fully-populated record with heroImageUrl', () => {
+    const result = ProductSchema.parse(VALID_PRODUCT_FULL);
+    expect(result.heroImageUrl).toBe('https://fabled10x.com/images/workflow-templates-hero.jpg');
+  });
+
+  it('unit_product_input_type: ProductInput type is usable for building valid records', () => {
+    const input: ProductInput = { ...VALID_PRODUCT_MINIMAL };
+    const result = ProductSchema.parse(input);
+    expect(result).toBeDefined();
+  });
+
+  it('unit_product_currency_lowercased: .toLowerCase() transform normalizes USD → usd', () => {
+    const result = ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: 'USD' });
+    expect(result.currency).toBe('usd');
+
+    const eur = ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: 'Eur' });
+    expect(eur.currency).toBe('eur');
+  });
+
+  it('unit_product_category_labels: PRODUCT_CATEGORY_LABELS has an entry for every PRODUCT_CATEGORIES value (exhaustive)', () => {
+    for (const cat of PRODUCT_CATEGORIES) {
+      expect(PRODUCT_CATEGORY_LABELS[cat as ProductCategory]).toBeDefined();
+      expect(typeof PRODUCT_CATEGORY_LABELS[cat as ProductCategory]).toBe('string');
+      expect(PRODUCT_CATEGORY_LABELS[cat as ProductCategory].length).toBeGreaterThan(0);
+    }
+    expect(Object.keys(PRODUCT_CATEGORY_LABELS).length).toBe(PRODUCT_CATEGORIES.length);
+  });
+
+  it('unit_product_license_labels: PRODUCT_LICENSE_LABELS has an entry for every PRODUCT_LICENSE_TYPES value (exhaustive)', () => {
+    for (const lic of PRODUCT_LICENSE_TYPES) {
+      expect(PRODUCT_LICENSE_LABELS[lic as ProductLicenseType]).toBeDefined();
+      expect(typeof PRODUCT_LICENSE_LABELS[lic as ProductLicenseType]).toBe('string');
+      expect(PRODUCT_LICENSE_LABELS[lic as ProductLicenseType].length).toBeGreaterThan(0);
+    }
+    expect(Object.keys(PRODUCT_LICENSE_LABELS).length).toBe(PRODUCT_LICENSE_TYPES.length);
+  });
+});
+
+// ── Barrel re-exports ───────────────────────────────────────────────
+
+describe('@/content/schemas barrel: Product re-exports', () => {
+  it('unit_product_barrel_exports: ProductSchema, PRODUCT_CATEGORIES, PRODUCT_LICENSE_TYPES, label maps importable via barrel', () => {
+    expect(ProductSchemaBarrel).toBe(ProductSchema);
+    expect(PRODUCT_CATEGORIES_BARREL).toBe(PRODUCT_CATEGORIES);
+    expect(PRODUCT_LICENSE_TYPES_BARREL).toBe(PRODUCT_LICENSE_TYPES);
+    expect(PRODUCT_CATEGORY_LABELS_BARREL).toBe(PRODUCT_CATEGORY_LABELS);
+    expect(PRODUCT_LICENSE_LABELS_BARREL).toBe(PRODUCT_LICENSE_LABELS);
+  });
+});
+
+// ── Security Tests (STRIDE: Tampering, Info Disclosure) ─────────────
+
+describe('Security: Product enum tampering', () => {
+  it('sec_tampering_product_category: rejects invalid category enum value (case sensitivity, unknown, empty)', () => {
+    for (const bad of ['WORKFLOW-TEMPLATES', 'unknown-cat', '', 'workflow_templates']) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, category: bad }),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_product_license: rejects invalid licenseType enum value', () => {
+    for (const bad of ['enterprise', 'SINGLE-USER', '', 'free']) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, licenseType: bad }),
+      ).toThrow();
+    }
+  });
+});
+
+describe('Security: Product slug tampering', () => {
+  it('sec_tampering_product_slug: rejects slug with uppercase, underscores, spaces, or path separators', () => {
+    for (const bad of ['My-Product', 'my_product', 'my product', '../etc', '', 'foo/bar']) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, slug: bad }),
+      ).toThrow();
+    }
+  });
+});
+
+describe('Security: Product Stripe price ID tampering', () => {
+  it('sec_tampering_product_stripe_price_id: rejects stripePriceId not matching ^price_[A-Za-z0-9]+$', () => {
+    for (const bad of ['prod_abc123', 'PRICE_ABC', 'price_', '../price_abc', 'price_abc!@#', 'price_with spaces', 'price_under_score']) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, stripePriceId: bad }),
+      ).toThrow();
+    }
+    // Valid: price_ + alphanumeric (no underscore in suffix per regex)
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, stripePriceId: 'price_1ABCxyz0123' }),
+    ).not.toThrow();
+  });
+});
+
+describe('Security: Product asset filename traversal', () => {
+  it('sec_tampering_product_asset_filename_traversal: rejects assetFilename containing path separators or traversal attempts', () => {
+    for (const bad of [
+      '../etc/passwd',
+      '../../secret.zip',
+      'private/products/secret.zip',
+      'workflow-templates/../secret',
+      '\\windows\\path',
+      'sub/file.zip',
+      '/abs/path.zip',
+      '',
+    ]) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, assetFilename: bad }),
+      ).toThrow();
+    }
+    // Valid: alphanumerics + dot/underscore/hyphen
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, assetFilename: 'workflow-templates.zip' }),
+    ).not.toThrow();
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, assetFilename: 'file_v1.0.zip' }),
+    ).not.toThrow();
+  });
+});
+
+describe('Security: Product currency length', () => {
+  it('sec_tampering_product_currency_length: rejects currency strings of wrong length', () => {
+    for (const bad of ['US', 'usdd', '', 'usddd']) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: bad }),
+      ).toThrow();
+    }
+    // Valid: 3 chars (any case, normalized)
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: 'eur' }),
+    ).not.toThrow();
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: 'GBP' }),
+    ).not.toThrow();
+  });
+});
+
+describe('Security: Product required field enforcement (Info Disclosure)', () => {
+  it('sec_info_disclosure_product_required: rejects records missing each required field; safeParse reports failing path', () => {
+    const required: (keyof ProductInput)[] = [
+      'id',
+      'slug',
+      'title',
+      'tagline',
+      'summary',
+      'category',
+      'licenseType',
+      'priceCents',
+      'currency',
+      'stripePriceId',
+      'assetFilename',
+      'lllEntryUrls',
+      'relatedCaseIds',
+      'publishedAt',
+    ];
+    for (const field of required) {
+      const partial = { ...VALID_PRODUCT_MINIMAL };
+      delete (partial as Record<string, unknown>)[field];
+      const result = ProductSchema.safeParse(partial);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const paths = result.error.issues.map((i) => i.path.join('.'));
+        expect(paths).toContain(field);
+      }
+    }
+
+    // Empty strings rejected by min(1) on required string fields
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, title: '' }),
+    ).toThrow();
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, tagline: '' }),
+    ).toThrow();
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, summary: '' }),
+    ).toThrow();
+  });
+});
+
+// ── Edge Case Tests ─────────────────────────────────────────────────
+
+describe('Product edge cases: Input boundaries', () => {
+  it('edge_input_product_optional_omission: accepts record with heroImageUrl omitted; result.heroImageUrl undefined', () => {
+    const result = ProductSchema.parse(VALID_PRODUCT_MINIMAL);
+    expect(result.heroImageUrl).toBeUndefined();
+  });
+
+  it('edge_input_product_price_boundaries: rejects 0/-1/-100/1.5; accepts 1', () => {
+    for (const bad of [0, -1, -100, 1.5, 1.99]) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, priceCents: bad }),
+      ).toThrow();
+    }
+    const minPositive = ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, priceCents: 1 });
+    expect(minPositive.priceCents).toBe(1);
+    const realistic = ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, priceCents: 4900 });
+    expect(realistic.priceCents).toBe(4900);
+  });
+
+  it('edge_input_product_currency_mixed_case: accepts mixed-case input, normalizes to lowercase', () => {
+    for (const input of ['USD', 'Eur', 'GBP', 'jpY']) {
+      const result = ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, currency: input });
+      expect(result.currency).toBe(input.toLowerCase());
+    }
+  });
+
+  it('edge_input_product_extra_fields_stripped: unknown fields stripped from parsed result', () => {
+    const withExtra = { ...VALID_PRODUCT_MINIMAL, secretAdminFlag: true, internalId: 'xxx' };
+    const result = ProductSchema.parse(withExtra);
+    expect(result).not.toHaveProperty('secretAdminFlag');
+    expect(result).not.toHaveProperty('internalId');
+    expect(result.id).toBe('prod-workflow-templates');
+  });
+});
+
+describe('Product edge cases: Temporal', () => {
+  it('edge_temporal_product_publishedat_format: accepts UTC Z-suffix; rejects offset and date-only', () => {
+    const valid = ProductSchema.parse({
+      ...VALID_PRODUCT_MINIMAL,
+      publishedAt: '2026-04-12T00:00:00Z',
+    });
+    expect(valid.publishedAt).toBe('2026-04-12T00:00:00Z');
+
+    expect(() =>
+      ProductSchema.parse({
+        ...VALID_PRODUCT_MINIMAL,
+        publishedAt: '2026-04-12T00:00:00+02:00',
+      }),
+    ).toThrow();
+
+    expect(() =>
+      ProductSchema.parse({
+        ...VALID_PRODUCT_MINIMAL,
+        publishedAt: '2026-04-12',
+      }),
+    ).toThrow();
+  });
+});
+
+// ── Error Recovery Tests ────────────────────────────────────────────
+
+describe('Product error recovery', () => {
+  it('err_safeparse_product_actionable: safeParse returns structured error with issues array containing path + message', () => {
+    const invalid = {
+      ...VALID_PRODUCT_MINIMAL,
+      category: 'invalid-cat',
+      priceCents: -1,
+      stripePriceId: 'bad_price_id',
+      assetFilename: '../etc/passwd',
+    };
+    const result = ProductSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.length).toBeGreaterThan(0);
+      for (const issue of result.error.issues) {
+        expect(issue).toHaveProperty('path');
+        expect(issue).toHaveProperty('message');
+      }
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      expect(paths).toContain('category');
+      expect(paths).toContain('priceCents');
+      expect(paths).toContain('stripePriceId');
+      expect(paths).toContain('assetFilename');
+    }
+  });
+});
+
+// ── Data Integrity Tests ────────────────────────────────────────────
+
+describe('Product data integrity', () => {
+  it('data_consistency_product_enum_source: ProductSchema rejects category/licenseType outside canonical tuples (single source of truth)', () => {
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, category: 'premium' }),
+    ).toThrow();
+    expect(() =>
+      ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, licenseType: 'enterprise' }),
+    ).toThrow();
+    // Every value in the tuple should be accepted
+    for (const cat of PRODUCT_CATEGORIES) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, category: cat }),
+      ).not.toThrow();
+    }
+    for (const lic of PRODUCT_LICENSE_TYPES) {
+      expect(() =>
+        ProductSchema.parse({ ...VALID_PRODUCT_MINIMAL, licenseType: lic }),
+      ).not.toThrow();
+    }
+  });
+
+  it('data_sensitivity_product_field_classification: every Product field is publicly bundlable; no field requires runtime redaction', () => {
+    // Product MDX is statically rendered into the bundle. All fields,
+    // including 'internal'-classification stripePriceId and assetFilename,
+    // are public-readable post-build. The validator IS the content boundary;
+    // no serializer/redaction layer is required for the in-process loader.
+    const result = ProductSchema.parse(VALID_PRODUCT_FULL);
+    expect(result).toHaveProperty('stripePriceId');
+    expect(result).toHaveProperty('assetFilename');
+    // No fields are stripped (default Zod object behavior preserves all schema fields)
+    const expectedFields = [
+      'id', 'slug', 'title', 'tagline', 'summary', 'category', 'licenseType',
+      'priceCents', 'currency', 'stripePriceId', 'assetFilename', 'heroImageUrl',
+      'lllEntryUrls', 'relatedCaseIds', 'publishedAt',
+    ];
+    for (const f of expectedFields) {
+      expect(result).toHaveProperty(f);
+    }
   });
 });

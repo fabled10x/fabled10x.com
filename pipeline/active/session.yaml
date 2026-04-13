@@ -2,13 +2,13 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
-  current_section: "storefront-auth-1.1"
-  current_agent: discovery
-  current_stage: "storefront-auth-1.1-discovery-complete"
+  current_section: "storefront-auth-1.2"
+  current_agent: pending
+  current_stage: "storefront-auth-1.1-complete"
 
 context_window:
-  iteration: 1
-  total_items: 9
+  iteration: 0
+  total_items: 0
   completed_items: 0
 
 completed_sections:
@@ -184,12 +184,12 @@ completed_sections:
   - id: "build-in-public-docs-2.2"
     name: "/build-log Index + Job + Phase Pages"
     completed_at: "2026-04-12"
-    commit_hash: pending
-    commit_message: pending
+    commit_hash: "24d2647"
+    commit_message: "Add build-log index + job + phase pages with 51 tests (build-in-public-docs-2.2)"
     tests: 51  # 22 unit + 10 integration + 2 security + 4 a11y + 2 infra + 6 edge + 3 err + 2 data; section-scoped 143/143; full suite 483 + 51 = 534 if storefront-auth-1.1 product files were complete
     files_new: 9  # 3 components + 6 test files
     files_modified: 1  # src/components/build-log/index.ts (barrel)
-    pushed: false  # set true after push
+    pushed: true
     notes: |
       Fourth section of bpd job. Three Next.js App Router pages
       (/build-log, /build-log/jobs/[slug], /build-log/jobs/[slug]/[phase])
@@ -239,10 +239,49 @@ completed_sections:
       Inherited loader P1 — npm run build skipped (loader_build_incompat).
       Cross-section cleanup for episodes.ts/cases.ts Object.freeze carried forward.
 
+  - id: "storefront-auth-1.1"
+    name: "Product Content Pipeline (Schema + Validator + Loader + Seed MDX)"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 39  # 11 unit + 3 integration + 7 security + 2 infra + 2 contract + 6 edge + 4 err + 4 data; full suite 522 (was 432 baseline; +90 incl. recovered file-load test counts)
+    files_new: 6  # product.ts, products.ts, products.test.ts, manifest.ts, 2 seed MDX
+    files_modified: 3  # validators.ts, validators.test.ts, schemas/index.ts (barrel)
+    pushed: false  # set true after push
+    notes: |
+      First section of storefront-auth (sa) job — kicks off the /products
+      monetization layer. Pure schema/validator/loader work mirroring the
+      wf 1.1/1.2/2.2 Case → CaseSchema → cases.ts pattern exactly:
+      Product interface + PRODUCT_CATEGORIES/PRODUCT_LICENSE_TYPES tuples +
+      label maps; ProductSchema appended to validators.ts with 7 hardened
+      attack vectors (enum tampering x2, slug regex, stripePriceId regex,
+      assetFilename traversal regex, currency length, required-field
+      enforcement); products.ts loader using manifest pattern
+      (loader_build_incompat workaround) + module-level cache + Object.freeze
+      (paid-forward cleanup from bpd-1.2); 2 seed MDX files with stub copy
+      + price_REPLACEMEBEFORESHIPPING placeholder (intentional friction:
+      validator accepts, Stripe rejects at Checkout).
+      Diverged from planning doc sketch in 3 ways (documented in
+      discovery.yaml.divergences_from_planning_doc): (1) loader returns
+      ReadonlyArray<LoadedEntry<Product>> not Product[]; (2) module-level
+      cache (planning said "no cache"); (3) manifest pattern (planning
+      sketched dynamic import).
+      Section is infrastructure-only — no UI, no API, no DB, no auth, no
+      forms, no nav. Most wiring beats N/A.
+      Concurrent build-in-public-docs-2.2 work shared this run; commit
+      explicitly stages only this section's source files (validators.ts/
+      validators.test.ts/schemas/index.ts/product.ts/products.ts/products.test.ts/
+      manifest.ts/2 seed MDX) plus shared state (session.yaml, knowledge.yaml).
+      Inherited loader_build_incompat P1 — npm run build skipped (consistent
+      with all wf and bpd loader-touching sections).
+      Blocker cleared: storefront-auth-1.2 (catalog routes /products + /products/[slug])
+      can start; 1.2 consumes getAllProducts/getProductBySlug + Product type
+      from this section's exports.
+
 resume_point:
-  last_action: "section_bpd_2.1_completed"
-  next_action: "/discovery bpd 2.2 (/build-log index + /build-log/jobs/[slug] + /build-log/jobs/[slug]/[phase])"
-  notes: "build-in-public-docs job: 3/6 features shipped (1.1 Schemas + Job-Tree Loader, 1.2 Pipeline State Loader, 2.1 <MarkdownDocument>). Next: 2.2 jobs routes mount the MarkdownDocument renderer from 2.1. 2.2 and 2.3 are parallelizable."
+  last_action: "section_storefront_auth_1.1_completed"
+  next_action: "/pipeline sa 1.2 (/products index + /products/[slug] detail + ProductCard + BuyButton stubbed disabled)"
+  notes: "storefront-auth job started (1/10 features shipped: 1.1 Product Content Pipeline). Next: 1.2 catalog routes consuming the loader from 1.1. Phase 2+ (auth/Stripe/account) blocked on 1.2 → Phase 1 ships standalone."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

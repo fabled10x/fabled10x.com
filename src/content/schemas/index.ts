@@ -3,5 +3,6 @@ export * from './content-pillar';
 export * from './episode';
 export * from './source-material';
 export * from './case';
+export * from './product';
 export * from './build-log';
 export * from './validators';

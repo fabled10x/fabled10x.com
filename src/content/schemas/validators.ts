@@ -3,6 +3,7 @@ import { CONTENT_TIERS } from './content-tier';
 import { CONTENT_PILLARS } from './content-pillar';
 import { SOURCE_MATERIAL_KINDS } from './source-material';
 import { CASE_STATUSES } from './case';
+import { PRODUCT_CATEGORIES, PRODUCT_LICENSE_TYPES } from './product';
 
 export const EpisodeSchema = z.object({
   id: z.string().min(1),
@@ -54,9 +55,31 @@ export const CaseSchema = z.object({
   heroImageUrl: z.url().optional(),
 });
 
+export const ProductSchema = z.object({
+  id: z.string().min(1),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  title: z.string().min(1),
+  tagline: z.string().min(1),
+  summary: z.string().min(1),
+  category: z.enum(PRODUCT_CATEGORIES),
+  licenseType: z.enum(PRODUCT_LICENSE_TYPES),
+  priceCents: z.number().int().positive(),
+  currency: z.string().length(3).toLowerCase(),
+  stripePriceId: z.string().regex(/^price_[A-Za-z0-9]+$/),
+  assetFilename: z
+    .string()
+    .min(1)
+    .regex(/^[a-zA-Z0-9._-]+$/, 'filename must not contain path separators'),
+  heroImageUrl: z.url().optional(),
+  lllEntryUrls: z.array(z.url()),
+  relatedCaseIds: z.array(z.string()),
+  publishedAt: z.iso.datetime(),
+});
+
 export type EpisodeInput = z.input<typeof EpisodeSchema>;
 export type SourceMaterialInput = z.input<typeof SourceMaterialSchema>;
 export type CaseInput = z.input<typeof CaseSchema>;
+export type ProductInput = z.input<typeof ProductSchema>;
 
 // ── Build-log schemas (build-in-public-docs-1.1) ────────────────────
 
