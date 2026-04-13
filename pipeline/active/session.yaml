@@ -2,14 +2,14 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
-  current_section: "storefront-auth-1.2"
-  current_agent: discovery
-  current_stage: "storefront-auth-1.2-discovery-complete"
+  current_section: "storefront-auth-2.1"
+  current_agent: pending
+  current_stage: "storefront-auth-1.2-complete"
   concurrent_jobs: []
 
 context_window:
-  iteration: 1
-  total_items: 14
+  iteration: 0
+  total_items: 0
   completed_items: 0
 
 completed_sections:
@@ -243,12 +243,12 @@ completed_sections:
   - id: "storefront-auth-1.1"
     name: "Product Content Pipeline (Schema + Validator + Loader + Seed MDX)"
     completed_at: "2026-04-13"
-    commit_hash: pending
-    commit_message: pending
+    commit_hash: "70e7f99"
+    commit_message: "Add product content pipeline with 39 tests (storefront-auth-1.1)"
     tests: 39  # 11 unit + 3 integration + 7 security + 2 infra + 2 contract + 6 edge + 4 err + 4 data; full suite 522 (was 432 baseline; +90 incl. recovered file-load test counts)
     files_new: 6  # product.ts, products.ts, products.test.ts, manifest.ts, 2 seed MDX
     files_modified: 3  # validators.ts, validators.test.ts, schemas/index.ts (barrel)
-    pushed: false  # set true after push
+    pushed: true
     notes: |
       First section of storefront-auth (sa) job — kicks off the /products
       monetization layer. Pure schema/validator/loader work mirroring the
@@ -309,10 +309,48 @@ completed_sections:
       + nav + a11y polish) is the next bpd section; widens the metadata
       exports of all four bpd 2.x routes and adds the Header nav link.
 
+  - id: "storefront-auth-1.2"
+    name: "Products Catalog Routes (Index + Detail)"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 42  # 18 unit + 5 integration + 5 a11y + 5 infra + 4 edge + 2 err + 3 data; full suite 594 (was 552 pre-green)
+    files_new: 9  # 2 pages + 2 components + 1 barrel + 4 test files
+    files_modified: 0
+    pushed: false
+    notes: |
+      Second section of storefront-auth (sa) job. Pure UI layer consuming
+      the 1.1 product loader. Both public routes (/products index +
+      /products/[slug] detail) render statically via generateStaticParams +
+      dynamicParams=false. ProductCard + BuyButton components; ProductCard
+      is router-agnostic (Link wraps it at the list level, keeping card
+      testable in isolation). BuyButton is 'use client' with isLive=false
+      stub — Phase 3.1 flips this single constant to activate the enabled
+      branch (currently syntactically reachable dead code; ESLint doesn't
+      flag it because const booleans don't narrow for unreachable analysis).
+      Scope decisions: no NAV_ITEMS update (deferred to 4.2 per planning
+      doc), no JSON-LD (deferred to 4.2), no sitemap append (deferred to
+      4.2). Canonical UI-only N/A set documented in
+      knowledge.yaml#ui_section_pipeline_scope covers 3 discovery + 6 red +
+      8 green + 2 refactor + 2 finish beats.
+      Concurrent build-in-public-docs-2.3 work shared this run; commit
+      explicitly stages only this section's source files (ProductCard +
+      BuyButton + barrel + 2 pages + 4 test files) plus shared state
+      (session.yaml, knowledge.yaml, currentwork/storefront-auth/README.md).
+      Key gotcha captured: planning doc's pseudocode for the index page
+      used `product.id` / `product.slug` directly, but getAllProducts
+      returns ReadonlyArray<LoadedEntry<Product>> — green implemented the
+      LoadedEntry shape matching wf 3.2/3.3, diverging from the template.
+      Inherited loader_build_incompat P1 — npm run build skipped (9th
+      consecutive section skipping build verification).
+      Blocker cleared: storefront-auth Phase 1 (Catalog) is COMPLETE and
+      shippable standalone. Phase 2.1 (Postgres + Drizzle) is the next
+      sa section — first persistence layer in fabled10x.
+
 resume_point:
-  last_action: "section_build_in_public_docs_2.3_completed"
-  next_action: "Resume storefront-auth-1.2 discovery (already in progress) OR run /pipeline bpd 3.1 for next bpd section"
-  notes: "build-in-public-docs Phase 2 complete (5/6 features shipped: 1.1, 1.2, 2.1, 2.2, 2.3). Phase 3 (3.1 polish) remaining for bpd. storefront-auth-1.2 discovery is mid-flight in pipeline/active/storefront-auth-1.2/ — return to that for the active job."
+  last_action: "section_storefront_auth_1.2_completed"
+  next_action: "/pipeline sa 2.1 (Postgres + Drizzle setup — schema, migrations, client, docker-compose.yml)"
+  notes: "storefront-auth Phase 1 COMPLETE (2/10 features shipped: 1.1 Product Content Pipeline, 1.2 Catalog Routes). /products renders statically with disabled BuyButton. Phase 2 begins with 2.1 — first persistence layer in the project (Postgres + Drizzle, docker-compose for local dev). build-in-public-docs Phase 2 also complete (5/6); bpd 3.1 is the remaining bpd section — can be run in parallel or after sa Phase 2."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

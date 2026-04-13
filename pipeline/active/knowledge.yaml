@@ -958,3 +958,83 @@ build-in-public-docs-2.3:
       severity: P1
       status: still open (bpd-2.3 inherits the gotcha — npm run build SKIPPED in green/refactor/postflight; consistent with all bpd sections + sa-1.1)
       next_action: "Dedicated /jobbuild for loader-v2 with static glob or manifest — now blocks bpd phase 3 deploy + sa phase 2 deploy"
+
+storefront-auth-1.2:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: extracted_card_in_link_wrapper
+      file: "src/components/products/ProductCard.tsx + src/app/products/page.tsx"
+      description: |
+        First fabled10x pattern where a card component is extracted to its own
+        file AND the parent index wraps it with Link at the list level, not
+        inside the card. Keeps ProductCard router-agnostic and testable in
+        isolation (ProductCard.test.tsx renders without next/link mock).
+        Contrast with wf 3.2/3.3 which inline card markup inside Link directly.
+      reusable_for: "Any future content type where the card needs standalone tests (e.g., if a carousel or recommendation surface reuses the same card outside of a list)"
+
+    - id: client_component_flip_point_stub
+      file: "src/components/products/BuyButton.tsx"
+      description: |
+        'use client' component authored in Phase 1 with isLive=false flag +
+        full Phase 3.1 scaffolding (useState, useTransition) imported. Early
+        return in the disabled branch keeps the enabled branch as dead code
+        that Phase 3.1 activates by flipping the single const. Import graph
+        stable across phases — no client/server boundary change later. ESLint
+        doesn't flag the scaffolding because the "unreachable" branch is
+        syntactically reachable (const boolean doesn't narrow).
+      reusable_for: "Any future UI affordance planned to gain server-action wiring in a later phase (e.g., newsletter subscribe with backend later, tool that will become authenticated, feedback form)"
+
+    - id: fs_readfilesync_use_client_test
+      file: "src/components/products/__tests__/BuyButton.test.tsx (unit_buybutton_is_client_component)"
+      description: |
+        Verifying 'use client' directive via fs.readFileSync in a test — reads
+        the source file and asserts the first non-comment line matches
+        /^\s*['"]use client['"];?\s*$/. Catches accidental removal of the
+        directive (which would silently convert the component to an RSC and
+        break runtime hooks). Pattern is small (~6 lines) and doesn't require
+        mocking or test-framework plumbing.
+      reusable_for: "Any client component that MUST remain client-side — pair the runtime behavior tests with this directive test to catch the boundary flip in review"
+
+    - id: ui_section_pipeline_scope
+      file: "pipeline/active/storefront-auth-1.2/interfaces.yaml + test-cases.yaml"
+      description: |
+        Canonical set of N/A justifications for a pure-UI section with no
+        API/DB/auth/forms: serializers, response_contracts, permission_matrix,
+        security_tests, contract_tests, permission_tests, serializer_enforcement,
+        error_response_consistency, wiring_form_api, wiring_database,
+        audit_api_routes, audit_hook_consumers. STRIDE handled at
+        section-level (not per-endpoint) with "only tampering:partial — React
+        auto-escaping" as the single applicable category. Copy-pasteable into
+        any future UI-only sections (e.g., sa 4.2 SEO polish, future static
+        surface pages).
+      reusable_for: "Any future UI-only section (static pages, SEO surfaces, purely presentational components)"
+
+  gotchas:
+    - "Planning doc's index-page code template in phase-1-catalog.md:374-382 mapped `products.map((product) => ...)` with `product.id`, but getAllProducts returns `ReadonlyArray<LoadedEntry<Product>>` where id lives at `entry.meta.id`. Green implemented the correct LoadedEntry shape (matching wf 3.2 episodes + wf 3.3 cases convention), NOT the planning doc template literally. This divergence was not flagged in discovery (template looked like pseudocode). Future: when a planning doc provides TypeScript code templates, verify them against the actual loader return types before using as authoritative."
+
+    - "Fixture collision: PRODUCT_CATEGORY_LABELS['workflow-templates']='Workflow Templates' — if seed/test fixture sets product.title='Workflow Templates' too, getByText('Workflow Templates') matches TWO elements (h1 + category <p>) and throws. Solved by using 'Workflow Templates Pro' as the test fixture title to avoid collision with category label. Seed MDX data in 1.1 has title='Workflow Templates' verbatim — if detail page tests ever add `getByText('Workflow Templates')` using the real seed loader (integration), this collision returns. Use role-scoped queries (getByRole('heading', {level: 1, name: ...})) or unique test fixtures."
+
+    - "ProductCard mock-with-text: a11y test 'every link has non-empty accessible name' failed when ProductCard was mocked to a childless <div data-testid='product-card'/>. The Link wraps the mock; the mock has no text; link textContent is empty. Fix: mock renders `{product.title}` as visible text — preserves the a11y test intent (links have content) AND validates that in real rendering ProductCard contributes visible text. Precedent worth re-applying when mocking any inner child of a Link wrapper."
+
+    - "Inherited loader_build_incompat P1 — npm run build SKIPPED consistently with all wf sections + bpd sections + sa-1.1. sa-1.2 adds static pages that ALSO consume the loader, so the blast radius of the loader-v2 followup is now even wider. This is the 9th consecutive section where build verification is skipped; the P1 severity should be escalated if not already being tracked for immediate action."
+
+  reusable_utilities: []
+  # No new shared utilities — formatPrice intentionally inlined per planning doc
+  # (2 call sites; 3rd triggers extraction to src/lib/format-price.ts in 4.1)
+
+  cross_section_cleanup_opportunities_added:
+    - target: "src/app/products/[slug]/page.tsx:40-46 + src/components/products/ProductCard.tsx:4-11"
+      description: "formatPrice Intl.NumberFormat duplicated across detail page + card. Extract to src/lib/format-price.ts when Phase 4.1 account page adds the 3rd call site."
+      priority: low
+      decision: defer
+
+    - target: "src/components/products/BuyButton.tsx Phase 1 scaffolding"
+      description: "useState + useTransition imports + enabled branch are dead code in Phase 1. At Phase 3.1, flip isLive=true and the scaffolding activates. No cleanup needed unless the flip-point design is abandoned."
+      priority: none
+      decision: intentional
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: still open (sa-1.2 uses the SAME pattern as all prior sections; does not break until npm run build is attempted)
+      next_action: "Dedicated /jobbuild for loader-v2 — blocks production deploy for ALL routes, sa phase 2 deploy still upstream"

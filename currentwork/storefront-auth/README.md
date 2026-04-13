@@ -79,7 +79,7 @@ This job reuses these `wf` outputs and cannot start until they exist.
 | #   | Feature                                                                                         | Phase                      | Size | Status  |
 |-----|-------------------------------------------------------------------------------------------------|----------------------------|------|---------|
 | 1.1 | Product content pipeline — schema + enums + Zod validator + loader + 2 seed MDX files           | 1 - Catalog                | M    | Shipped |
-| 1.2 | Products catalog routes — `/products` index + `/products/[slug]` detail + `ProductCard`/`BuyButton` (CTA disabled until Phase 3) | 1 - Catalog                | M    | Planned |
+| 1.2 | Products catalog routes — `/products` index + `/products/[slug]` detail + `ProductCard`/`BuyButton` (CTA disabled until Phase 3) | 1 - Catalog                | M    | Shipped |
 | 2.1 | Postgres + Drizzle setup — schema, migrations, client, `docker-compose.yml` for local dev       | 2 - Auth + Persistence     | L    | Planned |
 | 2.2 | Auth.js v5 integration — Resend magic-link provider, Drizzle adapter, session config            | 2 - Auth + Persistence     | L    | Planned |
 | 2.3 | Middleware route protection + `/login` + `/login/verify` pages + `<SignInForm>` client component | 2 - Auth + Persistence     | L    | Planned |
