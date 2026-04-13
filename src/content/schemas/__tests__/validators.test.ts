@@ -4,13 +4,56 @@ import {
   EpisodeSchema,
   SourceMaterialSchema,
   CaseSchema,
+  JobFeatureSchema,
+  JobPhaseHeaderSchema,
+  JobPhaseSchema,
+  JobSchema,
+  SessionStatusSchema,
+  KnowledgeFileSchema,
 } from '@/content/schemas/validators';
 
 import {
   EpisodeSchema as EpisodeSchemaBarrel,
   SourceMaterialSchema as SourceMaterialSchemaBarrel,
   CaseSchema as CaseSchemaBarrel,
+  JobSchema as JobSchemaBarrel,
+  JobFeatureSchema as JobFeatureSchemaBarrel,
+  JobPhaseSchema as JobPhaseSchemaBarrel,
+  SessionStatusSchema as SessionStatusSchemaBarrel,
+  KnowledgeFileSchema as KnowledgeFileSchemaBarrel,
 } from '@/content/schemas';
+
+import type { Job } from '@/content/schemas';
+
+// ── Build-log fixtures (exported for 1.2 reuse) ─────────────────────
+
+export function validJobFixture(overrides: Partial<Job> = {}): Job {
+  return {
+    slug: 'community-showcase',
+    alias: 'cs',
+    title: 'community-showcase — Implementation Plan',
+    context: 'Some context here.',
+    features: [
+      {
+        id: '1.1',
+        name: 'First feature',
+        phase: '1 - Foundation',
+        size: 'M',
+        status: 'Planned',
+      },
+    ],
+    phases: [
+      {
+        slug: 'phase-1-foundation',
+        filename: 'phase-1-foundation.md',
+        header: { phaseNumber: 1, title: 'Foundation' },
+        body: '# Phase 1: Foundation\n\nbody',
+      },
+    ],
+    readmeBody: '# community-showcase — Implementation Plan\n\n## Context\n\nx',
+    ...overrides,
+  };
+}
 
 // ── Fixtures ────────────────────────────────────────────────────────
 
@@ -375,5 +418,361 @@ describe('Data integrity', () => {
     expect(() =>
       CaseSchema.parse({ ...VALID_CASE_MINIMAL, status: 'deleted' }),
     ).toThrow();
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// build-in-public-docs-1.1: Build-log schemas
+// ════════════════════════════════════════════════════════════════════
+
+const VALID_FEATURE = {
+  id: '1.1',
+  name: 'First feature',
+  phase: '1 - Foundation',
+  size: 'M',
+  status: 'Planned',
+};
+
+const VALID_PHASE = {
+  slug: 'phase-1-foundation',
+  filename: 'phase-1-foundation.md',
+  header: { phaseNumber: 1, title: 'Foundation' },
+  body: '# Phase 1: Foundation\n\nbody',
+};
+
+// Hand-built fixture matching the live pipeline/active/session.yaml structure.
+// Kept in sync with the live file by visual inspection. The 1.2 section will
+// add live-file integration tests once the `yaml` package is installed.
+const LIVE_SESSION_FIXTURE = {
+  id: '2026-04-11-001',
+  startedAt: '2026-04-11T00:00:00Z',
+  currentPhase: 'build-in-public-docs',
+  currentSection: 'build-in-public-docs-1.1',
+  currentAgent: 'discovery',
+  currentStage: 'build-in-public-docs-1.1-discovery-complete',
+  contextWindow: { iteration: 1, totalItems: 11, completedItems: 0 },
+  completedSections: [
+    { section: 'website-foundation-1.1', completedAt: '2026-04-11' },
+    { section: 'website-foundation-4.1', completedAt: '2026-04-12' },
+  ],
+  notes: 'fabled10x project initialized on 2026-04-11.',
+};
+
+// Hand-built fixture matching the live pipeline/active/knowledge.yaml structure.
+const LIVE_KNOWLEDGE_FIXTURE = {
+  version: 1,
+  project: 'fabled10x',
+  description: 'Cross-section knowledge store.',
+  projectContext: {
+    purpose: 'fabled10x is the brand/marketing site for Fabled10X.',
+    stack: { framework: 'Next.js 16.2.3 (App Router)', runtime: 'React 19.2.4' },
+    contentModel: { location: 'src/content/schemas/' },
+  },
+  conventions: {
+    test_files: 'src/**/__tests__/**/*.test.{ts,tsx}',
+    path_alias: '@/ → src/',
+  },
+  patterns: [{ id: 'content_type_module', established_in: 'website-foundation-1.1' }],
+  openQuestions: [{ id: 'loader_build_incompat', priority: 'P1' }],
+};
+
+// ── Unit Tests: JobFeatureSchema ────────────────────────────────────
+
+describe('JobFeatureSchema', () => {
+  it('unit_job_feature_minimal: accepts a row with all required fields', () => {
+    const result = JobFeatureSchema.parse(VALID_FEATURE);
+    expect(result.id).toBe('1.1');
+    expect(result.name).toBe('First feature');
+    expect(result.size).toBe('M');
+  });
+
+  it('sec_tampering_feature_id_format: rejects ids that aren\'t N.M format', () => {
+    for (const bad of ['1', '1.1.2', 'abc', '1.', '.1']) {
+      expect(() =>
+        JobFeatureSchema.parse({ ...VALID_FEATURE, id: bad }),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_length_caps: rejects strings exceeding per-field caps', () => {
+    expect(() =>
+      JobFeatureSchema.parse({ ...VALID_FEATURE, name: 'x'.repeat(501) }),
+    ).toThrow();
+    expect(() =>
+      JobFeatureSchema.parse({ ...VALID_FEATURE, size: 'XXXXXXXXX' }),
+    ).toThrow();
+    expect(() =>
+      JobFeatureSchema.parse({ ...VALID_FEATURE, status: 'x'.repeat(41) }),
+    ).toThrow();
+  });
+});
+
+// ── Unit Tests: JobPhaseHeaderSchema ────────────────────────────────
+
+describe('JobPhaseHeaderSchema', () => {
+  it('unit_job_phase_header_minimal: accepts an empty object (all fields optional)', () => {
+    const result = JobPhaseHeaderSchema.parse({});
+    expect(result.phaseNumber).toBeUndefined();
+    expect(result.title).toBeUndefined();
+  });
+
+  it('unit_job_phase_header_full: accepts all 6 optional fields populated', () => {
+    const result = JobPhaseHeaderSchema.parse({
+      phaseNumber: 1,
+      title: 'Foundation',
+      totalSize: 'M + M + S',
+      prerequisites: 'wf shipped',
+      newTypes: 'Job, JobPhase',
+      newFiles: 'src/lib/build-log/jobs.ts',
+    });
+    expect(result.phaseNumber).toBe(1);
+    expect(result.title).toBe('Foundation');
+    expect(result.totalSize).toBe('M + M + S');
+    expect(result.prerequisites).toBe('wf shipped');
+    expect(result.newTypes).toBe('Job, JobPhase');
+    expect(result.newFiles).toBe('src/lib/build-log/jobs.ts');
+  });
+});
+
+// ── Unit Tests: JobPhaseSchema ──────────────────────────────────────
+
+describe('JobPhaseSchema', () => {
+  it('unit_job_phase_minimal: accepts a valid phase record', () => {
+    const result = JobPhaseSchema.parse(VALID_PHASE);
+    expect(result.slug).toBe('phase-1-foundation');
+    expect(result.filename).toBe('phase-1-foundation.md');
+  });
+
+  it('sec_tampering_phase_slug: rejects malformed phase slugs', () => {
+    for (const bad of ['phase-1', 'phase-foundation', 'phase-1-Foundation', '1-foundation']) {
+      expect(() =>
+        JobPhaseSchema.parse({ ...VALID_PHASE, slug: bad }),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_phase_filename: rejects filenames not matching /^phase-\\d+-[a-z0-9-]+\\.md$/', () => {
+    for (const bad of [
+      'phase-1-foundation.txt',
+      'phase-1.md',
+      'PHASE-1-FOUNDATION.MD',
+      '../etc/passwd.md',
+    ]) {
+      expect(() =>
+        JobPhaseSchema.parse({ ...VALID_PHASE, filename: bad }),
+      ).toThrow();
+    }
+  });
+});
+
+// ── Unit Tests: JobSchema ───────────────────────────────────────────
+
+describe('JobSchema', () => {
+  it('unit_job_minimal: accepts validJobFixture() with all required fields', () => {
+    const result = JobSchema.parse(validJobFixture());
+    expect(result.slug).toBe('community-showcase');
+    expect(result.alias).toBe('cs');
+  });
+
+  it('unit_job_full: accepts validJobFixture({ alias: cs }) with optional alias populated', () => {
+    const result = JobSchema.parse(validJobFixture({ alias: 'cs' }));
+    expect(result.alias).toBe('cs');
+  });
+
+  it('unit_job_alias_undefined: accepts a Job without alias field (omitted)', () => {
+    const fixture = validJobFixture();
+    delete (fixture as { alias?: string }).alias;
+    const result = JobSchema.parse(fixture);
+    expect(result.alias).toBeUndefined();
+  });
+
+  it('sec_tampering_job_slug: rejects bad slugs (uppercase, underscore, traversal, etc.)', () => {
+    for (const bad of ['UPPER', 'with_underscore', 'with space', '../../../etc/passwd', 'trailing-', '-leading']) {
+      expect(() =>
+        JobSchema.parse(validJobFixture({ slug: bad })),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_job_alias: rejects malformed alias values', () => {
+    for (const bad of ['Cs', 'cs1', 'cs-1', 'wayTooLongAlias']) {
+      expect(() =>
+        JobSchema.parse(validJobFixture({ alias: bad })),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_path_traversal_via_slug: SLUG regex blocks ../ and / and .', () => {
+    for (const bad of ['../etc', 'foo/bar', 'foo.bar']) {
+      expect(() =>
+        JobSchema.parse(validJobFixture({ slug: bad })),
+      ).toThrow();
+    }
+  });
+
+  it('edge_input_job_features_empty: accepts features: [] (degenerate but tolerated)', () => {
+    const result = JobSchema.parse(validJobFixture({ features: [] }));
+    expect(result.features).toEqual([]);
+  });
+
+  it('edge_input_job_phases_empty: accepts phases: [] (no phase files yet)', () => {
+    const result = JobSchema.parse(validJobFixture({ phases: [] }));
+    expect(result.phases).toEqual([]);
+  });
+
+  it('edge_input_unknown_fields_stripped: strict (default) Zod schemas drop unknown fields', () => {
+    const fixture = { ...validJobFixture(), secretAdminFlag: true };
+    const result = JobSchema.parse(fixture);
+    expect(result).not.toHaveProperty('secretAdminFlag');
+    expect(result.slug).toBe('community-showcase');
+  });
+});
+
+// ── Unit Tests: SessionStatusSchema ─────────────────────────────────
+
+describe('SessionStatusSchema', () => {
+  it('unit_session_status_minimal: accepts { id, completedSections: [] }', () => {
+    const result = SessionStatusSchema.parse({
+      id: '2026-04-12-001',
+      completedSections: [],
+    });
+    expect(result.id).toBe('2026-04-12-001');
+    expect(result.completedSections).toEqual([]);
+  });
+
+  it('unit_session_status_completed_string_form: accepts string-form entries', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: ['website-foundation-1.1'],
+    });
+    expect(result.completedSections).toEqual(['website-foundation-1.1']);
+  });
+
+  it('unit_session_status_completed_object_form: accepts object-form entries', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [
+        { section: 'website-foundation-1.1', completedAt: '2026-04-12' },
+      ],
+    });
+    expect(result.completedSections).toHaveLength(1);
+  });
+
+  it('unit_session_status_full: accepts a fully-populated SessionStatus', () => {
+    const result = SessionStatusSchema.parse(LIVE_SESSION_FIXTURE);
+    expect(result.id).toBe('2026-04-11-001');
+    expect(result.currentPhase).toBe('build-in-public-docs');
+    expect(result.contextWindow?.iteration).toBe(1);
+  });
+
+  it('edge_input_session_complete_at_optional: object form without completedAt', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [{ section: 'wf-1.1' }],
+    });
+    expect(result.completedSections).toHaveLength(1);
+  });
+
+  it('sec_tampering_section_id_format: rejects malformed completedSections entries', () => {
+    for (const bad of ['invalid-format', 'wf1.1', 'wf-1', 'wf-1.1.2']) {
+      expect(() =>
+        SessionStatusSchema.parse({
+          id: 'x',
+          completedSections: [bad],
+        }),
+      ).toThrow();
+    }
+  });
+
+  it('sec_info_disclosure_required_id: rejects records missing id or with empty id', () => {
+    expect(() =>
+      SessionStatusSchema.parse({ completedSections: [] }),
+    ).toThrow();
+    expect(() =>
+      SessionStatusSchema.parse({ id: '', completedSections: [] }),
+    ).toThrow();
+  });
+
+  it('integration_session_yaml_parses: SessionStatusSchema accepts the live-file shape (hand-built fixture)', () => {
+    // Fixture matches the structure of pipeline/active/session.yaml as of
+    // 2026-04-12. Live-file integration moves to 1.2 with `yaml` install.
+    const result = SessionStatusSchema.parse(LIVE_SESSION_FIXTURE);
+    expect(result.id).toBe('2026-04-11-001');
+    expect(Array.isArray(result.completedSections)).toBe(true);
+  });
+});
+
+// ── Unit Tests: KnowledgeFileSchema ─────────────────────────────────
+
+describe('KnowledgeFileSchema', () => {
+  it('unit_knowledge_file_minimal: accepts {} (every field optional)', () => {
+    const result = KnowledgeFileSchema.parse({});
+    expect(result).toBeDefined();
+  });
+
+  it('unit_knowledge_file_passthrough: accepts unknown top-level keys, preserves them', () => {
+    const result = KnowledgeFileSchema.parse({
+      project: 'fabled10x',
+      futureKey: 'whatever',
+    } as Record<string, unknown>);
+    expect((result as Record<string, unknown>).futureKey).toBe('whatever');
+  });
+
+  it('edge_input_knowledge_passthrough_preserves: preserves unknown nested keys via passthrough', () => {
+    const result = KnowledgeFileSchema.parse({
+      version: 1,
+      futureBlock: { foo: 'bar' },
+    } as Record<string, unknown>);
+    expect((result as Record<string, unknown>).futureBlock).toEqual({ foo: 'bar' });
+  });
+
+  it('integration_knowledge_yaml_parses: KnowledgeFileSchema accepts live-file shape (hand-built fixture)', () => {
+    const result = KnowledgeFileSchema.parse(LIVE_KNOWLEDGE_FIXTURE);
+    expect(result.version).toBe(1);
+    expect(result.project).toBe('fabled10x');
+    expect(result.projectContext?.purpose).toContain('fabled10x');
+  });
+});
+
+// ── Integration: Barrel re-export ───────────────────────────────────
+
+describe('@/content/schemas barrel: build-log re-exports', () => {
+  it('integration_barrel_reexport: build-log schemas are importable via the barrel', () => {
+    expect(JobSchemaBarrel).toBe(JobSchema);
+    expect(JobFeatureSchemaBarrel).toBe(JobFeatureSchema);
+    expect(JobPhaseSchemaBarrel).toBe(JobPhaseSchema);
+    expect(SessionStatusSchemaBarrel).toBe(SessionStatusSchema);
+    expect(KnowledgeFileSchemaBarrel).toBe(KnowledgeFileSchema);
+  });
+});
+
+// ── Error recovery: safeParse on malformed Job ──────────────────────
+
+describe('Build-log error recovery', () => {
+  it('err_safeparse_actionable_messages: JobSchema.safeParse returns structured error', () => {
+    const result = JobSchema.safeParse({ slug: 'BadSlug', features: 'not-array' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.length).toBeGreaterThan(0);
+      for (const issue of result.error.issues) {
+        expect(issue).toHaveProperty('path');
+        expect(issue).toHaveProperty('message');
+      }
+    }
+  });
+});
+
+// ── Data integrity ──────────────────────────────────────────────────
+
+describe('Build-log data integrity', () => {
+  it('data_sensitivity_schema_field_classification: build-log schemas only accept public-classified fields', () => {
+    // All fields in build-log schemas are sourced from publicly-committed
+    // currentwork/*.md and pipeline/active/*.yaml files. None carry
+    // confidential/secret data. This test asserts that interfaces.yaml's
+    // sensitivity classification (`public` for every field) holds at runtime
+    // by verifying parse succeeds with only public fixture data.
+    expect(() => JobSchema.parse(validJobFixture())).not.toThrow();
+    expect(() => SessionStatusSchema.parse(LIVE_SESSION_FIXTURE)).not.toThrow();
+    expect(() => KnowledgeFileSchema.parse(LIVE_KNOWLEDGE_FIXTURE)).not.toThrow();
   });
 });

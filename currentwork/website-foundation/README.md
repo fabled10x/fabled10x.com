@@ -1,5 +1,7 @@
 # website-foundation — Implementation Plan
 
+**Alias:** `wf` — invoke as `/pipeline wf <section>`. Section IDs in YAML + commits use the canonical slug `website-foundation`.
+
 ## Context
 
 fabled10x.com is the brand site for the Fabled10X YouTube channel — the place

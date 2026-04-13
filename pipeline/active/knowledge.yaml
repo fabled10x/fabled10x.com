@@ -499,3 +499,86 @@ website-foundation-4.1:
     - function: captureEmail
       file: src/components/capture/actions.ts
       purpose: "Server action that validates email via Zod and subscribes to Resend audience; degraded state when env vars missing"
+
+build-in-public-docs-1.1:
+  completed_at: "2026-04-12"
+  patterns_established:
+    - id: bold_key_dual_format_parser
+      file: src/lib/build-log/parse-phase.ts
+      description: |
+        Real markdown READMEs use TWO bold-key conventions interchangeably:
+        1. **Key:** value      (key inside bold, value outside)
+        2. **Key: value**      (entire line inside bold)
+        Parsers must support both. Try format 1 first, fallback to format 2.
+        Return clean value (trim trailing asterisks).
+      reusable_for: "Future markdown parsers in build-in-public-docs (1.2 pipeline-state notes parsing) or any other md-header parser"
+    - id: regex_no_m_flag_for_doc_section_extraction
+      file: src/lib/build-log/parse-readme.ts
+      description: |
+        For 'capture text until next ## heading OR end of doc' patterns, do
+        NOT use the /m flag. With /m, $ matches end-of-LINE which causes
+        non-greedy quantifiers + `$` lookaheads to terminate at the first
+        line, capturing only one line. Without /m, $ matches end-of-string
+        as expected. CONTEXT_RE = /## Context\\s*\\n+([\\s\\S]*?)(?=\\n## |$)/
+        — no /m flag.
+      reusable_for: "Any future markdown extraction with non-greedy [\\s\\S]*? + section-boundary lookahead"
+    - id: cache_and_freeze_loader
+      file: src/lib/build-log/jobs.ts
+      description: |
+        Module-scoped loader cache MUST assign via Object.freeze(...) to
+        prevent callers from mutating shared cache and corrupting
+        subsequent reads. Pattern: `let cache: readonly T[] | null = null;`
+        + `cache = Object.freeze(jobs); return cache;`. The wf 2.2
+        episodes.ts/cases.ts MISSED this — followup cleanup opportunity.
+      reusable_for: "build-in-public-docs-1.2 pipeline-state.ts (will use same pattern); any future cached loader"
+    - id: integration_against_real_filesystem
+      file: src/lib/build-log/__tests__/jobs.test.ts
+      description: |
+        For loaders walking checked-in directory trees (currentwork/,
+        src/content/), real-filesystem integration tests prove the parser
+        actually matches real format. Mock-fs variants cover negatives
+        (empty/missing). Pattern: vi.spyOn(fs, 'method') in mountVfs helper
+        for per-test override; vi.restoreAllMocks() + vi.resetModules() in
+        beforeEach to ensure fresh module + cache per test. Real-fs tests
+        omit the spy setup so default (real fs) is used.
+      reusable_for: "build-in-public-docs-1.2 pipeline-state.ts (live YAML parse); any future content loader"
+    - id: schema_split_extends_to_external_data
+      file: "src/content/schemas/build-log.ts (interfaces) + src/content/schemas/validators.ts (Zod schemas)"
+      description: |
+        The wf 1.1 + 1.2 schema-split pattern (interface in src/content/schemas/{name}.ts,
+        Zod schema in validators.ts, barrel re-export from index.ts) extends
+        cleanly to external data sources (filesystem walks, YAML parses) —
+        not just MDX content. Same file structure, same convention.
+      reusable_for: "Any future loader that needs typed return shapes — pipeline-state.ts (1.2), future plugin/integration loaders"
+
+  gotchas:
+    - "JobFeatureSchema.name cap was 200 originally; bumped to 500 because real bpd README features after backtick-stripping exceed 200 chars (e.g. 'Schemas + Job-Tree Loader — Job/JobPhase/...'). interfaces.yaml shows the planning-doc value 200 — the live cap is 500."
+    - "currentwork/website-foundation/README.md was missing the **Alias:** wf line; added during green to satisfy integration test. The convention is: every currentwork/{slug}/README.md must declare its alias at the top per CLAUDE.md/build-in-public-docs convention. Audit other currentwork/* dirs for compliance."
+    - "vi.spyOn on fs.promises.{readdir,readFile,stat} works because they're configurable properties on a shared Node singleton. The CURRENTWORK_DIR const in jobs.ts captures process.cwd() at module load time — vi.resetModules() between tests is critical so a fresh import gets fresh module state (and fresh cache)."
+    - "Vitest's expect(() => undefined.method()).toThrow() returns true (TypeError thrown), so red-phase sec_tampering_* tests against not-yet-implemented schemas pass for the wrong reason. Tolerable — they become genuine ZodError assertions once schemas exist."
+
+  reusable_utilities:
+    - function: parseReadme
+      file: src/lib/build-log/parse-readme.ts
+      purpose: "Pure function: extract title (H1), alias (`**Alias:** \\`x\\``), context (## Context block), and Feature Overview table rows from a job README markdown string. Returns ParsedReadme."
+    - function: parsePhaseHeader
+      file: src/lib/build-log/parse-phase.ts
+      purpose: "Pure function: extract phaseNumber/title from `# Phase N: Title` H1 + best-effort bold-key fields (Total Size, Prerequisites, New Types, New Files) from a phase markdown string. Tolerant of missing fields. Returns JobPhaseHeader."
+    - function: getAllJobs / getJobBySlug / getJobPhase
+      file: src/lib/build-log/jobs.ts
+      purpose: "Filesystem walker over currentwork/. Returns frozen, validated Job[] (or single Job/JobPhase). Empty currentwork → []. ENOENT → []. Skip dirs without README. Sort jobs by slug; sort phases by leading number. Module-scoped cache."
+    - function: validJobFixture
+      file: src/content/schemas/__tests__/validators.test.ts
+      purpose: "Test helper exported from validators.test.ts. Returns a valid Job object with optional overrides. Used by 1.1 unit tests; available for 1.2+ to reuse without redefining the fixture."
+
+  cross_section_cleanup_opportunities:
+    - target: "src/lib/content/episodes.ts:24-29 + src/lib/content/cases.ts:24-26"
+      description: "Add Object.freeze() to cache assignment. Currently those loaders assign bare sorted arrays — callers can mutate the cache and corrupt subsequent reads. wf 2.2 oversight; bpd 1.1 jobs.ts establishes the safer pattern."
+      priority: low
+      effort: "1 line per file; covered by existing tests (no new tests needed)"
+
+  documentation_drift:
+    - "interfaces.yaml says JobFeatureSchema.name max(200); runtime is max(500). Discovery artifact represents pre-implementation planning state — not retroactively updated to preserve audit trail."
+    - "test-cases.yaml plans `integration_session_yaml_parses` and `_knowledge_yaml_parses` to use live-file parsing via the yaml package. Because yaml installs in 1.2 per planning doc, 1.1 used hand-built JS-object fixtures (LIVE_SESSION_FIXTURE, LIVE_KNOWLEDGE_FIXTURE) matching the live structure. Live-file integration moves to 1.2."
+
+open_questions_added: []  # no new open questions; loader_build_incompat (P1) still applies, no new blockers
