@@ -2,9 +2,9 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
-  current_section: "storefront-auth-2.3"
+  current_section: "storefront-auth-3.1"
   current_agent: pending
-  current_stage: "storefront-auth-2.2-complete"
+  current_stage: "storefront-auth-2.3-complete"
   concurrent_jobs: []  # sa-2.2 + ce-1.2 both shipped 2026-04-13
 
 context_window:
@@ -560,6 +560,60 @@ completed_sections:
       pages + SignInForm) is the next sa section. Consumes signIn from
       @/auth via 'use client' SignInForm. Middleware tests will be
       pure-fn (no DB); login pages will be server components.
+
+  - id: "storefront-auth-2.3"
+    name: "Edge proxy + Login pages + SignInForm"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 39  # 17 unit, 3 integration, 3 security, 4 a11y, 2 infra, 6 edge, 2 err, 2 data
+    files_new: 9  # proxy.ts + 4 UI files (3 pages + SignInForm) + 5 test files (but SignInForm/verify tests are colocated per __tests__ convention so counted as new test files)
+    files_modified: 0  # no source modifications, only additions
+    pushed: false  # set true after push
+    notes: |
+      Final feature of storefront-auth Phase 2. Wires sa-2.1 DB + sa-2.2
+      Auth.js into a user-facing flow: anonymous request to gated path →
+      307 redirect to /login?callbackUrl=... → SignInForm posts email →
+      Auth.js signIn('resend') delivers magic-link → /login/verify shown
+      → user clicks link → Auth.js sets session cookie → subsequent
+      request passes the edge proxy gate.
+
+      KEY DECISION: Next.js 16 deprecated `middleware.ts` in favor of
+      `proxy.ts` (function name `proxy`, same matcher config). The
+      planning doc references middleware.ts — outdated per
+      node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md.
+      Implementation, tests, and planning-doc Files table updated to
+      reflect proxy convention. AGENTS.md directs: "heed deprecation
+      notices". Documented in knowledge.yaml:storefront-auth-2.3.patterns_established.next16_proxy_convention
+      for all future edge-gating work.
+
+      Test-harness discoveries documented in
+      knowledge.yaml:storefront-auth-2.3.gotchas:
+      - import.meta.url is NOT file:// in jsdom → use path.resolve(process.cwd(), ...)
+      - React 19 + jsdom blocks form submit when type=email value is
+        non-empty invalid → use fireEvent.submit instead of user.click
+      - UI tests rendering components that transitively import @/auth
+        must vi.mock('@/auth') to avoid tripping the DATABASE_URL guard
+
+      Test edits made during Green phase (all mechanism-only, preserving
+      test intent — see green-progress.yaml test_edits_made for full
+      rationale): vi.mock at top of login page.test.tsx; process.cwd()
+      swap in proxy.test.ts infra test; fireEvent.submit in 4 SignInForm
+      validation tests.
+
+      No cross-section refactor extractions this section. Flagged the
+      13-file Eyebrow pattern as a candidate for a future cross-section
+      refactor job (see refactor-progress.yaml:improvements[0].deferred).
+
+      Manual browser smoke (proxy redirect → Resend magic-link →
+      session cookie → /products/account access) is DEFERRED until a
+      live DB + RESEND_API_KEY environment is available. Automated
+      coverage via integration_middleware_callbackurl_roundtrip test
+      covers the proxy→login→signIn chain with signIn mocked.
+
+      Phase 2 (auth persistence) COMPLETE. Next: Phase 3 sa-3.1
+      (Stripe Client + Checkout Action + BuyButton Live) — depends on
+      sa-2.1 purchases table + sa-2.3 session enforcement.
 
 resume_point:
   last_action: "section_storefront_auth_2.2_completed"

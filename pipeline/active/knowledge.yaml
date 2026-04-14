@@ -1542,3 +1542,128 @@ storefront-auth-2.2:
     natural next section. Middleware tests won't need DB harness (pure
     function tests). SignInForm will consume `signIn` from @/auth via
     'use client' component — first client-side auth surface.
+
+storefront-auth-2.3:
+  completed_at: "2026-04-13"
+  name: "Edge proxy + Login pages + SignInForm"
+  tests: 39
+  files_new: 9  # proxy.ts + 3 UI + 5 test files
+  files_modified: 0
+  commit_hash: pending
+
+  patterns_established:
+    - id: next16_proxy_convention
+      description: |
+        Next.js 16 deprecated the `middleware.ts` file convention and renamed
+        it to `proxy.ts`. The function must be named `proxy` (default or
+        named export). Config object with `matcher` is unchanged. All future
+        edge-gating work in this repo uses proxy.ts, NOT middleware.ts.
+      file: "proxy.ts (project root)"
+      reference_docs: "node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md"
+      reusable_for: "Any future edge-runtime gating, header modification, A/B routing"
+
+    - id: edge_proxy_cookie_filter_pattern
+      description: |
+        For session-based gating without a DB call, read cookie presence
+        only (Boolean of .value). This is a FILTER, not authentication — the
+        downstream page handler / route handler must re-validate via auth()
+        for real authorization. Two-layer design keeps the edge fast and
+        Node-only packages out of the Edge runtime.
+      file: "proxy.ts"
+      reusable_for: "Future gated route families (admin, portal, etc.)"
+
+    - id: auth_form_use_action_state
+      description: |
+        Client-side `useActionState` wrapped around an inline async action
+        (NOT a separate 'use server' module) works for forms that call an
+        existing Auth.js or similarly-provided server action. The action
+        lives inside the 'use client' component, validates input, then
+        awaits the external server action. Pending state auto-disables the
+        submit button; error state renders p[role=alert] for screen readers.
+        Mirrors wf-4.1 EmailCapture but with inline action (EmailCapture
+        uses a separate actions.ts).
+      file: "src/components/auth/SignInForm.tsx"
+      reusable_for: "Any passwordless / magic-link / social auth form"
+
+    - id: nextrequest_test_fabrication
+      description: |
+        Test edge-runtime proxy/middleware by fabricating NextRequest objects:
+        `const req = new NextRequest(new URL(path, 'http://localhost:3000'));`
+        Cookies: `req.cookies.set(name, value);`. Assert redirect via
+        `res.status === 307` and `res.headers.get('location')`. Assert
+        passthrough via `res.status === 200` or
+        `res.headers.get('x-middleware-next') === '1'`.
+      file: "src/__tests__/proxy.test.ts"
+      reusable_for: "All future proxy tests"
+
+  gotchas:
+    - id: import_meta_url_not_file_in_jsdom
+      description: |
+        Vitest's jsdom environment does NOT set `import.meta.url` to a
+        `file://` scheme URL. Using `new URL('../foo', import.meta.url)`
+        with `fs.readFileSync` throws "The URL must be of scheme file".
+        Fix: use `path.resolve(process.cwd(), 'foo')` instead.
+      encountered_in: "src/__tests__/proxy.test.ts infra_middleware_edge_runtime_safe"
+      reusable_for: "Any test that needs to read source files from disk"
+
+    - id: react19_html5_validation_blocks_action
+      description: |
+        In React 19 + jsdom, HTML5 constraint validation on type="email"
+        inputs blocks form submission when the value is non-empty but
+        invalid (e.g., 'nope'). The form's submit event never fires, so
+        React's form action handler never runs. Workarounds that imperatively
+        `setAttribute('type', 'text')` or `removeAttribute('required')` get
+        reconciled away by React between user.type and user.click. Fix:
+        use `fireEvent.submit(form)` instead of `user.click(button)` —
+        bypasses browser validation and triggers React's action handler
+        directly. Preserves test intent.
+      encountered_in: "src/components/auth/__tests__/SignInForm.test.tsx"
+      reusable_for: "Any client-component form test that validates invalid
+        values against server-side rules (not relying on HTML5)"
+
+    - id: vi_mock_auth_for_ui_tests
+      description: |
+        Any UI test that renders a component importing from `@/auth`
+        (directly or transitively) will fail with "DATABASE_URL is not set"
+        unless it mocks `@/auth`. The @/auth module imports db from
+        @/db/client which throws if the env var is unset. For pure UI
+        tests not exercising real auth flows, add at top of test file:
+        `vi.mock('@/auth', () => ({ signIn: vi.fn(async () => undefined) }));`
+      encountered_in: "src/app/login/__tests__/page.test.tsx"
+      reusable_for: "All future tests rendering components that transitively import @/auth"
+
+  reusable_utilities:
+    - name: hasSessionCookie(request)
+      file: "proxy.ts"
+      purpose: "Returns true if either `authjs.session-token` or
+        `__Secure-authjs.session-token` cookie is present with truthy value.
+        Encapsulates the dev/production cookie-name difference."
+
+  decisions:
+    - topic: "proxy.ts vs middleware.ts"
+      chose: "proxy.ts"
+      rationale: "Next.js 16 deprecated middleware.ts per docs; AGENTS.md
+        directs 'heed deprecation notices'. The planning doc at
+        currentwork/storefront-auth/phase-2-auth-persistence.md was written
+        before the rename and references middleware.ts — should be updated
+        if revised. Implementation, tests, and integration test all use
+        proxy.ts."
+    - topic: "Inline signInAction vs separate actions.ts"
+      chose: "inline in SignInForm.tsx (per planning doc)"
+      rationale: "The action only wraps Auth.js's signIn — no validation
+        logic complex enough to warrant extraction. Simpler to keep in one
+        file. Differs from wf-4.1 EmailCapture (which has separate
+        actions.ts with 'use server') because signIn IS already a server
+        action; re-wrapping in a 'use server' module would double-serialize."
+
+  next_section_handoff: |
+    With sa-2.3 shipped, Phase 2 (auth persistence) is complete. Session
+    management is wired edge→page→action. Phase 3 (downloads + cart) can
+    assume:
+    - Anonymous requests to /products/account/* and /api/products/downloads/*
+      are redirected to /login with callbackUrl preserved.
+    - Authenticated sessions have a cookie that proxy recognizes (but Phase 3
+      handlers must re-validate via auth() — proxy is filter-only).
+    - /login/verify renders after a magic-link submit; the magic-link itself
+      is delivered by Resend and handled by Auth.js's /api/auth/[...nextauth]
+      route (from sa-2.2).

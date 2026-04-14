@@ -447,6 +447,8 @@ already wires into the test setup):
 
 ## Feature 2.3: Middleware + Login Pages + SignInForm
 
+**Status: ✓ Shipped 2026-04-13** — 39 tests (17 unit, 3 integration, 3 security, 4 a11y, 2 infra, 6 edge, 2 error-recovery, 2 data-integrity). Implementation used `proxy.ts` instead of `middleware.ts` — Next.js 16 deprecated and renamed the middleware file convention to proxy (function name `proxy`, same matcher config). See `pipeline/active/knowledge.yaml` `storefront-auth-2.3.decisions` for rationale.
+
 **Complexity: L** — Edge-runtime `middleware.ts` that gates
 `/products/account/*` and `/api/products/downloads/*`, plus the branded
 `/login` and `/login/verify` pages and the `<SignInForm>` client component.
@@ -705,15 +707,17 @@ fabricated `NextRequest` objects:
 
 ### Files
 
-| Action | File                                                |
-|--------|-----------------------------------------------------|
-| NEW    | `middleware.ts` (project root)                      |
-| NEW    | `src/__tests__/middleware.test.ts`                  |
-| NEW    | `src/app/login/page.tsx`                            |
-| NEW    | `src/app/login/verify/page.tsx`                     |
-| NEW    | `src/components/auth/SignInForm.tsx`                |
-| NEW    | `src/app/login/__tests__/page.test.tsx`             |
-| NEW    | `src/components/auth/__tests__/SignInForm.test.tsx` |
+| Action   | File                                                |
+|----------|-----------------------------------------------------|
+| ✓ NEW    | `proxy.ts` (project root — Next.js 16 rename of `middleware.ts`) |
+| ✓ NEW    | `src/__tests__/proxy.test.ts`                       |
+| ✓ NEW    | `src/__tests__/proxy-login-integration.test.tsx`    |
+| ✓ NEW    | `src/app/login/page.tsx`                            |
+| ✓ NEW    | `src/app/login/verify/page.tsx`                     |
+| ✓ NEW    | `src/components/auth/SignInForm.tsx`                |
+| ✓ NEW    | `src/app/login/__tests__/page.test.tsx`             |
+| ✓ NEW    | `src/app/login/verify/__tests__/page.test.tsx`      |
+| ✓ NEW    | `src/components/auth/__tests__/SignInForm.test.tsx` |
 
 ---
 
