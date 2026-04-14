@@ -1768,3 +1768,20 @@ storefront-auth-3.1:
       - "Mocking node:fs/promises in vitest requires both default and named exports in the factory"
       - "readFile in-memory is fine for small stubs but switch to createReadStream for large assets"
       - "path.resolve with startsWith(DIR + path.sep) is the traversal defense pattern"
+
+  storefront-auth-4.1:
+    completed_at: "2026-04-14"
+    patterns_established:
+      - description: "Authenticated server component page with auth() + db query + redirect"
+        file: "src/app/products/account/page.tsx"
+        reusable_for: "Any future page needing session-gated server-side data fetching"
+      - description: "Ownership-gated detail page using notFound() for mismatch (not 403)"
+        file: "src/app/products/account/purchases/[id]/page.tsx"
+        reusable_for: "Any future per-user resource detail page"
+      - description: "Client component sign-out with form action + useTransition pattern"
+        file: "src/components/account/SignOutButton.tsx"
+        reusable_for: "Auth.js v5 signOut from any client component"
+    gotchas:
+      - "redirect() and notFound() don't throw in test mocks — use 'return redirect(...)' for testability"
+      - "getAllProducts() returns LoadedEntry<Product>[] — Map to .meta for Map<string, Product>"
+      - "Mocking drizzle db chain must match exact call order: select→from→where→orderBy or →limit"

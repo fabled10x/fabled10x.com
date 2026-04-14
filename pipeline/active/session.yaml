@@ -3,8 +3,8 @@ session:
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
   current_section: "storefront-auth-4.1"
-  current_agent: pending
-  current_stage: "storefront-auth-3.3-complete"
+  current_agent: finish
+  current_stage: "storefront-auth-4.1-finish"
   concurrent_jobs: []
 
 context_window:
