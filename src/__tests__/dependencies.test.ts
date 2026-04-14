@@ -17,6 +17,14 @@ describe('package dependencies', () => {
   it('infra_dependencies_drizzle_kit_in_dev_deps', () => {
     expect(pkg.devDependencies).toHaveProperty('drizzle-kit');
   });
+
+  it('infra_dependencies_next_auth_installed', () => {
+    expect(pkg.dependencies).toHaveProperty('next-auth');
+  });
+
+  it('infra_dependencies_auth_drizzle_adapter_installed', () => {
+    expect(pkg.dependencies).toHaveProperty('@auth/drizzle-adapter');
+  });
 });
 
 describe('db npm scripts', () => {

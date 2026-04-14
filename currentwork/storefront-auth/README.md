@@ -81,7 +81,7 @@ This job reuses these `wf` outputs and cannot start until they exist.
 | 1.1 | Product content pipeline — schema + enums + Zod validator + loader + 2 seed MDX files           | 1 - Catalog                | M    | Shipped |
 | 1.2 | Products catalog routes — `/products` index + `/products/[slug]` detail + `ProductCard`/`BuyButton` (CTA disabled until Phase 3) | 1 - Catalog                | M    | Shipped |
 | 2.1 | Postgres + Drizzle setup — schema, migrations, client, `docker-compose.yml` for local dev       | 2 - Auth + Persistence     | L    | Planned |
-| 2.2 | Auth.js v5 integration — Resend magic-link provider, Drizzle adapter, session config            | 2 - Auth + Persistence     | L    | Planned |
+| 2.2 | Auth.js v5 integration — Resend magic-link provider, Drizzle adapter, session config            | 2 - Auth + Persistence     | L    | Shipped |
 | 2.3 | Middleware route protection + `/login` + `/login/verify` pages + `<SignInForm>` client component | 2 - Auth + Persistence     | L    | Planned |
 | 3.1 | Stripe client + price-map resolver + `createCheckoutSession()` server action + BuyButton live   | 3 - Payments + Fulfillment | L    | Planned |
 | 3.2 | Stripe webhook handler — signature verification + idempotent `purchases` write + Resend confirmation email | 3 - Payments + Fulfillment | L    | Planned |

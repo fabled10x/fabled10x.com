@@ -302,12 +302,31 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 
 ---
 
-## Feature 2.2: Auth.js v5 + Resend Magic-Link
+## Feature 2.2: Auth.js v5 + Resend Magic-Link ✅ COMPLETE (2026-04-13)
 
 **Complexity: L** — Wire Auth.js v5, the Drizzle adapter, the Resend email
 provider, and the session config. By the end of this feature, a user can
 submit an email at (eventually) `/login`, receive a magic-link email from
 Resend, click it, and land in a signed-in session.
+
+**Shipped checklist:**
+- [x] `npm install next-auth@beta @auth/drizzle-adapter` (pinned: next-auth ^5.0.0-beta.30, @auth/drizzle-adapter ^1.11.1)
+- [x] `src/auth.ts` — NextAuth v5 central config with DrizzleAdapter + Resend + session strategy=database + pages + trustHost + sessionCallback
+- [x] Exports: handlers, auth, signIn, signOut, sessionCallback (extracted for unit testability), authConfig (exposed for adapter-level integration tests)
+- [x] `src/app/api/auth/[...nextauth]/route.ts` — 2-line re-export of handlers.GET/POST
+- [x] `src/types/next-auth.d.ts` — module augmentation adding id: string to Session.user
+- [x] `src/__tests__/auth.test.ts` — 25 tests (12 unit/infra/edge-state passing + 13 DB-gated integration/sec/edge-input/err/data via skipIf(!hasDb))
+- [x] `src/__tests__/mocks/msw-server.ts` — setupServer() with default Resend /emails handler
+- [x] `src/__tests__/setup.ts` — MSW lifecycle block uncommented (beforeAll/afterEach/afterAll)
+- [x] `vitest.config.mts` — test.server.deps.inline = ['next-auth', '@auth/core', '@auth/drizzle-adapter'] (required for vitest to resolve next-auth's bare `next/server` import)
+
+**Drive-by schema extension (required by @auth/drizzle-adapter type contract):**
+- [x] `src/db/schema.ts` — added 3 nullable columns to users (emailVerified, name, image) + new `accounts` table (composite PK on provider+providerAccountId, userId FK cascade)
+- [x] `src/db/migrations/0001_add_auth_user_columns_and_accounts.sql` — generated via drizzle-kit
+- [x] `src/db/__tests__/schema.test.ts` — extended User literal to include new nullable fields (sa-2.1 test intent preserved)
+
+**Tests shipped:** 27 new test entries (14 passing + 13 DB-gated skipped) + 2 route re-export tests + 2 dependency presence tests = **29 new, 17 passing, 13 skipped**
+**Full suite:** 769 (739 passed | 30 skipped); zero regressions vs pre-green baseline of 712.
 
 ### Problem
 

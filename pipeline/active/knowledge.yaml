@@ -1362,3 +1362,183 @@ cohort-enrollment-1.2:
       resolution_evidence:
         first_clean_build: "storefront-auth-2.1 (2026-04-13)"
         second_clean_build: "cohort-enrollment-1.2 (2026-04-13)"
+
+storefront-auth-2.2:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: next_auth_v5_module_augmentation_pattern
+      description: |
+        To add custom fields to next-auth v5's Session type (e.g., session.user.id
+        which next-auth defaults to omit), use ambient module augmentation in
+        `src/types/next-auth.d.ts`:
+          import 'next-auth';
+          declare module 'next-auth' {
+            interface Session { user: { id: string; email: string; ... }; expires: string; }
+          }
+        tsconfig.json's default `include: ['**/*.ts']` picks this up automatically.
+        No separate triple-slash reference needed.
+      file: "src/types/next-auth.d.ts"
+      reusable_for: "Any future section that adds custom Session fields (e.g., role/tenant for multi-role auth, impersonation tokens, feature flags)"
+
+    - id: auth_config_extract_pattern
+      description: |
+        Extract NextAuth() config object as named export `authConfig` BEFORE
+        destructuring { handlers, auth, signIn, signOut }. This exposes
+        adapter, providers, callbacks to integration tests that need to
+        exercise the adapter directly (e.g., `authConfig.adapter.createUser(...)`).
+        Also extract `sessionCallback` as a separate named export so it can
+        be unit-tested in isolation without going through NextAuth's wrapper.
+        Pattern:
+          export const sessionCallback: NonNullable<NonNullable<NextAuthConfig['callbacks']>['session']> = async ({ session, user }) => { ... };
+          export const authConfig: NextAuthConfig = { adapter, providers, ..., callbacks: { session: sessionCallback } };
+          export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+      file: "src/auth.ts"
+      reusable_for: "Any future refactor of auth.ts (e.g., adding JWT callback, adding signIn callback, swapping adapters)"
+
+    - id: vitest_next_auth_deps_inline
+      description: |
+        next-auth@5.x (beta) does `import 'next/server'` internally (bare
+        import without .js extension). vitest's default Node ESM resolver
+        fails with "Cannot find module 'next/server'. Did you mean
+        'next/server.js'?". Fix: add next-auth to vitest config's
+        test.server.deps.inline array so Vite processes next-auth's
+        imports and resolves via next.js's package.json exports field.
+        REQUIRED inline packages: ['next-auth', '@auth/core', '@auth/drizzle-adapter'].
+        @auth/core is transitively imported by next-auth and has similar
+        bare imports; @auth/drizzle-adapter imports @auth/core's Adapter type.
+      file: "vitest.config.mts"
+      reusable_for: "Any future section adding another next-auth adapter, provider, or Auth.js satellite package"
+
+    - id: vi_hoisted_db_url_stub_for_module_load
+      description: |
+        sa-2.1 shipped src/db/client.ts with `throw new Error('DATABASE_URL is
+        not set')` at module scope. Any test file that imports `@/auth`
+        transitively imports `@/db/client` and fails to load without
+        DATABASE_URL — even when the tests are supposed to be DB-gated via
+        skipIf(!hasDb). Fix: per-file `vi.hoisted(() => { ... })` block at
+        the top of the test file sets DATABASE_URL (+ AUTH_SECRET + RESEND_API_KEY)
+        to recognizable stub values before imports execute. vi.hoisted's
+        block runs before ALL imports (even hoisted-up import statements).
+        Then the file's hasDb check is TIGHTENED to exclude the stub marker:
+          const hasDb = typeof DATABASE_URL === 'string' && .length > 0 && !DATABASE_URL.includes('stubhost');
+        Result: real DATABASE_URL triggers integration tests; stub allows
+        module load without running DB-gated tests.
+      file: "src/__tests__/auth.test.ts, src/app/api/auth/[...nextauth]/__tests__/route.test.ts"
+      reusable_for: "Any future section in sa-3.x/4.x that imports @/auth in test context (3.1 Stripe checkout action, 3.2 webhook handler, 4.1 account page)"
+
+    - id: drizzle_adapter_schema_contract
+      description: |
+        @auth/drizzle-adapter v1.11's DrizzleAdapter(db, schema?) requires
+        schema to be a DefaultPostgresSchema with usersTable matching
+        {id, name, email, emailVerified, image} columns and an accountsTable
+        (even for magic-link only — TS type contract is strict). Magic-link
+        never queries the accounts table at runtime, but the schema object
+        must include it for TS. Our sa-2.1 users table only had
+        {id, email, createdAt, lastSignInAt} — not adapter-compatible until
+        extended with (emailVerified, name, image) nullable columns + a new
+        accounts table matching Auth.js defaults (userId FK cascade,
+        composite PK on provider+providerAccountId, 11 OAuth-specific columns).
+        Migration 0001 generated via drizzle-kit with explicit --name flag.
+      file: "src/db/schema.ts + src/db/migrations/0001_add_auth_user_columns_and_accounts.sql"
+      reusable_for: "Any future adapter integration (e.g., adding OAuth providers in a later job — accounts table already in place)"
+
+    - id: msw_server_bootstrap_pattern
+      description: |
+        Minimal MSW server file at src/__tests__/mocks/msw-server.ts:
+          export const server = setupServer(...defaultResendHandlers);
+        With default-export'd handler array so individual tests can reference
+        it for re-extension. setup.ts imports `server` and wires lifecycle:
+          beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+          afterEach(() => cleanup());
+          afterEach(() => server.resetHandlers());  // separate hook for regex-friendly detection
+          afterAll(() => server.close());
+        'bypass' (not 'error') because unrelated test fetches shouldn't fail
+        hard — only assertions about specific intercepted endpoints matter.
+      file: "src/__tests__/mocks/msw-server.ts + src/__tests__/setup.ts"
+      reusable_for: "Any section needing HTTP intercepts in tests (sa-3.1 Stripe, sa-3.2 webhook signature, 4.2 sitemap external fetches)"
+
+  gotchas:
+    - id: drizzle_adapter_users_schema_mismatch_breaking
+      description: |
+        sa-2.1 users schema was authored without knowledge that @auth/drizzle-adapter
+        v1 REQUIRES emailVerified/name/image columns. Attempting to use the
+        adapter against sa-2.1's users table (without extension) would fail at
+        INSERT time with "column 'emailVerified' of relation 'users' does not
+        exist". TypeScript also rejects the adapter config. Always verify
+        adapter's DefaultPostgresSchema type shape against your actual table
+        before wiring.
+
+    - id: nextauth_signin_server_action_context
+      description: |
+        Auth.js v5 exports signIn as a SERVER ACTION — when imported from a
+        client component, Next.js requires an implicit "use server" directive.
+        Auth.js's own src/auth.ts is auto-marked. For tests, calling signIn()
+        directly works in Vitest's node environment (no Next.js request context
+        needed for the pure provider flow). The hidden callbackUrl input in
+        SignInForm (sa-2.3) is required so the server action receives it
+        through formData.
+
+    - id: drizzle_kit_requires_name_flag_for_stable_migration_names
+      description: |
+        Re-confirming sa-2.1's gotcha: `drizzle-kit generate` without --name
+        produces migrations with random descriptive names. Use
+        `npm run db:generate -- --name descriptive_change` to get stable
+        0001_descriptive_change.sql filename. Used for 0001_add_auth_user_columns_and_accounts.sql.
+
+    - id: drizzle_schema_test_literal_must_include_all_non_optional_fields
+      description: |
+        Drizzle's $inferSelect type includes EVERY column as either T or T|null
+        (not optional with ?). When schema is extended with new columns, existing
+        tests that construct a User literal via `const u: User = { ... }` must
+        be updated to include the new fields (as null if nullable). This is a
+        cross-section ripple: sa-2.1's schema.test.ts line 16-24 needed
+        emailVerified/name/image added when sa-2.2 extended the users schema.
+
+  reusable_utilities:
+    - function: "authConfig"
+      file: "src/auth.ts"
+      purpose: "Full NextAuthConfig object exposed for integration tests that need adapter/providers/callbacks access directly (e.g., sa-3.1/3.2/4.1 may need to invoke adapter methods under test)"
+
+    - function: "sessionCallback"
+      file: "src/auth.ts"
+      purpose: "Extracted session() callback — unit-testable in isolation. Mirrors user.id into session.user.id. Any future changes to session payload shape go here."
+
+    - function: "server (MSW setupServer instance)"
+      file: "src/__tests__/mocks/msw-server.ts"
+      purpose: "Shared MSW server for the whole test suite. Append handlers in individual tests via `server.use(http.post(url, handler))`. Resets between tests via setup.ts afterEach."
+
+  cross_section_cleanup_opportunities_added:
+    - opportunity: "Extract truncateAll helper + hasDb gate to src/db/__tests__/_helpers.ts"
+      rationale: "Now duplicated in 2 files (schema.test.ts, auth.test.ts). When sa-3.2 (webhook) or 3.3 (download) adds a 3rd integration-DB file, do the extraction. Matches sa-2.1's earlier signal."
+      next_section_trigger: "sa-3.2 or sa-3.3"
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: "CONFIRMED RESOLVED (still) — not re-tested in sa-2.2 (VPS OOM skips npm run build per policy). sa-2.1 + ce-1.2 both confirmed. Downgrade to resolved tracked separately."
+      next_action: "No action required — still resolved"
+
+  section_notes: |
+    Second consecutive section to skip local npm run build verification due
+    to VPS OOM policy. The loader_build_incompat P1 remains observationally
+    resolved from sa-2.1/ce-1.2; this section doesn't touch loaders so no
+    new risk introduced.
+
+    Section is infrastructure-heavy config work — small code surface
+    (4 new source files + 1 migration + 2 test files) with high precision
+    required. All 3 discovery-flagged P1 risks (adapter shape, next-auth
+    beta drift, Resend endpoint URL) resolved during green phase:
+    - Adapter shape: required users schema extension + accounts table addition
+    - next-auth beta drift: API aligned with v5.0.0-beta.30; next/server
+      import in env.js requires vitest deps.inline fix
+    - Resend endpoint URL: confirmed https://api.resend.com/emails — MSW
+      handler in place
+
+    Concurrent ce-1.2 landed in tree (src/content/schemas/cohort.ts +
+    src/lib/content/cohorts.ts + tests) during this run; sa-2.2 commit
+    explicitly stages only sa-2.2 files per the established pattern.
+
+    Blocker cleared: sa-2.3 (middleware + /login pages + SignInForm) is the
+    natural next section. Middleware tests won't need DB harness (pure
+    function tests). SignInForm will consume `signIn` from @/auth via
+    'use client' component — first client-side auth surface.

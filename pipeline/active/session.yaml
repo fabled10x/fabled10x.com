@@ -1,11 +1,11 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "cohort-enrollment"
-  current_section: "cohort-enrollment-1.3"
+  current_phase: "storefront-auth"
+  current_section: "storefront-auth-2.3"
   current_agent: pending
-  current_stage: "cohort-enrollment-1.2-complete"
-  concurrent_jobs: ["storefront-auth-2.2"]  # sa-2.2 is next sa section (sa-2.1 shipped 2026-04-13); ce-1.2 shipped 2026-04-13
+  current_stage: "storefront-auth-2.2-complete"
+  concurrent_jobs: []  # sa-2.2 + ce-1.2 both shipped 2026-04-13
 
 context_window:
   iteration: 0
@@ -506,10 +506,65 @@ completed_sections:
       consumes all three exported functions (getAllCohorts, getCohortBySlug,
       getCohortBuckets).
 
+  - id: "storefront-auth-2.2"
+    name: "Auth.js v5 + Resend Magic-Link"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 29  # 12 unit/infra/edge-state passing + 13 DB-gated integration/sec/err/data via skipIf + 2 route re-export + 2 deps assertions; full suite 769 (was 712 pre-green; +27 new entries + +2 route + +2 dep = +31 new test counts; +14 new passing) + 28 from concurrent ce-1.2 landed
+    files_new: 8  # auth.ts, next-auth.d.ts, route.ts, msw-server.ts, auth.test.ts, route.test.ts, migration 0001.sql, 0001_snapshot.json
+    files_modified: 6  # schema.ts (users extension + accounts table), schema.test.ts (User literal), dependencies.test.ts (+2 assertions), setup.ts (MSW lifecycle), vitest.config.mts (deps.inline), package.json+lock (+2 deps)
+    pushed: false  # set true after push
+    notes: |
+      Second feature of storefront-auth Phase 2. Wires Auth.js v5 to
+      sa-2.1's Postgres/Drizzle schema via @auth/drizzle-adapter, with
+      Resend magic-link as the sole provider. DB-session strategy,
+      30-day maxAge, trustHost: true for proxy deploys, pages.signIn=/login
+      (2.3 builds it), sessionCallback mirrors user.id into session.user.id.
+      Module augmentation in src/types/next-auth.d.ts extends Session.user
+      with typed id + email fields.
+
+      Drive-by schema extension: sa-2.1's users table lacked
+      (emailVerified, name, image) columns + accounts table that
+      @auth/drizzle-adapter v1.11 REQUIRES at TS type level and would
+      fail at INSERT runtime. Extended schema + generated migration 0001
+      via drizzle-kit. sa-2.1's schema.test.ts User literal updated to
+      include the 3 new nullable fields (test intent preserved).
+
+      Drive-by test-infra wiring: MSW v2.7 (installed but unwired since
+      wf 4.1) now fully operational. src/__tests__/mocks/msw-server.ts
+      created with default Resend /emails handler; setup.ts MSW lifecycle
+      block uncommented (beforeAll listen + afterEach resetHandlers +
+      afterAll close). Reusable for sa-3.1 Stripe, 3.2 webhook, etc.
+
+      vitest.config.mts gained test.server.deps.inline = ['next-auth',
+      '@auth/core', '@auth/drizzle-adapter'] to resolve next-auth's
+      bare `next/server` import under vitest's Node ESM resolver. Auth.js
+      v5 beta's internal env.js triggers this resolution path.
+
+      Test harness refinement: vi.hoisted() per-file block stubs
+      DATABASE_URL/AUTH_SECRET/RESEND_API_KEY so @/auth module load
+      succeeds without a real DB; hasDb gate tightened with stubhost
+      exclusion to keep integration tests db-gated. Pattern documented
+      in knowledge.yaml as db_client_eager_guard workaround.
+
+      Concurrent cohort-enrollment-1.2 landed in tree during this run;
+      commit explicitly stages only sa-2.2 files + shared state
+      (session.yaml, knowledge.yaml). sa-2.2 stats reported here;
+      ce-1.2 stats reported in its own completed_sections entry.
+
+      loader_build_incompat P1 remains resolved (not re-tested in 2.2
+      per VPS OOM policy; observationally confirmed by sa-2.1 + ce-1.2).
+
+      Blocker cleared: sa-2.3 (middleware + /login + /login/verify
+      pages + SignInForm) is the next sa section. Consumes signIn from
+      @/auth via 'use client' SignInForm. Middleware tests will be
+      pure-fn (no DB); login pages will be server components.
+
 resume_point:
-  last_action: "section_cohort_enrollment_1.2_completed"
-  next_action: "/pipeline ce 1.3 (Cohort Index + Detail Pages — consumes all 3 loader exports). /pipeline sa 2.2 also ready (Auth.js v5 + Resend magic-link + Drizzle adapter)."
-  notes: "cohort-enrollment progress: 2/3 features shipped in Phase 1 (1.1 schema + 1.2 loader). Next: 1.3 (index + detail pages), which completes Phase 1. storefront-auth Phase 2 at 1/3 (sa-2.1 shipped); sa-2.2 is the next sa section. build-in-public-docs COMPLETE (6/6)."
+  last_action: "section_storefront_auth_2.2_completed"
+  next_action: "/pipeline sa 2.3 (Middleware + /login pages + SignInForm). /pipeline ce 1.3 (Cohort Index + Detail Pages) also ready."
+  notes: "storefront-auth Phase 2 at 2/3 (2.1 Postgres+Drizzle + 2.2 Auth.js+Resend). Next: 2.3 middleware + login pages. cohort-enrollment at 2/3 (1.1 schema + 1.2 loader); ce-1.3 completes Phase 1. build-in-public-docs COMPLETE (6/6)."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

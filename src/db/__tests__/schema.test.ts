@@ -16,6 +16,9 @@ describe('db schema structure (unit)', () => {
     const u: User = {
       id: 'u-1',
       email: 'a@example.com',
+      emailVerified: null,
+      name: null,
+      image: null,
       createdAt: new Date('2026-01-01T00:00:00Z'),
       lastSignInAt: null,
     };
