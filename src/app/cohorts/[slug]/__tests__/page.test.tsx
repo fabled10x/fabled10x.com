@@ -54,7 +54,7 @@ const MOCK_COHORT_ANNOUNCED = {
     publishedAt: '2026-04-01',
   },
   slug: 'ai-delivery-2026-q3',
-  default: MOCK_MDX,
+  Component: MOCK_MDX,
 };
 
 const MOCK_COHORT_OPEN = {
@@ -76,7 +76,7 @@ const MOCK_COHORT_OPEN = {
     commitmentHoursPerWeek: 12,
   },
   slug: 'workflow-mastery-2026-q4',
-  default: MOCK_MDX,
+  Component: MOCK_MDX,
 };
 
 function makeParams(slug: string) {

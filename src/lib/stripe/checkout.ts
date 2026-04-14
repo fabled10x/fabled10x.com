@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { stripe } from './client';
+import { getStripe } from './client';
 import { resolveStripePriceId } from './price-map';
 
 export async function createCheckoutSession(productSlug: string) {
@@ -17,7 +17,7 @@ export async function createCheckoutSession(productSlug: string) {
 
   const baseUrl = process.env.AUTH_URL ?? 'http://localhost:3000';
 
-  const checkout = await stripe.checkout.sessions.create({
+  const checkout = await getStripe().checkout.sessions.create({
     mode: 'payment',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],

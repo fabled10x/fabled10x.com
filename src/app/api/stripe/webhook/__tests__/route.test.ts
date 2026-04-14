@@ -18,11 +18,11 @@ vi.hoisted(() => {
 
 const mockConstructEvent = vi.fn();
 vi.mock('@/lib/stripe/client', () => ({
-  stripe: {
+  getStripe: () => ({
     webhooks: {
       constructEvent: (...args: unknown[]) => mockConstructEvent(...args),
     },
-  },
+  }),
 }));
 
 const mockInsert = vi.fn();

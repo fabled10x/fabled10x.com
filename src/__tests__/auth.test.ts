@@ -81,34 +81,42 @@ describe('auth module exports (unit)', () => {
 
 // ===== UNIT: callbacks.session =====
 
+type SessionCallbackParams = Parameters<typeof sessionCallback>[0];
+function invokeSessionCallback(
+  session: unknown,
+  user: unknown,
+) {
+  return sessionCallback({ session, user } as SessionCallbackParams);
+}
+
 describe('callbacks.session (unit)', () => {
   it('unit_session_callback_mirrors_user_id: sets session.user.id from user.id', async () => {
     const session = {
       user: { email: 'alice@example.com' },
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-abc',
       email: 'alice@example.com',
       createdAt: new Date(),
       lastSignInAt: null,
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
-    expect(result.user.id).toBe('u-abc');
+    };
+    const result = await invokeSessionCallback(session, user);
+    expect(result.user!.id).toBe('u-abc');
   });
 
   it('unit_session_callback_does_not_leak_user_fields: returned session contains only {id, email, name?, image?}', async () => {
     const session = {
       user: { email: 'leak@example.com' },
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-leak',
       email: 'leak@example.com',
       createdAt: new Date('2026-01-01'),
       lastSignInAt: new Date('2026-02-01'),
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
+    };
+    const result = await invokeSessionCallback(session, user);
     expect(result.user).not.toHaveProperty('createdAt');
     expect(result.user).not.toHaveProperty('lastSignInAt');
   });
@@ -116,14 +124,14 @@ describe('callbacks.session (unit)', () => {
   it('unit_session_callback_noop_when_session_user_absent: returns session unchanged if session.user missing', async () => {
     const session = {
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-noop',
       email: 'noop@example.com',
       createdAt: new Date(),
       lastSignInAt: null,
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
+    };
+    const result = await invokeSessionCallback(session, user);
     expect(result).toBe(session);
   });
 
@@ -131,32 +139,32 @@ describe('callbacks.session (unit)', () => {
     const session = {
       user: { id: 'attacker-forged-uuid', email: 'victim@example.com' },
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-legit-from-db',
       email: 'victim@example.com',
       createdAt: new Date(),
       lastSignInAt: null,
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
-    expect(result.user.id).toBe('u-legit-from-db');
-    expect(result.user.id).not.toBe('attacker-forged-uuid');
+    };
+    const result = await invokeSessionCallback(session, user);
+    expect(result.user!.id).toBe('u-legit-from-db');
+    expect(result.user!.id).not.toBe('attacker-forged-uuid');
   });
 
   it('sec_info_disclosure_session_payload_minimal: no internal user fields leak into session', async () => {
     const session = {
       user: { email: 'min@example.com' },
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-min',
       email: 'min@example.com',
       createdAt: new Date(),
       lastSignInAt: new Date(),
       internalNotes: 'admin only',
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
-    const keys = Object.keys(result.user);
+    };
+    const result = await invokeSessionCallback(session, user);
+    const keys = Object.keys(result.user!);
     for (const k of keys) {
       expect(['id', 'email', 'name', 'image']).toContain(k);
     }
@@ -166,16 +174,16 @@ describe('callbacks.session (unit)', () => {
     const session = {
       user: { email: 'strip@example.com' },
       expires: new Date(Date.now() + 60_000).toISOString(),
-    } as unknown as Parameters<typeof sessionCallback>[0]['session'];
+    };
     const user = {
       id: 'u-strip',
       email: 'strip@example.com',
       createdAt: new Date('2026-01-01'),
       lastSignInAt: new Date('2026-02-01'),
-    } as unknown as Parameters<typeof sessionCallback>[0]['user'];
-    const result = await sessionCallback({ session, user });
-    expect(Object.keys(result.user)).not.toContain('createdAt');
-    expect(Object.keys(result.user)).not.toContain('lastSignInAt');
+    };
+    const result = await invokeSessionCallback(session, user);
+    expect(Object.keys(result.user!)).not.toContain('createdAt');
+    expect(Object.keys(result.user!)).not.toContain('lastSignInAt');
   });
 });
 

@@ -38,7 +38,7 @@ export default async function CohortDetailPage({ params }: RouteParams) {
     return;
   }
 
-  const { meta, default: MdxBody } = entry;
+  const { meta, Component: MdxBody } = entry;
 
   return (
     <Container as="main" className="py-16">

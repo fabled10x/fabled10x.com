@@ -6,10 +6,12 @@ const globalForDb = globalThis as unknown as {
   pg: ReturnType<typeof postgres> | undefined;
 };
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not set');
-}
+// postgres.js is lazy — no TCP connection until the first query.
+// At build time DATABASE_URL is absent; the placeholder lets the module
+// evaluate so DrizzleAdapter can type-check the schema.  Any actual
+// query without a real URL will fail with a connection error.
+const connectionString =
+  process.env.DATABASE_URL ?? 'postgres://build:build@localhost:5432/build';
 
 const client =
   globalForDb.pg ??

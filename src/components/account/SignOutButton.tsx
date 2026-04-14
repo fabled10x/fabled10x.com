@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { signOut } from '@/auth';
+import { signOutAction } from '@/lib/actions/auth';
 
 export function SignOutButton() {
   const [isPending, startTransition] = useTransition();
@@ -10,7 +10,7 @@ export function SignOutButton() {
     <form
       action={() => {
         startTransition(async () => {
-          await signOut({ redirectTo: '/' });
+          await signOutAction();
         });
       }}
     >

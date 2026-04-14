@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const signInMock = vi.fn(async () => undefined);
+const signInMock = vi.fn();
 
 vi.mock('@/auth', () => ({
   signIn: (...args: unknown[]) => signInMock(...(args as [])),
@@ -180,8 +180,8 @@ describe('SignInForm', () => {
     let resolveSignIn: () => void = () => {};
     signInMock.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          resolveSignIn = resolve;
+        new Promise((resolve) => {
+          resolveSignIn = () => resolve(undefined);
         }),
     );
     const user = userEvent.setup();

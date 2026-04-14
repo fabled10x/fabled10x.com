@@ -27,9 +27,11 @@ describe('db client', () => {
     expect(mod.schema).toHaveProperty('purchases');
   });
 
-  it('err_missing_database_url_throws_descriptive: importing @/db/client with DATABASE_URL unset throws', async () => {
+  it('err_missing_database_url_uses_placeholder: importing @/db/client with DATABASE_URL unset still loads (build safety)', async () => {
     delete process.env.DATABASE_URL;
-    await expect(import('@/db/client')).rejects.toThrow(/DATABASE_URL/);
+    const mod = await import('@/db/client');
+    expect(mod).toHaveProperty('db');
+    expect(mod).toHaveProperty('schema');
   });
 
   it('sec_info_disclosure_database_url_not_logged: client module load does not console.log the DATABASE_URL value', async () => {

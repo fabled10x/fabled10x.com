@@ -49,7 +49,7 @@ const MOCK_UPCOMING = [
       publishedAt: '2026-04-01',
     },
     slug: 'ai-delivery-2026-q3',
-    default: () => null,
+    Component: () => null,
   },
   {
     meta: {
@@ -75,7 +75,7 @@ const MOCK_UPCOMING = [
       publishedAt: '2026-04-01',
     },
     slug: 'workflow-mastery-2026-q4',
-    default: () => null,
+    Component: () => null,
   },
 ];
 

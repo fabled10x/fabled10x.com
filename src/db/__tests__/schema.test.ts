@@ -85,7 +85,7 @@ describe('db schema structure (unit)', () => {
     const idx = cfg.indexes[0];
     const config = idx.config;
     expect(config.name).toContain('user_id');
-    const idxColNames = config.columns.map((c: { name: string }) => c.name);
+    const idxColNames = config.columns.map((c: unknown) => (c as { name: string }).name);
     expect(idxColNames).toContain('user_id');
   });
 });

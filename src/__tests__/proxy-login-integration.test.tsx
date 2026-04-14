@@ -42,7 +42,7 @@ describe('integration: proxy redirect → login page → signIn with same callba
     await user.type(screen.getByRole('textbox'), 'user@example.com');
     await user.click(screen.getByRole('button'));
     await waitFor(() => expect(signInMock).toHaveBeenCalled());
-    const args = signInMock.mock.calls[0] as [string, Record<string, string>];
+    const args = signInMock.mock.calls[0] as unknown as [string, Record<string, string>];
     expect(args[1].redirectTo).toBe('/products/account/purchases/abc');
   });
 });

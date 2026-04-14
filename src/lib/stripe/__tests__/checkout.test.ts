@@ -6,14 +6,15 @@ vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }));
 
-vi.mock('../client', () => ({
-  stripe: {
-    checkout: {
-      sessions: {
-        create: vi.fn(),
-      },
+const mockStripeClient = {
+  checkout: {
+    sessions: {
+      create: vi.fn(),
     },
   },
+};
+vi.mock('../client', () => ({
+  getStripe: () => mockStripeClient,
 }));
 
 vi.mock('../price-map', () => ({
@@ -31,12 +32,11 @@ vi.mock('next/navigation', () => ({
 
 import { createCheckoutSession } from '../checkout';
 import { auth } from '@/auth';
-import { stripe } from '../client';
 import { resolveStripePriceId } from '../price-map';
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = vi.mocked(auth) as unknown as ReturnType<typeof vi.fn>;
 const mockResolve = vi.mocked(resolveStripePriceId);
-const mockCreate = vi.mocked(stripe.checkout.sessions.create);
+const mockCreate = vi.mocked(mockStripeClient.checkout.sessions.create);
 
 describe('createCheckoutSession', () => {
   beforeEach(() => {

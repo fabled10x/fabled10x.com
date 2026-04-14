@@ -2,9 +2,9 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const mockSignOut = vi.fn();
-vi.mock('@/auth', () => ({
-  signOut: (...args: unknown[]) => mockSignOut(...args),
+const mockSignOutAction = vi.fn();
+vi.mock('@/lib/actions/auth', () => ({
+  signOutAction: (...args: unknown[]) => mockSignOutAction(...args),
 }));
 
 import { SignOutButton } from '../SignOutButton';
@@ -23,15 +23,15 @@ describe('SignOutButton', () => {
     ).toBeInTheDocument();
   });
 
-  it('unit_signout_calls: form submission calls signOut({ redirectTo: "/" })', async () => {
-    mockSignOut.mockResolvedValue(undefined);
+  it('unit_signout_calls: form submission calls signOutAction', async () => {
+    mockSignOutAction.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
     render(<SignOutButton />);
     await user.click(screen.getByRole('button', { name: /sign out/i }));
 
     await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalledWith({ redirectTo: '/' });
+      expect(mockSignOutAction).toHaveBeenCalled();
     });
   });
 
@@ -39,7 +39,7 @@ describe('SignOutButton', () => {
 
   it('err_signout_pending: button disabled and shows "Signing out…" while pending', async () => {
     let resolveSignOut: () => void;
-    mockSignOut.mockImplementation(
+    mockSignOutAction.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
           resolveSignOut = resolve;
@@ -63,7 +63,7 @@ describe('SignOutButton', () => {
 
   it('a11y_signout_pending: button communicates disabled state via disabled attribute', async () => {
     let resolveSignOut: () => void;
-    mockSignOut.mockImplementation(
+    mockSignOutAction.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
           resolveSignOut = resolve;

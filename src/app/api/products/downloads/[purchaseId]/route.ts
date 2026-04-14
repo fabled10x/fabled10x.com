@@ -59,7 +59,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     );
   }
 
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
       'Content-Type': 'application/zip',

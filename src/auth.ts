@@ -21,7 +21,9 @@ export const authConfig: NextAuthConfig = {
   }),
   providers: [
     Resend({
-      apiKey: process.env.RESEND_API_KEY,
+      // Fallback prevents Resend SDK from throwing at build time when
+      // env vars are absent — the key is only used at runtime.
+      apiKey: process.env.RESEND_API_KEY ?? 'placeholder_build_key',
       from: process.env.AUTH_RESEND_FROM ?? 'no-reply@fabled10x.com',
     }),
   ],
