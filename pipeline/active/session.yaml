@@ -2,14 +2,14 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "storefront-auth"
-  current_section: "storefront-auth-4.1"
+  current_section: "storefront-auth-4.2"
   current_agent: finish
-  current_stage: "storefront-auth-4.1-finish"
+  current_stage: "storefront-auth-4.2-finish"
   concurrent_jobs: []
 
 context_window:
-  iteration: 0
-  total_items: 0
+  iteration: 1
+  total_items: 8
   completed_items: 0
 
 completed_sections:
@@ -671,10 +671,20 @@ completed_sections:
     files_modified: 2
     pushed: true
 
+  - id: "storefront-auth-4.1"
+    name: "Account UI (Overview + Purchase Detail + Sign-Out)"
+    completed_at: "2026-04-14"
+    commit_hash: "b75ecd0"
+    commit_message: "Add account UI with 27 tests (storefront-auth-4.1)"
+    tests: 27
+    files_new: 8
+    files_modified: 3
+    pushed: true
+
 resume_point:
-  last_action: "section_storefront_auth_3.3_completed"
-  next_action: "/pipeline sa 4.1 (Account UI)"
-  notes: "storefront-auth Phase 3 complete (3.1 checkout + 3.2 webhook + 3.3 download). Next: Phase 4 account UI."
+  last_action: "section_storefront_auth_4.1_completed"
+  next_action: "/pipeline sa 4.2 (SEO + Error Boundaries + Lighthouse)"
+  notes: "storefront-auth Phase 4 in progress. 4.1 complete (account UI). Next: 4.2 (SEO polish, error boundaries, Lighthouse sweep)."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

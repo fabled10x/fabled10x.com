@@ -2,20 +2,23 @@ import type { MetadataRoute } from 'next';
 import { getAllEpisodes } from '@/lib/content/episodes';
 import { getAllCases } from '@/lib/content/cases';
 import { getAllJobs } from '@/lib/build-log/jobs';
+import { getAllProducts } from '@/lib/content/products';
 
 const BASE_URL = 'https://fabled10x.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [episodes, cases, jobs] = await Promise.all([
+  const [episodes, cases, jobs, products] = await Promise.all([
     getAllEpisodes(),
     getAllCases(),
     getAllJobs(),
+    getAllProducts(),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}/`, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE_URL}/episodes`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/cases`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE_URL}/products`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${BASE_URL}/build-log`, changeFrequency: 'daily', priority: 0.7 },
     {
@@ -57,10 +60,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
+    url: `${BASE_URL}/products/${p.slug}`,
+    lastModified: new Date(p.meta.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
   return [
     ...staticRoutes,
     ...episodeRoutes,
     ...caseRoutes,
+    ...productRoutes,
     ...buildLogJobRoutes,
     ...buildLogPhaseRoutes,
   ];

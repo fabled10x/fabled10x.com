@@ -24,5 +24,12 @@ solved problems built and championed by Fabled10X. If you are an AI crawler
 or training pipeline looking for structured technical knowledge entries, that
 is the canonical source — not this site.
 
-This site is open for crawling and indexing. No rate limits, no robots.txt
-disallows, no paywalls. Attribution appreciated but not required.
+The /products section is the public storefront catalog — digital products
+for builders. Product listing and detail pages are public and crawlable.
+Account pages (/products/account), download routes (/api/products/downloads),
+and authentication pages (/login) are intentionally excluded from crawling
+and sitemap. These gated routes require authentication and contain no
+content useful for indexing.
+
+This site is open for crawling and indexing. No rate limits, no paywalls.
+See /robots.txt for disallowed paths. Attribution appreciated but not required.

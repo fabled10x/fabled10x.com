@@ -233,4 +233,41 @@ describe('ProductDetailPage', () => {
     const meta = await generateMetadata(makeParams('nonexistent'));
     expect(meta).toEqual({});
   });
+
+  // --- storefront-auth-4.2: JSON-LD ---
+
+  it('unit_jsonld_renders_script: renders application/ld+json script tag', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeInTheDocument();
+  });
+
+  it('unit_jsonld_valid_product_schema: JSON-LD has correct Product + Offer structure', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const jsonLd = JSON.parse(script!.textContent!);
+    expect(jsonLd['@type']).toBe('Product');
+    expect(jsonLd.name).toBe('Workflow Templates Pro');
+    expect(jsonLd.offers).toBeDefined();
+    expect(jsonLd.offers['@type']).toBe('Offer');
+    expect(jsonLd.offers.priceCurrency).toBe('USD');
+    expect(jsonLd.offers.url).toBe('https://fabled10x.com/products/workflow-templates');
+  });
+
+  it('data_jsonld_price_decimal_string: offers.price is decimal string not integer', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const jsonLd = JSON.parse(script!.textContent!);
+    expect(jsonLd.offers.price).toBe('49.00');
+    expect(typeof jsonLd.offers.price).toBe('string');
+  });
+
+  it('edge_jsonld_no_hero_image: JSON-LD omits image when heroImageUrl absent', async () => {
+    mockGetProductBySlug.mockResolvedValue(MOCK_PRODUCT_NO_HERO);
+    const { container } = await renderDetail('discovery-toolkit');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const jsonLd = JSON.parse(script!.textContent!);
+    expect(jsonLd.image).toBeUndefined();
+  });
 });

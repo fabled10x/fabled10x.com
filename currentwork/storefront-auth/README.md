@@ -87,7 +87,7 @@ This job reuses these `wf` outputs and cannot start until they exist.
 | 3.2 | Stripe webhook handler — signature verification + idempotent `purchases` write + Resend confirmation email | 3 - Payments + Fulfillment | L    | Shipped |
 | 3.3 | Download route handler — verifies purchase, streams file from `private/products/`               | 3 - Payments + Fulfillment | M    | Shipped |
 | 4.1 | Account UI — `/products/account` overview + `/products/account/purchases/[id]` detail + sign-out button | 4 - Account + SEO          | M    | Shipped |
-| 4.2 | SEO polish + error boundaries + Lighthouse sweep — JSON-LD, sitemap, nav, robots, segment error/not-found | 4 - Account + SEO          | M    | Planned |
+| 4.2 | SEO polish + error boundaries + Lighthouse sweep — JSON-LD, sitemap, nav, robots, segment error/not-found | 4 - Account + SEO          | M    | Shipped |
 
 **Size guide**: S = few hours, single file. M = half day, 2-3 files. L = full day, 4+ files. XL = multi-day, new content type + loader + UI.
 

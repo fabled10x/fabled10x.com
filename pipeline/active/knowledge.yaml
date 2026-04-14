@@ -1785,3 +1785,24 @@ storefront-auth-3.1:
       - "redirect() and notFound() don't throw in test mocks — use 'return redirect(...)' for testability"
       - "getAllProducts() returns LoadedEntry<Product>[] — Map to .meta for Map<string, Product>"
       - "Mocking drizzle db chain must match exact call order: select→from→where→orderBy or →limit"
+
+  storefront-auth-4.2:
+    completed_at: "2026-04-14"
+    patterns_established:
+      - description: "Segment-scoped error boundary with unstable_retry prop"
+        file: "src/app/products/error.tsx"
+        reusable_for: "Any new route segment needing its own error boundary"
+      - description: "Segment-scoped not-found with contextual copy"
+        file: "src/app/products/account/not-found.tsx"
+        reusable_for: "Any route segment needing a custom 404 instead of root not-found"
+      - description: "JSON-LD Product + Offer with conditional image field"
+        file: "src/app/products/[slug]/page.tsx"
+        reusable_for: "Any product/item detail page needing schema.org structured data"
+      - description: "Sitemap with parallel content loader calls (4 loaders)"
+        file: "src/app/sitemap.ts"
+        reusable_for: "Adding any new content type to the sitemap"
+    gotchas:
+      - "Root error.tsx uses unstable_retry (not reset) in Next.js 16.2.0+ — all segment error boundaries must match"
+      - "JSON-LD price must be string with toFixed(2), not number — schema.org requires decimal string"
+      - "When adding a new NAV_ITEMS entry, update hardcoded count assertions in Header.test.tsx and the data_header_nav_items expected array"
+      - "Sitemap edge case test has hardcoded static route count — must be updated when adding new static routes"

@@ -6,6 +6,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
+        disallow: [
+          '/products/account',
+          '/products/account/',
+          '/api/products/downloads',
+          '/login',
+          '/login/',
+          '/api/auth',
+        ],
       },
     ],
     sitemap: 'https://fabled10x.com/sitemap.xml',

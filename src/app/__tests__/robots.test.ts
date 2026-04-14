@@ -25,4 +25,18 @@ describe('robots', () => {
     expect(result).toHaveProperty('rules');
     expect(result).toHaveProperty('sitemap');
   });
+
+  // --- storefront-auth-4.2: Disallow gated routes ---
+
+  it('unit_robots_disallow_gated', () => {
+    const result = robots();
+    const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
+    const starRule = rules.find((r) => r.userAgent === '*');
+    expect(starRule).toBeDefined();
+    const disallow = Array.isArray(starRule?.disallow) ? starRule.disallow : [starRule?.disallow].filter(Boolean);
+    expect(disallow).toContain('/products/account');
+    expect(disallow).toContain('/api/products/downloads');
+    expect(disallow).toContain('/login');
+    expect(disallow).toContain('/api/auth');
+  });
 });

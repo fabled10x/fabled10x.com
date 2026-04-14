@@ -43,7 +43,7 @@ describe('Header', () => {
     render(<Header />);
     const nav = screen.getByRole('navigation');
     const items = nav.querySelectorAll('li');
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
   });
 
   it('unit_header_nav_hrefs', () => {
@@ -90,6 +90,7 @@ describe('Header', () => {
       { href: '/episodes', label: 'Episodes' },
       { href: '/cases', label: 'Cases' },
       { href: '/build-log', label: 'Build log' },
+      { href: '/products', label: 'Products' },
       { href: '/about', label: 'About' },
     ]);
   });
@@ -106,7 +107,7 @@ describe('Header', () => {
     render(<Header />);
     const nav = screen.getByRole('navigation');
     const items = nav.querySelectorAll('li');
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
   });
 
   it('int_header_active_on_build_log', () => {
@@ -148,6 +149,14 @@ describe('Header', () => {
     render(<Header />);
     const link = screen.getByRole('link', { name: 'Build log' });
     expect(link).not.toHaveAttribute('aria-current', 'page');
+  });
+
+  // --- storefront-auth-4.2: Products nav item ---
+
+  it('unit_header_has_products_link', () => {
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Products' });
+    expect(link).toHaveAttribute('href', '/products');
   });
 
   // --- Integration ---

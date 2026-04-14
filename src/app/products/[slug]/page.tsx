@@ -57,8 +57,30 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   const { meta, Component } = entry;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: meta.title,
+    description: meta.summary,
+    category: PRODUCT_CATEGORY_LABELS[meta.category],
+    ...(meta.heroImageUrl ? { image: meta.heroImageUrl } : {}),
+    brand: { '@type': 'Brand', name: 'Fabled10X' },
+    offers: {
+      '@type': 'Offer',
+      price: (meta.priceCents / 100).toFixed(2),
+      priceCurrency: meta.currency.toUpperCase(),
+      availability: 'https://schema.org/InStock',
+      url: `https://fabled10x.com/products/${meta.slug}`,
+    },
+  };
+
   return (
-    <Container as="article" className="py-16">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Container as="article" className="py-16">
       <header className="max-w-2xl">
         <p className="text-sm uppercase tracking-wide text-muted">
           {PRODUCT_CATEGORY_LABELS[meta.category]}
@@ -86,5 +108,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
         <Component />
       </section>
     </Container>
+    </>
   );
 }
