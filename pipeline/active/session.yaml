@@ -1,11 +1,11 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "storefront-auth"
-  current_section: "storefront-auth-3.1"
+  current_phase: "cohort-enrollment"
+  current_section: "cohort-enrollment-2.1"
   current_agent: pending
-  current_stage: "storefront-auth-2.3-complete"
-  concurrent_jobs: []  # sa-2.2 + ce-1.2 both shipped 2026-04-13
+  current_stage: "cohort-enrollment-1.3-complete"
+  concurrent_jobs: []
 
 context_window:
   iteration: 0
@@ -505,6 +505,32 @@ completed_sections:
       Blocker cleared: ce-1.3 (/cohorts index + detail pages) can start —
       consumes all three exported functions (getAllCohorts, getCohortBySlug,
       getCohortBuckets).
+
+  - id: "cohort-enrollment-1.3"
+    name: "/cohorts Index + /cohorts/[slug] Detail Pages"
+    completed_at: "2026-04-14"
+    commit_hash: pending
+    commit_message: pending
+    tests: 37
+    files_new: 7
+    files_modified: 0
+    pushed: false
+    notes: |
+      Third section of ce job. Public cohort catalog: /cohorts index page
+      with upcoming/archived sections via getCohortBuckets(), and /cohorts/[slug]
+      detail pages with CohortDetailHero, MDX body, and status-driven CTA
+      placeholder (5-branch conditional for announced/open/closed/enrolled/shipped).
+      Components: CohortStatusBadge (color-coded badge with brand tokens),
+      CohortCard (series/title/tagline/dates/price), CohortDetailHero (full
+      hero with start/end/duration/tuition). Mirrors wf-3.2/wf-3.3 content
+      page pattern exactly (async server components, generateStaticParams,
+      dynamicParams=false, notFound guard). Empty-upcoming fallback links to
+      homepage email capture. formatDate uses UTC anchor to avoid timezone bugs.
+      formatPrice duplicated in CohortCard + CohortDetailHero (intentionally
+      kept inline — 6 lines, per CLAUDE.md 3-line rule). ESLint caught 1
+      unescaped apostrophe in CTA text — fixed in refactor phase.
+      Pure static content section: no API, no DB, no hooks, no auth, no forms.
+      35+ pipeline beats N/A across all phases.
 
   - id: "storefront-auth-2.2"
     name: "Auth.js v5 + Resend Magic-Link"

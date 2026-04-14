@@ -1,45 +1,42 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { createCheckoutSession } from '@/lib/stripe/checkout';
 
 interface BuyButtonProps {
   productSlug: string;
 }
 
 export function BuyButton({ productSlug }: BuyButtonProps) {
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-
-  const isLive = false;
-
-  if (!isLive) {
-    return (
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        className="rounded-md border border-mist bg-mist/30 px-6 py-3 text-sm font-semibold text-muted"
-      >
-        Coming soon
-      </button>
-    );
-  }
 
   return (
     <div>
       <button
         type="button"
-        className="rounded-md bg-accent px-6 py-3 text-sm font-semibold text-parchment hover:bg-accent/90"
+        disabled={isPending}
+        className="rounded-md bg-accent px-6 py-3 text-sm font-semibold text-parchment hover:bg-accent/90 disabled:opacity-60"
         onClick={() => {
+          setError(null);
           startTransition(async () => {
-            setError(null);
-            void productSlug;
+            try {
+              await createCheckoutSession(productSlug);
+            } catch {
+              setError(
+                'Could not start checkout. Try again in a moment.',
+              );
+            }
           });
         }}
       >
-        Buy now
+        {isPending ? 'Preparing checkout\u2026' : 'Buy now'}
       </button>
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mt-2 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

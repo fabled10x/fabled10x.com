@@ -1667,3 +1667,48 @@ storefront-auth-2.3:
     - /login/verify renders after a magic-link submit; the magic-link itself
       is delivered by Resend and handled by Auth.js's /api/auth/[...nextauth]
       route (from sa-2.2).
+
+storefront-auth-3.1:
+  completed_at: "2026-04-14"
+  patterns_established:
+    - description: "stripe_singleton_client"
+      file: "src/lib/stripe/client.ts"
+      reusable_for: "Any future Stripe SDK usage — singleton with API version pin and globalThis hot-reload safety"
+    - description: "server_action_checkout_pattern"
+      file: "src/lib/stripe/checkout.ts"
+      reusable_for: "Cohort enrollment checkout (ce Phase 4) — same auth check → resolve price → create session → redirect pattern"
+    - description: "price_resolver_pattern"
+      file: "src/lib/stripe/price-map.ts"
+      reusable_for: "Cohort resolveStripePriceId equivalent — reads from content loader, rejects placeholders"
+  gotchas:
+    - "Product MDX uses 'price_REPLACEMEBEFORESHIPPING' (no underscores in REPLACEME part) while cohort MDX uses 'price_REPLACE_ME_*' (with underscores). The price-map resolver checks for 'REPLACEME' (no underscore) which matches the product pattern. Cohort resolver should check differently."
+    - "Stripe apiVersion must be cast as Stripe.LatestApiVersion because we're pinning a specific version string. This is the documented Stripe TypeScript pattern."
+    - "Next.js server action redirect() throws NEXT_REDIRECT internally. Tests must expect the redirect to throw, not return — the try/catch in BuyButton deliberately lets this throw escape (redirect happens after the await)."
+  reusable_utilities:
+    - function: "resolveStripePriceId"
+      file: "src/lib/stripe/price-map.ts"
+      purpose: "Maps product slug to Stripe price_xxx ID via product loader — product-specific, cohort needs its own"
+    - function: "createCheckoutSession"
+      file: "src/lib/stripe/checkout.ts"
+      purpose: "Server action: auth check → price resolve → Stripe Checkout Session → redirect"
+  test_count: 23
+  test_breakdown:
+    unit: 10
+    integration: 1
+    security: 2
+    accessibility: 2
+    infrastructure: 2
+    edge_case: 2
+    error_recovery: 1
+    data_integrity: 1
+  status_note: |
+    With sa-3.1 shipped, the Stripe SDK is installed, singleton client is
+    available at src/lib/stripe/client.ts, and the BuyButton on /products/[slug]
+    is live — clicking it triggers createCheckoutSession which redirects to
+    Stripe Checkout. Phase 3.2 (webhook handler) and 3.3 (download route) can
+    assume:
+    - stripe singleton from src/lib/stripe/client.ts (same instance across hot-reload)
+    - Checkout Session metadata includes userId + productSlug
+    - success_url → /products/account?purchased={slug}
+    - cancel_url → /products/{slug}?canceled=1
+    - client_reference_id = session.user.id

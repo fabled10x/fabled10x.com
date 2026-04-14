@@ -82,8 +82,8 @@ This job reuses these `wf` outputs and cannot start until they exist.
 | 1.2 | Products catalog routes — `/products` index + `/products/[slug]` detail + `ProductCard`/`BuyButton` (CTA disabled until Phase 3) | 1 - Catalog                | M    | Shipped |
 | 2.1 | Postgres + Drizzle setup — schema, migrations, client, `docker-compose.yml` for local dev       | 2 - Auth + Persistence     | L    | Planned |
 | 2.2 | Auth.js v5 integration — Resend magic-link provider, Drizzle adapter, session config            | 2 - Auth + Persistence     | L    | Shipped |
-| 2.3 | Middleware route protection + `/login` + `/login/verify` pages + `<SignInForm>` client component | 2 - Auth + Persistence     | L    | Planned |
-| 3.1 | Stripe client + price-map resolver + `createCheckoutSession()` server action + BuyButton live   | 3 - Payments + Fulfillment | L    | Planned |
+| 2.3 | Middleware route protection + `/login` + `/login/verify` pages + `<SignInForm>` client component | 2 - Auth + Persistence     | L    | Shipped |
+| 3.1 | Stripe client + price-map resolver + `createCheckoutSession()` server action + BuyButton live   | 3 - Payments + Fulfillment | L    | Shipped |
 | 3.2 | Stripe webhook handler — signature verification + idempotent `purchases` write + Resend confirmation email | 3 - Payments + Fulfillment | L    | Planned |
 | 3.3 | Download route handler — verifies purchase, streams file from `private/products/`               | 3 - Payments + Fulfillment | M    | Planned |
 | 4.1 | Account UI — `/products/account` overview + `/products/account/purchases/[id]` detail + sign-out button | 4 - Account + SEO          | M    | Planned |
