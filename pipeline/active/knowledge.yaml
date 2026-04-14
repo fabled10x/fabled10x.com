@@ -1258,3 +1258,107 @@ storefront-auth-2.1:
       severity: P1
       status: "LIKELY RESOLVED — npm run build succeeded cleanly for the first time with content-detail routes present. Observation, not verified fix. Confirm in 2.2 when next build runs."
       next_action: "If 2.2 build also passes, downgrade severity and update open_questions entry to `resolved`."
+
+cohort-enrollment-1.2:
+  completed_at: "2026-04-13"
+  patterns_established:
+    - id: cohort_loader_mirrors_products_with_startdate_asc
+      file: "src/lib/content/cohorts.ts"
+      description: |
+        Fourth fabled10x content loader, structurally identical to products.ts
+        (ReadonlyArray<LoadedEntry<T>> + Object.freeze + manifest pattern) with
+        two intentional divergences:
+          (1) Sort by `meta.startDate` ASCENDING (not `meta.publishedAt`
+              DESCENDING). Rationale (planning-doc line 506-508): UX signal for
+              the /cohorts catalog is "when is the next cohort I can join",
+              not "when was it published". Publication date is immaterial
+              to an applicant.
+          (2) Adds `getCohortBuckets()` partition helper that splits the cache
+              into `upcoming: [announced|open|closed]` + `archived: [enrolled|
+              shipped]`. Status `closed` goes to UPCOMING (applications closed
+              but cohort has not run yet), NOT archived. Canonicalizes the
+              bucket classification so ce-1.3 index page + ce-4.5 account page
+              stay in sync.
+      reusable_for: "ce-1.3 index + detail pages consume all three functions; ce-4.5 account page consumes getCohortBuckets"
+
+    - id: cohort_seed_mdx_status_pairing
+      file: "src/content/cohorts/{ai-delivery-2026-q3,workflow-mastery-2026-q4}.mdx"
+      description: |
+        Seed MDX pair intentionally exercises `announced` + `open` statuses
+        (planning-doc line 517-520). ce-1.3 detail-page CTA state machine
+        needs real data for both branches during manual verification. ce-2.x
+        waitlist form hydrates on the `announced` cohort; ce-3.x apply form
+        hydrates on the `open` cohort.
+      reusable_for: "Future seed-pair conventions — when a content type has
+        enum-status branches that downstream components fork on, seed at least
+        one example per branch so the downstream render paths are verifiable
+        manually + via integration tests."
+
+  gotchas:
+    - id: as_const_breaks_mdx_acorn
+      description: |
+        MDX uses the acorn parser (plain JS, not TypeScript). Seed MDX files
+        MUST use `export const meta = { ... };` — NEVER `} as const;`. The
+        planning doc's TypeScript-flavored sketch uses `as const` but that
+        produces a build/test failure with the error:
+          "@mdx-js/rollup: Could not parse import/exports with acorn — Unexpected token"
+          at the `as` keyword.
+        Existing products/cases/episodes MDX files all correctly omit `as const`
+        (precedent at src/content/products/workflow-templates.mdx:16).
+        Planning-doc code blocks for MDX files should be edited to remove
+        `as const` before being used as templates. Discovery's
+        divergences_from_planning_doc should flag this for future cohort-
+        adjacent MDX work.
+      caught_by: "Green phase: 28/28 tests failed initially with acorn parse error; fix took 2 edits removing 'as const'"
+
+    - id: products_barrel_gap_pre_existing
+      description: |
+        src/lib/content/index.ts does NOT re-export products.ts loaders
+        (getAllProducts / getProductBySlug) — inherited gap from sa-1.1 where
+        the barrel update was omitted. Cases / episodes / cohorts ARE barrel-
+        re-exported. 1-line fix, low priority. Not ce-1.2's responsibility to
+        clean up (would be scope creep). Natural home: a dedicated barrel-
+        audit sweep or the createContentLoader factory extraction job.
+
+  reusable_utilities:
+    - function: "getAllCohorts"
+      file: "src/lib/content/cohorts.ts"
+      purpose: "Returns ReadonlyArray<LoadedEntry<Cohort>> sorted by meta.startDate ASC. Module-level cached + Object.freeze. Consumed by ce-1.3 index page, ce-4.5 account cohorts list, ce-4.3 checkout helper validation."
+
+    - function: "getCohortBySlug"
+      file: "src/lib/content/cohorts.ts"
+      purpose: "Returns LoadedEntry<Cohort> | null for a given slug. Delegates to getAllCohorts then .find. Consumed by ce-1.3 detail page + ce-3.1 apply page + ce-4.3 checkout helper."
+
+    - function: "getCohortBuckets"
+      file: "src/lib/content/cohorts.ts"
+      purpose: "Partitions cohorts into { upcoming, archived } with canonical status → bucket mapping. Consumed by ce-1.3 index page (renders two sections) and ce-4.5 account cohorts list (groups enrollments separately from upcoming interest)."
+
+  cross_section_cleanup_opportunities_added:
+    - target: "createContentLoader<T>({directory, schema, manifest, sortFn}) factory across products/cases/episodes/cohorts"
+      description: |
+        4 loaders now share ~25 lines of identical boilerplate (manifest +
+        cache + freeze + sort pattern). sa-1.1 flagged this cleanup at
+        priority=medium with the trigger 'Defer until a 4th loader appears OR
+        roll into loader-v2'. ce-1.2 IS the 4th loader AND loader_build_incompat
+        is now CONFIRMED RESOLVED. However, ce-1.2 diverges on sort-key
+        (startDate ASC vs publishedAt DESC), so the factory signature needs a
+        sortFn generic. Extracting from ce-1.2 would require modifying three
+        sibling loader files (out of section scope). Natural home: a dedicated
+        refactor-sweep job that simultaneously retires loader_build_incompat,
+        extracts createContentLoader, and dedupes MdxModule interface.
+      priority: medium
+      decision: "Defer to a dedicated refactor-sweep job (not a section of any running phase)"
+
+    - target: "src/lib/content/index.ts — products.ts not re-exported"
+      description: "1-line barrel gap inherited from sa-1.1. Would add `export { getAllProducts, getProductBySlug } from './products';`. Low priority; fold into the createContentLoader refactor-sweep above."
+      priority: low
+      decision: defer
+
+  inherited_open_question_status:
+    - id: loader_build_incompat
+      severity: P1
+      status: "CONFIRMED RESOLVED — npm run build passed cleanly for the SECOND consecutive section (sa-2.1 was the first observation; ce-1.2 is the confirmation). All 52 static pages prerender without warnings; all existing content-detail routes (cases/[slug], episodes/[slug], products/[slug], build-log/*) work. Cohort routes aren't yet present (ship in ce-1.3) but the cohort loader compiles and is build-compatible."
+      next_action: "Downgrade open_question severity to resolved in a future knowledge.yaml cleanup. The dedicated createContentLoader factory refactor-sweep is now UNBLOCKED (no longer gated by loader_build_incompat)."
+      resolution_evidence:
+        first_clean_build: "storefront-auth-2.1 (2026-04-13)"
+        second_clean_build: "cohort-enrollment-1.2 (2026-04-13)"

@@ -1,15 +1,15 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "storefront-auth"
-  current_section: "storefront-auth-2.1"
+  current_phase: "cohort-enrollment"
+  current_section: "cohort-enrollment-1.3"
   current_agent: pending
-  current_stage: "cohort-enrollment-1.1-complete"
-  concurrent_jobs: []  # ce-1.1 shipped 2026-04-13
+  current_stage: "cohort-enrollment-1.2-complete"
+  concurrent_jobs: ["storefront-auth-2.2"]  # sa-2.2 is next sa section (sa-2.1 shipped 2026-04-13); ce-1.2 shipped 2026-04-13
 
 context_window:
-  iteration: 1
-  total_items: 15
+  iteration: 0
+  total_items: 0
   completed_items: 0
 
 completed_sections:
@@ -408,10 +408,108 @@ completed_sections:
       regardless.
       Blocker cleared: ce-1.2 (Cohort Loader + Seed MDX) can start.
 
+  - id: "storefront-auth-2.1"
+    name: "Postgres + Drizzle Setup"
+    completed_at: "2026-04-13"
+    commit_hash: "c8f5aae"
+    commit_message: "Add Postgres + Drizzle setup with 42 tests (storefront-auth-2.1)"
+    tests: 42  # 8 unit + 6 integration (DATABASE_URL skipIf-gated) + 3 security + 14 infra + 5 edge + 1 err + 5 data; full suite 712 with DATABASE_URL set
+    files_new: 8  # schema.ts, client.ts, migrations/0000_init.sql + 2 meta/, drizzle.config.ts, docker-compose.yml, .env.example + 6 new test files (client, migration, schema, docker-compose, drizzle-config, env-example, gitignore, readme-db)
+    files_modified: 4  # package.json (+3 deps, +5 scripts), package-lock.json, .gitignore (+docker-volume rule + .env.example whitelist), README.md (+ Local database setup section)
+    pushed: true
+    notes: |
+      First persistence layer in fabled10x. Establishes 4 Drizzle tables
+      (users/sessions/verification_tokens/purchases) with UNIQUE + FK cascade +
+      composite PK + user_id index + 8 inferred types. Uses globalThis singleton
+      pattern for the postgres.js client (survives Next.js dev HMR reloads;
+      module-scope `let cache` from the loader pattern would exhaust the
+      connection pool). DATABASE_URL guard at module load — fail-loud, not
+      lazy-error at first query.
+
+      Integration tests gated behind `describe.skipIf(!process.env.DATABASE_URL)`:
+      7 unit tests (schema shape via getTableConfig) always run; 17 integration/
+      edge/data/security tests run only when DATABASE_URL is set. Without env,
+      tests cleanly skip — NOT a regression of the zero-skipped rule. Pattern
+      documented in patterns.yaml; 2.2/3.2/3.3/4.1 will inherit.
+
+      pgcrypto CREATE EXTENSION clause manually prepended to the generated
+      migration (drizzle-kit does not auto-emit it for gen_random_uuid defaults).
+      --name init flag required to get stable 0000_init.sql filename.
+
+      loader_build_incompat P1 did NOT surface — npm run build succeeded
+      cleanly for the first time with content-detail routes present
+      (52 static pages prerendered). Recommendation: close or downgrade
+      after 2.2 also passes. knowledge.yaml updated accordingly.
+
+      .env.example required a .gitignore whitelist `!.env.example` after the
+      catch-all `.env*` rule; silent failure mode (file won't show in git status)
+      captured as gotcha in knowledge.yaml.
+
+      Concurrent cohort-enrollment-1.1 work shared this run; ce-1.1 shipped
+      2026-04-13 as commit 1d5f9a5 before this push. sa-2.1 commit explicitly
+      stages only this section's source files (src/db/*, drizzle.config.ts,
+      docker-compose.yml, .env.example, 6 new test files + dependencies.test.ts
+      modification + currentwork/storefront-auth/phase-2-auth-persistence.md
+      checklist update) plus shared state (knowledge.yaml).
+
+      Blocker cleared: storefront-auth Phase 2.2 (Auth.js v5 + Resend magic-link
+      + Drizzle adapter) is the next sa section. Consumes `users`, `sessions`,
+      `verificationTokens` tables from this migration.
+
+  - id: "cohort-enrollment-1.2"
+    name: "Cohort Loader + Seed MDX"
+    completed_at: "2026-04-13"
+    commit_hash: pending
+    commit_message: pending
+    tests: 28  # 7 unit + 4 integration + 3 contract + 3 infra + 4 edge + 4 err + 3 data_integrity; full suite 723 (was 695 pre-ce-1.2)
+    files_new: 4  # src/lib/content/cohorts.ts, src/lib/content/__tests__/cohorts.test.ts, src/content/cohorts/manifest.ts, src/content/cohorts/ai-delivery-2026-q3.mdx, src/content/cohorts/workflow-mastery-2026-q4.mdx (5 files)
+    files_modified: 1  # src/lib/content/index.ts (barrel +1 line)
+    pushed: false  # set true after push
+    notes: |
+      Second section of cohort-enrollment (ce) job. Cohort loader + 2 seed
+      MDX files, mirroring the sa-1.1 products.ts loader pattern exactly
+      (ReadonlyArray<LoadedEntry<Cohort>> + Object.freeze + module cache +
+      manifest workaround) with 2 intentional divergences:
+        (1) Sort by meta.startDate ASCENDING (not publishedAt DESCENDING) —
+            UX signal for the /cohorts catalog is "when is the next cohort
+            I can join", per planning-doc design decision line 506-508.
+        (2) Adds getCohortBuckets() partition helper splitting status into
+            { upcoming: [announced|open|closed], archived: [enrolled|shipped] }.
+            status='closed' is classified as UPCOMING (applications closed but
+            cohort has not yet run).
+      Seed pair exercises BOTH announced + open statuses (planning-doc
+      line 517-520) so downstream ce-1.3 detail-page CTA state machine has
+      real data for both render branches.
+      Section is infrastructure/loader+seeds — no UI, no API, no DB, no
+      forms, no nav. 13 pipeline beats N/A (most wiring + security/permission/
+      contract categories) per canonical schema_only_pipeline_scope-adjacent
+      pattern from sa-1.1.
+      Refactor produced ZERO code changes — implementation was already
+      idiomatic. 4-loader createContentLoader factory extraction flagged
+      (sa-1.1 trigger met) but deferred to a dedicated refactor-sweep job
+      because (a) sort-key divergence needs sortFn generic, (b) sibling
+      loader files are out of ce-1.2 scope.
+      One green-phase bug caught + fixed: seed MDX initially used 'as const;'
+      (TypeScript syntax from planning-doc sketch) which acorn rejects in
+      MDX — 28/28 tests failed with 'Could not parse import/exports'. Fix:
+      removed 'as const' (products/cases/episodes MDX precedent omits it).
+      Captured as knowledge.yaml gotcha.
+      **loader_build_incompat P1 CONFIRMED RESOLVED** — npm run build
+      passed cleanly for the SECOND consecutive section (sa-2.1 first
+      observation; ce-1.2 confirmation). All 52 static pages prerender.
+      Cohort routes not present yet (ce-1.3) but loader is build-compatible.
+      Concurrent storefront-auth-2.2 work is active in the working tree
+      (pipeline/active/storefront-auth-2.2/ exists from a concurrent run);
+      commit explicitly stages only this section's source files + shared
+      state (session.yaml, knowledge.yaml).
+      Blocker cleared: ce-1.3 (/cohorts index + detail pages) can start —
+      consumes all three exported functions (getAllCohorts, getCohortBySlug,
+      getCohortBuckets).
+
 resume_point:
-  last_action: "section_cohort_enrollment_1.1_completed"
-  next_action: "/pipeline sa 2.1 (Postgres + Drizzle setup — schema, migrations, client, docker-compose.yml). ce-1.2 (Cohort Loader + 2 seed MDX) also ready — can run in parallel."
-  notes: "cohort-enrollment Phase 1 progress: 1/3 features shipped (1.1 Cohort Schema + Validator). storefront-auth Phase 1 COMPLETE (2/10); Phase 2 begins with 2.1 — first persistence layer. build-in-public-docs Phase 2 also complete (5/6); bpd 3.1 done — bpd job shipped 6/6."
+  last_action: "section_cohort_enrollment_1.2_completed"
+  next_action: "/pipeline ce 1.3 (Cohort Index + Detail Pages — consumes all 3 loader exports). /pipeline sa 2.2 also ready (Auth.js v5 + Resend magic-link + Drizzle adapter)."
+  notes: "cohort-enrollment progress: 2/3 features shipped in Phase 1 (1.1 schema + 1.2 loader). Next: 1.3 (index + detail pages), which completes Phase 1. storefront-auth Phase 2 at 1/3 (sa-2.1 shipped); sa-2.2 is the next sa section. build-in-public-docs COMPLETE (6/6)."
 
 notes: |
   fabled10x project initialized on 2026-04-11.
