@@ -1,0 +1,29 @@
+section_id: storefront-auth-3.3
+phase: green
+status: complete
+
+files_created:
+  - src/app/api/products/downloads/[purchaseId]/route.ts
+  - src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+  - private/products/workflow-templates.zip
+  - private/products/discovery-toolkit.zip
+  - private/products/README.md
+
+files_modified:
+  - .gitignore
+
+tests_passing: 10
+tests_total: 10
+tests_skipped: 0
+
+implementation_summary:
+  - GET route handler at /api/products/downloads/[purchaseId]
+  - Auth check via auth() — 401 if no session
+  - Purchase DB lookup by id — 404 if not found
+  - Ownership verification — 403 if purchase.userId !== session.user.id
+  - Product content lookup — 410 if product no longer available
+  - Path traversal defense via path.resolve + startsWith — 400
+  - File streaming with readFile — 500 if missing on disk
+  - Response headers: application/zip, Content-Disposition attachment, Cache-Control private no-store
+  - Stub binary assets in private/products/
+  - .gitignore comment documenting placeholder tracking strategy

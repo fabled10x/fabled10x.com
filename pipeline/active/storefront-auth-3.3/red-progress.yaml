@@ -1,0 +1,51 @@
+section_id: storefront-auth-3.3
+phase: red
+status: complete
+
+test_file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+total_tests: 10
+
+tests_by_category:
+  unit: 3
+  security: 3
+  edge_case: 2
+  infrastructure: 2
+  permission: 0 (n/a)
+  contract: 0 (n/a)
+  accessibility: 0 (n/a)
+  error_recovery: 0 (n/a)
+  data_integrity: 0 (n/a)
+  visual: 0 (n/a)
+  smoke: 0 (n/a)
+
+test_inventory:
+  - id: unit_download_happy_path
+    category: unit
+    status: failing (route.ts does not exist)
+  - id: unit_download_not_found
+    category: unit
+    status: failing
+  - id: unit_download_product_gone
+    category: unit
+    status: failing
+  - id: sec_download_unauthenticated
+    category: security
+    status: failing
+  - id: sec_download_wrong_user
+    category: security
+    status: failing
+  - id: sec_download_path_traversal
+    category: security
+    status: failing
+  - id: edge_download_file_missing
+    category: edge_case
+    status: failing
+  - id: edge_download_response_headers
+    category: edge_case
+    status: failing
+  - id: infra_download_exports_GET
+    category: infrastructure
+    status: failing
+  - id: infra_download_runtime_nodejs
+    category: infrastructure
+    status: failing

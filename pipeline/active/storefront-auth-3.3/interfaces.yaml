@@ -1,0 +1,43 @@
+section_id: storefront-auth-3.3
+
+api_endpoints:
+  - method: GET
+    path: "/api/products/downloads/[purchaseId]"
+    runtime: nodejs
+    auth: required
+    params:
+      purchaseId: "UUID — purchase record ID"
+    responses:
+      200: "Binary file stream (application/zip) with Content-Disposition: attachment"
+      400: "{ error: 'Invalid asset path' } — path traversal attempt"
+      401: "{ error: 'Unauthenticated' } — no session"
+      403: "{ error: 'Forbidden' } — user doesn't own purchase"
+      404: "{ error: 'Not found' } — purchaseId doesn't exist"
+      410: "{ error: 'Product no longer available' } — product MDX deleted"
+      500: "{ error: 'Asset missing on disk' } — file not found on filesystem"
+    security:
+      - auth_check: "await auth() must return session with user.id"
+      - ownership_check: "purchase.userId === session.user.id"
+      - path_traversal: "path.resolve() + startsWith(PRODUCTS_DIR + path.sep)"
+
+types:
+  existing:
+    - name: Purchase
+      path: src/db/schema.ts
+      usage: "Row type from purchases table query"
+    - name: Product
+      path: src/content/schemas/product.ts
+      usage: "Product meta — assetFilename field"
+  new:
+    - name: RouteContext
+      location: "inline in route.ts"
+      definition: "{ params: Promise<{ purchaseId: string }> }"
+
+serializers:
+  not_applicable: "Route returns raw file bytes (binary) or JSON error objects — no ORM model serialization needed"
+
+permission_matrix:
+  not_applicable: "Single ownership check (purchase.userId === session.user.id), not a role-based matrix"
+
+response_contracts:
+  not_applicable: "Binary file response — Content-Type is application/zip, not JSON. Error responses use standard { error: string } shape."

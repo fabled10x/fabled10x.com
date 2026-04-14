@@ -1,0 +1,48 @@
+section_id: storefront-auth-3.3
+
+route_handler_pattern:
+  reference: src/app/api/stripe/webhook/route.ts
+  notes: |
+    - export const runtime = 'nodejs' for Node-only APIs (fs, crypto)
+    - Named export: export async function GET/POST(request, context)
+    - NextRequest for request, NextResponse.json() for error responses
+    - new NextResponse(buffer, { headers }) for binary responses
+
+auth_check_pattern:
+  reference: src/lib/stripe/checkout.ts:8-12
+  notes: |
+    const session = await auth();
+    if (!session?.user?.id) { /* 401 or redirect */ }
+
+db_query_pattern:
+  reference: src/app/api/stripe/webhook/route.ts:48-56
+  notes: |
+    - import { db, schema } from '@/db/client'
+    - import { eq } from 'drizzle-orm'
+    - db.select().from(schema.purchases).where(eq(schema.purchases.id, id)).limit(1)
+    - Destructure: const [purchase] = await db.select()...
+
+product_loader_pattern:
+  reference: src/lib/content/products.ts
+  notes: |
+    - import { getProductBySlug } from '@/lib/content/products'
+    - Returns LoadedEntry<Product> | null
+    - Access meta.assetFilename for the binary filename
+
+next16_params_pattern:
+  reference: src/app/api/stripe/webhook/route.ts
+  notes: |
+    - Next.js 16 params are Promise-based: params: Promise<{ slug: string }>
+    - Must await: const { purchaseId } = await context.params
+
+test_pattern:
+  reference: src/app/api/stripe/webhook/__tests__/route.test.ts
+  notes: |
+    - vi.hoisted() for env var stubs (DATABASE_URL, etc.)
+    - vi.mock('@/auth') for session mocking
+    - vi.mock('@/db/client') for DB query chain mocking
+    - vi.mock('@/lib/content/products') for product loader
+    - vi.mock('node:fs/promises') for file system
+    - Dynamic import: const { GET } = await import('../route')
+    - Request factory: new Request(url, { method: 'GET' })
+    - Assert response.status and response.json() or response.arrayBuffer()

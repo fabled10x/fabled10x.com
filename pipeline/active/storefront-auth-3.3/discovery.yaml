@@ -1,0 +1,60 @@
+section_id: storefront-auth-3.3
+section_name: "Download Route Handler"
+complexity: M
+phase: "3 - Payments + Fulfillment"
+
+checklist_items:
+  - id: download-route-handler
+    name: "GET /api/products/downloads/[purchaseId] route handler"
+    description: "Verifies logged-in user owns the purchase, streams file from private/products/"
+    files_new:
+      - src/app/api/products/downloads/[purchaseId]/route.ts
+      - src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+      - private/products/workflow-templates.zip
+      - private/products/discovery-toolkit.zip
+      - private/products/README.md
+    files_modified:
+      - .gitignore
+
+  - id: auth-check
+    name: "Auth session verification"
+    description: "Return 401 for unauthenticated requests"
+    parent: download-route-handler
+
+  - id: ownership-check
+    name: "Purchase ownership verification"
+    description: "Return 403 if purchase.userId !== session.user.id"
+    parent: download-route-handler
+
+  - id: purchase-lookup
+    name: "Purchase DB lookup"
+    description: "Return 404 if purchaseId not found"
+    parent: download-route-handler
+
+  - id: product-lookup
+    name: "Product content lookup"
+    description: "Return 410 if product no longer exists"
+    parent: download-route-handler
+
+  - id: path-traversal-defense
+    name: "Path traversal prevention"
+    description: "Reject assetFilename values that escape private/products/"
+    parent: download-route-handler
+
+  - id: file-streaming
+    name: "File streaming with correct headers"
+    description: "application/zip, Content-Disposition: attachment, Cache-Control: private, no-store"
+    parent: download-route-handler
+
+  - id: stub-assets
+    name: "Placeholder binary assets"
+    description: "Stub zip files in private/products/ for dev/test"
+    parent: download-route-handler
+
+implementation_groups:
+  - id: group-1-route-handler
+    name: "Download route handler"
+    items: [download-route-handler, auth-check, ownership-check, purchase-lookup, product-lookup, path-traversal-defense, file-streaming]
+  - id: group-2-stub-assets
+    name: "Stub binary assets"
+    items: [stub-assets]

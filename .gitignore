@@ -46,6 +46,10 @@ next-env.d.ts
 docs/
 .claude/
 
+# product assets — placeholder stubs are tracked; replace with real content
+# before shipping. Revisit with git-lfs if any single asset exceeds a few MB.
+# private/products/*.zip
+
 # local docker volume data (Postgres is managed by the named volume
 # `fabled10x-postgres-data` in docker-compose.yml, not bind-mounted;
 # this rule guards against accidental `./data` mounts during local dev)

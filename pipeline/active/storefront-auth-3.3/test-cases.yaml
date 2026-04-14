@@ -1,0 +1,87 @@
+section_id: storefront-auth-3.3
+total_tests: 10
+
+unit_tests:
+  - id: unit_download_happy_path
+    name: "Authenticated owner gets 200 + file bytes with correct headers"
+    category: unit
+    checklist_item: file-streaming
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: unit_download_not_found
+    name: "Valid session but purchaseId not in DB returns 404"
+    category: unit
+    checklist_item: purchase-lookup
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: unit_download_product_gone
+    name: "Purchase exists but product MDX deleted returns 410"
+    category: unit
+    checklist_item: product-lookup
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+security_tests:
+  - id: sec_download_unauthenticated
+    name: "No session returns 401"
+    category: security
+    checklist_item: auth-check
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: sec_download_wrong_user
+    name: "Authenticated but non-owner returns 403"
+    category: security
+    checklist_item: ownership-check
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: sec_download_path_traversal
+    name: "assetFilename with ../ escaping PRODUCTS_DIR returns 400"
+    category: security
+    checklist_item: path-traversal-defense
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+edge_case_tests:
+  - id: edge_download_file_missing
+    name: "Asset file missing on disk returns 500"
+    category: edge_case
+    checklist_item: file-streaming
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: edge_download_response_headers
+    name: "Response includes Content-Type, Content-Disposition, Content-Length, Cache-Control"
+    category: edge_case
+    checklist_item: file-streaming
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+infrastructure_tests:
+  - id: infra_download_exports_GET
+    name: "Route module exports GET function"
+    category: infrastructure
+    checklist_item: download-route-handler
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+  - id: infra_download_runtime_nodejs
+    name: "Route exports runtime = 'nodejs'"
+    category: infrastructure
+    checklist_item: download-route-handler
+    file: src/app/api/products/downloads/[purchaseId]/__tests__/route.test.ts
+
+permission_tests:
+  not_applicable: "Single ownership check, not a role-based matrix"
+
+contract_tests:
+  not_applicable: "Binary file response — not a JSON API contract"
+
+accessibility_tests:
+  not_applicable: "API-only route, no frontend rendering"
+
+error_recovery_tests:
+  not_applicable: "Error cases covered by unit + edge_case categories"
+
+data_integrity_tests:
+  not_applicable: "Read-only route — no data mutations"
+
+visual_tests:
+  not_applicable: "API-only route, no visual output"
+
+smoke_tests:
+  not_applicable: "Covered by unit happy-path test"

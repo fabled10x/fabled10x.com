@@ -1,0 +1,152 @@
+version: 1
+section_id: "storefront-auth-3.3"
+section_name: "Download Route Handler"
+started_at: "2026-04-14T00:00:00Z"
+current_phase: discovery
+
+preflight:
+  npm_test: { status: pass, at: "2026-04-14T05:18:00Z" }
+  npm_lint: { status: pass, at: "2026-04-14T05:18:00Z" }
+  tsc_noEmit: { status: skipped, at: "2026-04-14T05:18:00Z" }
+  git_clean: { status: pass, at: "2026-04-14T05:18:00Z" }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done }
+    - { id: deep_codebase_research, status: done }
+    - { id: cross_section_pattern_lookup, status: done }
+    - { id: parse_checklist_items, status: done }
+    - { id: analyze_dependencies, status: done }
+    - { id: define_interfaces, status: done }
+    - { id: find_existing_patterns, status: done }
+    - { id: stride_threat_modeling, status: done }
+    - { id: edge_case_enumeration, status: done }
+    - { id: serializer_inventory, status: na, reason: "No serializers needed — route returns raw file bytes or JSON error objects" }
+    - { id: response_contract_spec, status: na, reason: "Binary file response, not JSON API contracts" }
+    - { id: permission_matrix, status: na, reason: "Single ownership check, not a role-based matrix" }
+    - { id: specify_test_cases, status: done }
+    - { id: dependency_graph, status: done }
+    - { id: write_discovery_yaml, status: done }
+    - { id: write_dependencies_yaml, status: done }
+    - { id: write_interfaces_yaml, status: done }
+    - { id: write_patterns_yaml, status: done }
+    - { id: write_test_cases_yaml, status: done }
+    - { id: verify_zero_coverage_gaps, status: done }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 10
+  coverage_gaps: 0
+
+red:
+  status: done
+  beats:
+    - { id: read_discovery_yamls, status: done }
+    - { id: study_test_patterns, status: done }
+    - { id: batch_1_functional, status: done, tests_written: 3 }
+    - { id: batch_1_verify, status: done }
+    - { id: batch_2_security, status: done, tests_written: 3 }
+    - { id: batch_2_verify, status: done }
+    - { id: batch_3_permission_matrix, status: na, reason: "Single ownership check, not a role-based matrix" }
+    - { id: batch_3_verify, status: na, reason: "No permission matrix tests" }
+    - { id: batch_4_contract, status: na, reason: "Binary file response, not JSON API contracts" }
+    - { id: batch_4_verify, status: na, reason: "No contract tests" }
+    - { id: batch_5_edge_error_data, status: done, tests_written: 2 }
+    - { id: batch_5_verify, status: done }
+    - { id: batch_6_a11y_infra, status: done, tests_written: 2 }
+    - { id: batch_6_verify, status: done }
+    - { id: full_suite_verification, status: done }
+    - { id: coverage_matrix_check, status: done }
+    - { id: update_red_progress, status: done }
+  total_tests: 10
+  coverage_gaps: 0
+
+green:
+  status: done
+  beats:
+    - { id: analyze_failing_tests, status: done }
+    - { id: plan_implementation_order, status: done }
+    - { id: group_1_schema_types, status: na, reason: "No content schema changes in this section" }
+    - { id: group_1_verify, status: na, reason: "No schema/type tests" }
+    - { id: group_2_logic_hooks_serializers, status: na, reason: "No utility functions, hooks, or serializers" }
+    - { id: group_2_verify, status: na, reason: "No logic tests" }
+    - { id: group_3_ui_components, status: na, reason: "No UI components — API-only route" }
+    - { id: group_3_verify, status: na, reason: "No component tests" }
+    - { id: group_4_api_routes_wiring, status: done }
+    - { id: group_4_full_suite, status: done }
+    - { id: wiring_components, status: na, reason: "No UI components — API-only route" }
+    - { id: wiring_navigation, status: na, reason: "No new pages — API-only route" }
+    - { id: wiring_form_api, status: na, reason: "No forms in this section" }
+    - { id: wiring_data_flow, status: na, reason: "No hooks or client-side data flow" }
+    - { id: wiring_database, status: na, reason: "No schema changes — reads existing purchases table" }
+    - { id: wiring_feature_reconciliation, status: done }
+    - { id: wiring_interactive_behaviors, status: na, reason: "No interactive UI — API-only route" }
+    - { id: wiring_cross_component_flows, status: na, reason: "Single isolated route — no multi-step flows" }
+    - { id: serializer_enforcement, status: na, reason: "No ORM objects in responses — file bytes or JSON errors" }
+    - { id: error_response_consistency, status: done }
+    - { id: zero_skipped_verification, status: done }
+    - { id: npm_build_passes, status: na, reason: "6GB VPS OOMs on next build" }
+    - { id: update_green_progress, status: done }
+  tests_passing: 10
+  tests_total: 10
+
+refactor:
+  status: done
+  beats:
+    - { id: baseline_all_tests_pass, status: done }
+    - { id: dry_analysis_within_section, status: done }
+    - { id: cross_section_dry_analysis, status: done }
+    - { id: type_safety_audit, status: done }
+    - { id: error_consistency_audit, status: done }
+    - { id: serializer_completeness_audit, status: na, reason: "No ORM objects in responses" }
+    - { id: performance_review, status: done }
+    - { id: code_quality_naming_structure, status: done }
+    - { id: eslint_clean, status: done }
+    - { id: barrel_exports_check, status: na, reason: "Route auto-discovered by App Router, no barrel exports" }
+    - { id: hardcoded_values_check, status: done }
+    - { id: loading_error_empty_states, status: na, reason: "API-only route, no UI states" }
+    - { id: final_npm_test, status: done }
+    - { id: final_npm_lint, status: done }
+    - { id: final_npm_build, status: na, reason: "6GB VPS OOMs on next build" }
+    - { id: update_refactor_progress, status: done }
+  improvements_identified: 0
+  improvements_completed: 0
+
+finish:
+  status: pending
+  beats:
+    - { id: cleanup_dead_code, status: pending }
+    - { id: cleanup_verify_tests, status: pending }
+    - { id: nav_sync_verification, status: pending }
+    - { id: audit_file_inventory, status: pending }
+    - { id: audit_api_routes, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_hook_consumers, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_component_mounts, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_feature_reconciliation, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: update_session_yaml, status: pending }
+    - { id: update_planning_checklist, status: pending }
+    - { id: knowledge_capture, status: pending }
+    - { id: security_checklist, status: pending }
+    - { id: git_stage_files, status: pending }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: pending }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+stats:
+  total_tests_specified: 0
+  total_tests_written: 0
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0
+  commit_hash: null
+  commit_message: null

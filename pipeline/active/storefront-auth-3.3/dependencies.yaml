@@ -1,0 +1,56 @@
+section_id: storefront-auth-3.3
+
+npm_packages:
+  existing:
+    - name: next
+      version: "16.2.3"
+      usage: "NextResponse, NextRequest, route handler"
+    - name: drizzle-orm
+      usage: "eq() for DB queries"
+    - name: postgres
+      usage: "DB client (via src/db/client.ts)"
+  new: []
+
+internal_modules:
+  - path: src/auth.ts
+    exports: [auth]
+    usage: "Session verification — auth() returns { user: { id, email } } or null"
+
+  - path: src/db/client.ts
+    exports: [db, schema]
+    usage: "Drizzle DB client + schema for purchases table queries"
+
+  - path: src/db/schema.ts
+    exports: [purchases, Purchase]
+    usage: "purchases table definition — id, userId, productSlug, stripeSessionId, etc."
+
+  - path: src/lib/content/products.ts
+    exports: [getProductBySlug]
+    usage: "Load product MDX meta including assetFilename"
+
+  - path: src/content/schemas/product.ts
+    exports: [Product]
+    usage: "Product interface — assetFilename field is the critical linkage"
+
+  - path: proxy.ts
+    exports: [proxy, config]
+    usage: "Edge middleware already gates /api/products/downloads — redirects anonymous to /login"
+
+node_builtins:
+  - module: "node:fs/promises"
+    import: readFile
+    usage: "Read binary asset from disk"
+  - module: "node:path"
+    import: [path, resolve, sep]
+    usage: "Resolve asset file path + traversal defense"
+
+content_types:
+  read_only:
+    - Product (via getProductBySlug — reads meta.assetFilename)
+  new: []
+
+environment_variables:
+  existing:
+    - DATABASE_URL
+    - AUTH_SECRET
+  new: []
