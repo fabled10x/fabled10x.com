@@ -1758,29 +1758,13 @@ storefront-auth-3.1:
         file: "src/lib/email/purchase-confirmation.ts"
         purpose: "Send purchase receipt email via Resend with product title lookup and account link"
 
-  - id: gated_file_download_route
-    established_in: "storefront-auth-3.3"
-    established_at: "2026-04-14"
-    description: |
-      Gated file download pattern: GET route handler at
-      /api/products/downloads/[purchaseId] that streams files from
-      private/products/ after verifying auth + ownership. Defense-in-depth
-      chain: (1) auth() session check → 401, (2) DB purchase lookup → 404,
-      (3) userId ownership → 403, (4) product content lookup → 410,
-      (5) path.resolve + startsWith traversal defense → 400,
-      (6) readFile → 500 on ENOENT. Response: raw Buffer with
-      Content-Type: application/zip, Content-Disposition: attachment,
-      Cache-Control: private, no-store. runtime = 'nodejs' for fs access.
-
-      Mocking node:fs/promises in vitest: provide both default and named
-      exports in the mock factory:
-        vi.mock('node:fs/promises', () => ({
-          default: { readFile: (...args) => mockReadFile(...args) },
-          readFile: (...args) => mockReadFile(...args),
-        }))
-    reusable_for:
-      - "Phase 4 account UI — links to this download route from purchase detail page"
-      - "Future gated asset delivery (course content, license files)"
+  storefront-auth-3.3:
+    completed_at: "2026-04-14"
+    patterns_established:
+      - description: "Gated file download route handler with defense-in-depth chain"
+        file: "src/app/api/products/downloads/[purchaseId]/route.ts"
+        reusable_for: "Future gated asset delivery (course content, license files)"
     gotchas:
-      - "path.resolve with a benign filename like 'file.zip' returns PRODUCTS_DIR/file.zip which passes startsWith(PRODUCTS_DIR + path.sep) correctly"
-      - "readFile in-memory is fine for small stubs; switch to createReadStream for large assets"
+      - "Mocking node:fs/promises in vitest requires both default and named exports in the factory"
+      - "readFile in-memory is fine for small stubs but switch to createReadStream for large assets"
+      - "path.resolve with startsWith(DIR + path.sep) is the traversal defense pattern"
