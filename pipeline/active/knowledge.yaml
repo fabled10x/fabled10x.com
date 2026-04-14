@@ -1736,3 +1736,24 @@ storefront-auth-3.1:
       - function: "getCohortBuckets"
         file: "src/lib/content/cohorts.ts"
         purpose: "Partition cohorts into upcoming (announced|open|closed) vs archived (enrolled|shipped) — consumed by index page"
+
+  storefront-auth-3.2:
+    completed_at: "2026-04-14"
+    patterns_established:
+      - description: "Stripe webhook handler pattern"
+        file: "src/app/api/stripe/webhook/route.ts"
+        reusable_for: "Any future Stripe webhook event handling (e.g. subscription events, refunds)"
+      - description: "Idempotent insert with email side-effect"
+        file: "src/app/api/stripe/webhook/route.ts"
+        reusable_for: "Any webhook → DB write → notification pattern where replay safety matters"
+      - description: "Resend email helper with product lookup fallback"
+        file: "src/lib/email/purchase-confirmation.ts"
+        reusable_for: "Future transactional emails (email-funnel job adds marketing emails later)"
+    gotchas:
+      - "Resend SDK v6 returns { data, error } instead of throwing — must check error and throw manually"
+      - "Stripe webhooks need runtime = 'nodejs' — Edge runtime can't verify HMAC signatures"
+      - "vi.mock must be set up before import for modules with side effects (Stripe client, db client throw at module eval if env vars missing)"
+    reusable_utilities:
+      - function: "sendPurchaseConfirmation"
+        file: "src/lib/email/purchase-confirmation.ts"
+        purpose: "Send purchase receipt email via Resend with product title lookup and account link"
