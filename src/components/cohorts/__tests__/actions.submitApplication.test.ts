@@ -10,12 +10,20 @@ const {
   mockSelectLimit,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn();
-  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }));
-  const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
+  const mockInsertValues = vi.fn<(...args: unknown[]) => { returning: typeof mockInsertReturning }>(
+    () => ({ returning: mockInsertReturning }),
+  );
+  const mockInsert = vi.fn<(...args: unknown[]) => { values: typeof mockInsertValues }>(
+    () => ({ values: mockInsertValues }),
+  );
 
   const mockSelectLimit = vi.fn();
-  const mockSelectWhere = vi.fn(() => ({ limit: mockSelectLimit }));
-  const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
+  const mockSelectWhere = vi.fn<(...args: unknown[]) => { limit: typeof mockSelectLimit }>(
+    () => ({ limit: mockSelectLimit }),
+  );
+  const mockSelectFrom = vi.fn<(...args: unknown[]) => { where: typeof mockSelectWhere }>(
+    () => ({ where: mockSelectWhere }),
+  );
   const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
 
   return {
@@ -221,7 +229,7 @@ describe('submitApplication server action', () => {
   it('unit_submit_application_inserts_user_id_from_session', async () => {
     await submitApplication(idle, fd(VALID_FORM_ENTRIES));
     expect(mockInsert).toHaveBeenCalled();
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg.userId).toBe('user-1');
   });
 
@@ -237,14 +245,14 @@ describe('submitApplication server action', () => {
   it('unit_submit_application_links_waitlist_row_when_email_matches', async () => {
     mockSelectLimit.mockResolvedValueOnce([{ id: 'wl-99' }]);
     await submitApplication(idle, fd(VALID_FORM_ENTRIES));
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg.waitlistId).toBe('wl-99');
   });
 
   it('unit_submit_application_passes_null_waitlist_id_when_no_match', async () => {
     mockSelectLimit.mockResolvedValueOnce([]);
     await submitApplication(idle, fd(VALID_FORM_ENTRIES));
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg.waitlistId).toBeNull();
   });
 
@@ -273,7 +281,7 @@ describe('submitApplication server action', () => {
       ['session.user.id', 'attacker-user'],
     ]);
     await submitApplication(idle, malicious);
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg.userId).toBe('user-1');
   });
 
@@ -389,7 +397,7 @@ describe('submitApplication server action', () => {
       ]),
     );
     expect(result.status).toBe('success');
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg.referralSource).toBeNull();
   });
 
@@ -482,7 +490,7 @@ describe('submitApplication server action', () => {
 
   it('data_serialization_inserted_fields_match_zod_parse', async () => {
     await submitApplication(idle, fd(VALID_FORM_ENTRIES));
-    const valuesArg = mockInsertValues.mock.calls[0][0];
+    const valuesArg = mockInsertValues.mock.calls[0][0] as Record<string, unknown>;
     expect(valuesArg).toMatchObject({
       cohortSlug: 'ai-delivery-2026-q3',
       background: expect.any(String),

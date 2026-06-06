@@ -136,7 +136,7 @@ Condensed 2026-04-12 via `/condense ce` — 8 pipeline runs saved. Each merged f
 | 2.2 | `<WaitlistForm>` + `submitWaitlist` server action + waitlist confirmation email + env (`RESEND_COHORT_WAITLIST_AUDIENCE_ID`, `RESEND_FROM_COHORTS`) | 2 - Waitlist + Persistence      | M    | 2.2 + 2.3  | Shipped |
 | 3.1 | `CohortApplicationInputSchema` Zod validator (background, goals, commitment hours, timezone)                                          | 3 - Application Flow            | S    | 3.1        | Planned |
 | 3.2 | `/cohorts/[slug]/apply` auth-gated page + proxy matcher + `<ApplicationForm>` + `submitApplication` server action + applicant confirmation email | 3 - Application Flow            | L    | 3.2 + 3.3 + 3.4 | Shipped |
-| 4.1 | Admin layout + `ADMIN_EMAILS` allowlist + applications list + application detail + `decideApplication` server action (accept / waitlist / decline) | 4 - Review + Payment + Account  | L    | 4.1 + 4.2  | Planned |
+| 4.1 | Admin layout + `ADMIN_EMAILS` allowlist + applications list + application detail + `decideApplication` server action (accept / waitlist / decline) | 4 - Review + Payment + Account  | L    | 4.1 + 4.2  | Shipped |
 | 4.2 | Decision email (accept/waitlist/decline) + HMAC checkout-token utility + `/cohorts/[slug]/checkout` GET route + Stripe webhook cohort branch + `cohort_enrollments` idempotent insert | 4 - Review + Payment + Account  | L    | 4.3 + 4.4  | Planned |
 | 4.3 | `/products/account/cohorts` + "My cohorts" card + SEO / sitemap / robots / nav / middleware polish + JSON-LD                          | 4 - Review + Payment + Account  | M    | 4.5 + 4.6  | Planned |
 
@@ -434,7 +434,7 @@ Feature Overview table for which old IDs each new ID merges.
 | `cohort-enrollment-2.2`     | Waitlist form + `submitWaitlist` + confirmation email          | 2.2 + 2.3         |
 | `cohort-enrollment-3.1` ✅  | Application input schema + validator                           | 3.1               |
 | `cohort-enrollment-3.2`     | Apply page + middleware + `<ApplicationForm>` + `submitApplication` + applicant email | 3.2 + 3.3 + 3.4   |
-| `cohort-enrollment-4.1`     | Admin layout + allowlist + list + detail + `decideApplication` | 4.1 + 4.2         |
+| `cohort-enrollment-4.1` ✅  | Admin layout + allowlist + list + detail + `decideApplication` | 4.1 + 4.2         |
 | `cohort-enrollment-4.2`     | Decision email + HMAC token + checkout route + Stripe webhook branch | 4.3 + 4.4         |
 | `cohort-enrollment-4.3`     | `/products/account/cohorts` + account card + SEO/sitemap/robots/nav/middleware polish | 4.5 + 4.6         |
 

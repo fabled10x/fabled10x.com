@@ -10,9 +10,10 @@ vi.mock('@/lib/content/cohorts', () => ({
   getCohortBySlug: vi.fn(),
 }));
 
-vi.mock('@/auth', () => ({
-  auth: vi.fn(),
+const { mockAuth } = vi.hoisted(() => ({
+  mockAuth: vi.fn<() => Promise<unknown>>(),
 }));
+vi.mock('@/auth', () => ({ auth: mockAuth }));
 
 vi.mock('drizzle-orm', () => ({
   eq: (col: unknown, val: unknown) => ({ _op: 'eq', col, val }),
@@ -26,8 +27,12 @@ const {
   mockSelectLimit,
 } = vi.hoisted(() => {
   const mockSelectLimit = vi.fn();
-  const mockSelectWhere = vi.fn(() => ({ limit: mockSelectLimit }));
-  const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
+  const mockSelectWhere = vi.fn<(...args: unknown[]) => { limit: typeof mockSelectLimit }>(
+    () => ({ limit: mockSelectLimit }),
+  );
+  const mockSelectFrom = vi.fn<(...args: unknown[]) => { where: typeof mockSelectWhere }>(
+    () => ({ where: mockSelectWhere }),
+  );
   const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
   return { mockSelect, mockSelectFrom, mockSelectWhere, mockSelectLimit };
 });
@@ -59,12 +64,10 @@ vi.mock('@/components/cohorts/ApplicationForm', () => ({
 
 import { notFound, redirect } from 'next/navigation';
 import { getCohortBySlug } from '@/lib/content/cohorts';
-import { auth } from '@/auth';
 
 import ApplyPage, { metadata } from '../page';
 
 const mockGetCohortBySlug = vi.mocked(getCohortBySlug);
-const mockAuth = vi.mocked(auth);
 const mockNotFound = vi.mocked(notFound);
 const mockRedirect = vi.mocked(redirect);
 
@@ -107,7 +110,7 @@ const MOCK_COHORT_CLOSED = {
 
 const VALID_SESSION = {
   user: { id: 'user-1', email: 'applicant@example.com' },
-} as Awaited<ReturnType<typeof auth>>;
+};
 
 function makeParams(slug: string) {
   return { params: Promise.resolve({ slug }) };

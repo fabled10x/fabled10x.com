@@ -14,6 +14,7 @@ import { sendCohortWaitlistConfirmation } from '../cohort-waitlist-confirmation'
 
 const COHORT_FIXTURE = {
   meta: {
+    id: 'cohort-ai-delivery-2026-q3',
     slug: 'ai-delivery-2026-q3',
     title: 'AI Delivery Intensive',
     summary: 'Ship real AI projects in 6 weeks.',
