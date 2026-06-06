@@ -2111,35 +2111,6 @@ styling-overhaul-1.3:
     one session. Phase 1 (Foundation Tokens) of styling-overhaul COMPLETE
     (1.1 + 1.2 + 1.3 all shipped) — Phase 2 (Typography) unblocked.
 
-styling-overhaul-1.3:
-  completed_at: "2026-06-06"
-  scope_recap: |
-    Pure docs section. Rewrote Visual Identity Direction in
-    docs/fabled10x-brand-identity.md (gitignored doc — only test ships)
-    and added new canonical docs/fabled10x-design-system.md (gitignored).
-    46 tests in src/__tests__/brand/docs.test.ts (readFileSync + regex
-    pattern matching against the doc bodies). Full suite 1042/1042
-    passing, build clean, no schema or code changes.
-  patterns_established:
-    - description: |
-        readFileSync-based content tests for gitignored docs/ files.
-        Tests read the file at runtime; the file lives in working tree
-        but is not committed (docs/ in .gitignore). Pattern: when
-        replacing/editing branded prose, write a regex test that asserts
-        on the new content AND a negative test that asserts the old
-        forbidden prose is gone.
-      file: "src/__tests__/brand/docs.test.ts"
-      reusable_for: "Any future docs rewrite that needs guard-rails against regression"
-  gotchas:
-    - |
-      JavaScript regex has no \Z end-of-input anchor (Python/Ruby
-      construct). Use $ instead. Without that fix, section-extraction
-      regexes silently match literal "Z" character and return empty for
-      the final document section.
-  reusable_utilities: []
-  follow_ups:
-    - |
-      Cross-section DRY: 5 readFileSync(join(process.cwd(),...)) call
-      sites across brand-test files (so-1.1 tokens, so-1.2 spacing, 3
-      in so-1.3 docs). Extract a brand-sentinel-static-file helper when
-      so-2.2 typography.test.ts adds the 6th call site.
+# Note: a parallel agent committed an earlier (now-stale) so-1.3 entry here
+# that said docs were gitignored. The unignore landed in 466f9c3; the stale
+# duplicate is removed. Canonical so-1.3 knowledge entry is at line 2013.
