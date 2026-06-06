@@ -3,6 +3,10 @@ import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe/client';
 import { db, schema } from '@/db/client';
 import { sendPurchaseConfirmation } from '@/lib/email/purchase-confirmation';
+import {
+  COHORT_METADATA_KEYS,
+  COHORT_METADATA_KIND,
+} from '@/lib/cohorts/constants';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +42,11 @@ export async function POST(request: NextRequest) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
+  const metadata = session.metadata ?? {};
+
+  if (metadata[COHORT_METADATA_KEYS.kind] === COHORT_METADATA_KIND) {
+    return handleCohortCheckout(session);
+  }
 
   const userId = session.metadata?.userId;
   const productSlug = session.metadata?.productSlug;
@@ -80,6 +89,46 @@ export async function POST(request: NextRequest) {
       });
     }
   }
+
+  return NextResponse.json({ received: true });
+}
+
+async function handleCohortCheckout(
+  session: Stripe.Checkout.Session,
+): Promise<NextResponse> {
+  const metadata = session.metadata ?? {};
+  const userId = metadata[COHORT_METADATA_KEYS.userId];
+  const cohortSlug = metadata[COHORT_METADATA_KEYS.cohortSlug];
+  const applicationId = metadata[COHORT_METADATA_KEYS.applicationId];
+  const stripeSessionId = session.id;
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id;
+  const amountCents = session.amount_total ?? 0;
+  const currency = session.currency ?? 'usd';
+
+  if (!userId || !cohortSlug || !applicationId || !paymentIntentId) {
+    return NextResponse.json(
+      { error: 'Cohort checkout session missing required metadata' },
+      { status: 400 },
+    );
+  }
+
+  await db
+    .insert(schema.cohortEnrollments)
+    .values({
+      applicationId,
+      cohortSlug,
+      userId,
+      stripeSessionId,
+      stripePaymentIntentId: paymentIntentId,
+      amountCents,
+      currency,
+    })
+    .onConflictDoNothing({
+      target: schema.cohortEnrollments.stripeSessionId,
+    });
 
   return NextResponse.json({ received: true });
 }

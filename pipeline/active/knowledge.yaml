@@ -4293,3 +4293,77 @@ cohort-enrollment-4.3:
     3.1, 3.2, 4.1, 4.2 still planned, 4.3 now done). 4.2 is the canonical
     next ce section — its enrollment INSERT path populates the cohort_
     enrollments table that 4.3 already queries today.
+
+cohort-enrollment-4.2:
+  completed_at: '2026-06-06'
+  patterns_established:
+    - description: 'HMAC-signed JSON token utility (sign/verify roundtrip)'
+      file: 'src/lib/cohorts/checkout-token.ts'
+      reusable_for: |
+        Any future stateless one-shot link that needs server-verifiable identity +
+        expiration without DB lookup. Pattern: base64url(JSON body) + "." + base64url(HMAC-SHA256(body)).
+        verifyCheckoutToken returns discriminated union { ok: true, payload } | { ok: false, reason }
+        with reasons 'malformed' | 'bad-signature' | 'expired'. timingSafeEqual on signature
+        compare. Length check BEFORE timingSafeEqual (it throws on mismatched lengths).
+        Sibling candidates: future unsubscribe links, magic-link cohort referrals, any future
+        passwordless one-time action token.
+    - description: 'Stripe Checkout Session metadata.kind discriminator for webhook branching'
+      file: 'src/app/api/stripe/webhook/route.ts + src/lib/cohorts/constants.ts'
+      reusable_for: |
+        Single webhook route routes events to multiple write paths by inspecting
+        session.metadata.kind. Each kind (currently 'cohort' + implicit 'product') has its own
+        handler function. Pattern: branch BEFORE pulling kind-specific metadata fields so the
+        product branch's required-field check doesn't false-flag cohort events. Adding new
+        Stripe-funded surfaces (e.g., future newsletter pro, membership) reuses this shape.
+    - description: 'Decision email with conditional checkout-link variant'
+      file: 'src/lib/email/cohort-decision.ts'
+      reusable_for: |
+        Single function with discriminated decision union dispatches to three body builders
+        (acceptBody/waitlistBody/declineBody). Only the accept variant computes a signed token
+        and embeds the checkout URL. Best-effort Resend send (logs + swallows error). Throws
+        BEFORE env short-circuit on the (accepted, null acceptedUntil) invariant so the
+        programming bug surfaces even in dev where env is unset. Sibling for future
+        application-status-change emails, manual interventions.
+  gotchas:
+    - 'Planning doc shows `import { stripe } from "@/lib/stripe/client"`, but the actual codebase export is `getStripe()` (sa-3.1 convention). All cohort Stripe calls must use getStripe().'
+    - 'cohort-decision.ts ships as a no-op stub in ce-4.1 so admin.ts (decideApplication) can import it without circularity. ce-4.2 replaces the stub with the real implementation — the function signature is widened from `application: unknown / cohort: unknown` to `ApplicationListRow / LoadedEntry<Cohort>`, which is type-compatible with the existing admin.ts call site.'
+    - 'GET route uses `new URL(request.url)` instead of `request.nextUrl` — works with both Request and NextRequest in tests. NextResponse.redirect accepts an absolute URL or a URL object.'
+    - 'mock db pattern for Drizzle insert chain: when tests need to assert the onConflictDoNothing target, JSON.stringify the captured arg and expect.toContain the column name. Real schema fields serialize as Column objects; in mocks set the field to a string literal matching the underlying column name.'
+    - 'COHORT_CHECKOUT_SECRET must be a real value at sign time (signCheckoutToken throws clearly when missing). Tests stub the env in beforeEach + restore in afterEach to avoid bleed-over.'
+    - 'inherited loader_build_incompat: npm run build fails at /cases/[slug] generateStaticParams in this section (was /episodes/[slug] in prior sections). Verified by checking out base commit 53004a6 — identical error. Unrelated to this section.'
+  reusable_utilities:
+    - function: 'signCheckoutToken(payload) / verifyCheckoutToken(token)'
+      file: 'src/lib/cohorts/checkout-token.ts'
+      purpose: |
+        HMAC-SHA256-signed JSON token with expiresAt. base64url + dot-separated body+sig.
+        Round-trips via sign/verify with timingSafeEqual comparison. Throws on missing
+        COHORT_CHECKOUT_SECRET. Three failure reasons: 'malformed', 'bad-signature', 'expired'.
+    - function: 'createCohortCheckoutSession({cohort, applicationId, userId, userEmail})'
+      file: 'src/lib/cohorts/checkout.ts'
+      purpose: |
+        Creates a Stripe Checkout Session for a cohort tuition payment. Sets metadata
+        {kind:'cohort', cohortSlug, applicationId, userId} so the webhook can route the event
+        to handleCohortCheckout. Rejects placeholder stripePriceId before calling Stripe.
+        Returns session.url; throws if Stripe returns no URL.
+    - function: 'sendCohortDecision({to, decision, application, cohort, acceptedUntil})'
+      file: 'src/lib/email/cohort-decision.ts'
+      purpose: |
+        Sends accept/waitlist/decline decision email via Resend. Accept variant signs the
+        checkout token and embeds the URL. Waitlist + decline have no checkout link. Throws on
+        (accepted, null acceptedUntil). Silently returns when RESEND_API_KEY or
+        RESEND_FROM_COHORTS missing. Logs+swallows Resend errors (best-effort).
+  deferred_followups:
+    - id: email_helpers_dry_extract
+      description: |
+        escapeHtml + formatDate are now duplicated 3x across cohort email modules
+        (cohort-decision, cohort-waitlist-confirmation, cohort-application-received).
+        Trigger condition met (3 sibling call sites). Extract to a shared helper module
+        (e.g., src/lib/email/format.ts) in a dedicated cross-section refactor.
+        Touches 3 files outside any single section's scope — defer to a focused refactor.
+  blocker_cleared: |
+    cohort-enrollment Phase 4 sections 4.1 + 4.2 COMPLETE. Full Stripe-payment loop now wired:
+    admin decides → decision email signs checkout token → applicant clicks → GET route
+    creates Stripe session with metadata.kind='cohort' → Stripe webhook reads metadata and
+    inserts cohort_enrollments row. ce-4.3 (account cohorts view + SEO/sitemap/robots/nav
+    polish + JSON-LD) is now unblocked — reads cohort_enrollments + cohort_applications and
+    renders both under /products/account/cohorts.

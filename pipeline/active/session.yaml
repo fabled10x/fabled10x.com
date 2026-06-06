@@ -183,6 +183,79 @@ completed_sections:
       Blocker cleared: styling-overhaul Phase 3 (Material Language) is now
       2/3 complete. so-3.3 (forbidden-pattern sentinel) is the canonical
       next so section to close Phase 3.
+  - id: cohort-enrollment-4.2
+    name: Decision Email + HMAC Token + Checkout Route + Webhook Cohort Branch
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add cohort decision email + HMAC checkout token + checkout route + webhook cohort branch with 51 tests (cohort-enrollment-4.2)
+    tests: 51
+    files_new: 6
+    files_modified: 2
+    pushed: false
+    notes: |
+      Second feature of cohort-enrollment Phase 4 (Review + Payment + Account).
+      Merged old 4.3 (decision email + HMAC token + checkout route) + 4.4
+      (webhook cohort branch) per /condense ce. Closes the Stripe-payment loop:
+      admin decides → decision email signs checkout token → applicant clicks →
+      GET route creates Stripe Checkout Session with metadata.kind='cohort' →
+      webhook reads metadata and inserts cohort_enrollments row.
+
+      Server-only section — no UI components, no new nav routes (4.3 will add
+      Cohorts nav link + sitemap + JSON-LD). 5 checklist items implemented:
+      (1) HMAC-signed checkout token utility (sign/verify with timingSafeEqual,
+      base64url, three failure reasons: malformed/bad-signature/expired)
+      (2) createCohortCheckoutSession (Stripe SDK call w/ metadata discriminator,
+      placeholder-stripePriceId guard, success/cancel URLs derived from AUTH_URL)
+      (3) sendCohortDecision real impl (3 branches: accept signs token + embeds
+      checkout URL; waitlist + decline have no link; throws on accepted+null
+      acceptedUntil; silent return on missing env; logs+swallows Resend errors)
+      (4) GET /cohorts/[slug]/checkout route (auth gate, token verify, slug match,
+      application owner check, error redirects to /cohorts?error=<msg>)
+      (5) Webhook cohort branch (MODIFY) — metadata.kind discriminator routes
+      cohort events to handleCohortCheckout (single insert into cohort_enrollments
+      via onConflictDoNothing on stripe_session_id for replay idempotency).
+
+      51 tests = 14 unit + 8 integration + 7 security (STRIDE: tampering ×5,
+      info-disclosure ×1, elevation ×1) + 4 permission + 4 contract + 6 edge
+      + 2 err_recovery + 3 data + 2 infra. Accessibility N/A (no UI). 100%
+      coverage matrix — every checklist item has ≥1 test.
+
+      Key alignment: planning doc shows `import { stripe }` but actual codebase
+      export is `getStripe()` (sa-3.1 convention). All Stripe calls go through
+      getStripe(). The cohort-decision.ts stub shipped in ce-4.1 (so admin.ts
+      could import it without circularity) is replaced here with the full impl;
+      function signature widens from (application: unknown, cohort: unknown) to
+      (ApplicationListRow, LoadedEntry<Cohort>) — type-compatible with the
+      existing admin.ts call site.
+
+      Refactor produced ONE source change — removed pointless try/catch wrapper
+      around sign(body) in verifyCheckoutToken (5 lines of noise). One cross-section
+      DRY trigger captured + deferred: escapeHtml + formatDate duplicated 3x
+      across cohort email modules (cohort-decision + cohort-waitlist-confirmation
+      + cohort-application-received) — captured to knowledge.yaml for a dedicated
+      email-helpers extraction section. All audits clean: 0 any/as/@ts-ignore in
+      section files, 0 ESLint warnings, tsc clean (0 errors).
+
+      Build status: npm run build hits the pre-existing loader_build_incompat at
+      /cases/[slug] generateStaticParams (was /episodes/[slug] on base commit
+      53004a6 — verified by checking out base). Unchanged from origin/main HEAD;
+      user has uncommitted loader fixes in main that resolve this independently.
+      ZERO BEARING on this server-only section.
+
+      Concurrent runs: working tree has prior modifications from other sessions
+      (CLAUDE.md M, currentwork/website-foundation/* M, src/lib/content/* M,
+      multiple untracked currentwork/ dirs, pipeline/active/cohort-enrollment-3.2/
+      and styling-overhaul-2.4/ N). Worktree branched from clean origin/main +
+      bind-mounts node_modules from main. Commit explicitly stages ONLY this
+      section's files (3 new source + 3 new test + 2 modified source + 1 modified
+      test) plus shared state (session.yaml, knowledge.yaml, currentwork/
+      cohort-enrollment/README.md).
+
+      Blocker cleared: cohort-enrollment Phase 4 sections 4.1 + 4.2 COMPLETE.
+      Full Stripe-payment loop wired end-to-end. ce-4.3 (Account cohorts view +
+      SEO/sitemap/robots/nav/middleware polish + JSON-LD) is now the next ce
+      section — reads cohort_enrollments + cohort_applications and renders both
+      under /products/account/cohorts.
   - id: styling-overhaul-3.1
     name: Surface primitives (<Marble>, <Parchment>, <Bone>, <Shadow>)
     completed_at: '2026-06-06'
