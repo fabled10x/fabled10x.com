@@ -2469,6 +2469,131 @@ styling-overhaul-2.2:
       so-3.3 forbidden-pattern sentinel extends the existing brand-sentinel
       test pattern that so-2.2 just added to (now 4 sibling files)
 
+styling-overhaul-2.4:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - id: layered_prose_retrofit
+      file: "src/app/globals.css (.build-log-prose @layer components block)"
+      description: |
+        Token-driven retrofit of a long-form prose component layer. Replace
+        every magic value inside an existing .build-log-prose-style block
+        with var(--token) references already declared by upstream foundation
+        sections (so-1.x palette/space/radius/edge + so-2.1 font vars +
+        so-2.2 type-scale vars + so-2.3 brand color tokens). Selector list:
+          - root: --pair-text-on-marble + --leading-body + --text-body-1 +
+            --font-body chain (with system-ui/sans-serif fallback)
+          - h2/h3: --font-display + 900 + uppercase + --tracking-display +
+            --text-display-{2,3} + --space-{6,7}/{3,4} margins +
+            --edge-color border for h2 underline
+          - drop cap: > h2:first-child::first-letter { --color-oxblood +
+            1.4em + 1 } — typographic effect on the existing h2, no DOM node,
+            no aria/alt-text needed
+          - inline code: --font-mono + --color-bone + --edge-color-subtle +
+            --radius-soft (kept distinct from pre via :not(pre code))
+          - pre: Shadow surface — --color-shadow bg + --color-parchment text +
+            --radius-card + --space-4/5 padding + --space-5 0 margin +
+            --text-body-3 + 1px --edge-color
+          - table: border-collapse + --text-body-3 + --font-body + th uses
+            --color-bone bg + font-weight 700
+          - blockquote: 3px solid --color-oxblood border-left + solid
+            --color-parchment bg (NO color-mix — discipline: solid colors
+            only, no blends) + --space-2/4 padding + italic
+          - links: a:not(.build-log-anchor) gets Oxblood + 1px underline +
+            3px offset (editorial-craft signature, NOT Wikipedia underline);
+            anchor element keeps its own muted style with hover-reveal
+      reusable_for:
+        - "Any future long-form prose component (.editorial-prose, .essay-prose, .case-study-prose) — same selector list, same token chain"
+        - "Any component layer retrofit where placeholder magic values need to be replaced by foundation tokens established in earlier so sections"
+        - "MarkdownDocument-style react-markdown wrappers — the className is the only consumer surface; retrofit happens entirely in CSS without touching the React tree"
+    - id: shipping_via_consumer_pre_wire
+      file: "src/components/build-log/MarkdownDocument.tsx (line 18 — bpd-2.1 already wired the className)"
+      description: |
+        When a CSS class is already mounted on a component shipped in an
+        earlier section, retrofit work in CSS-only takes effect across every
+        downstream page that mounts that component, with zero per-page edits.
+        bpd-2.1 shipped MarkdownDocument with className='build-log-prose'
+        baked in; bpd-2.2 mounted MarkdownDocument on /build-log/jobs/[slug]
+        and [slug]/[phase] routes; bpd-2.3 mounted it on /build-log/status.
+        so-2.4's CSS retrofit instantly lights up all four routes the moment
+        the new globals.css block lands.
+      reusable_for: "Any so-N.x retrofit where the consumer wiring was done by an upstream bpd / wf / sa / ce section — saves the per-page mount work"
+
+  gotchas:
+    - "vitest.config.ts versus vitest.config.mts: when both files exist on disk, vitest picks the .ts variant (alphabetical priority) — even if .mts has the canonical settings. In this repo the .mts has the next-auth/@auth/core/@auth/drizzle-adapter server.deps.inline rules; the .ts is a stale stub. The user's main repo has D vitest.config.ts (uncommitted deletion) but origin/main HEAD still has both files. Fresh worktrees branching from origin/main will fail preflight tests with 'Cannot find module .../node_modules/next/server imported from .../next-auth/lib/env.js'. Fix: `git rm vitest.config.ts` as an inline preflight fix in any worktree that hits this. The so-2.4 commit promotes this deletion to history."
+    - "Worktree mode means tests that depend on currentwork/community-showcase/ (jobs.test.ts integration_get_job_community_showcase + integration_get_phase_real_file) will fail in the worktree because that directory is untracked in the user's main repo — it has NEVER been committed to origin/main. This is a fresh-worktree environmental issue, not a regression. Document as pre-existing baseline; do NOT pull in the untracked dir (it would pollute the section commit)."
+    - "loader_build_incompat at /episodes/[slug] generateStaticParams reappears in fresh worktrees from origin/main because the user has M src/lib/content/{episodes,cases,loader}.ts uncommitted in main that resolve it. Past sections (sa-2.1, ce-1.2) confirmed the issue resolved when those edits were present in the working tree. In a CSS-only section like so-2.4, the build failure is unrelated to the section work — the CSS compilation stage itself completes cleanly ('Compiled successfully in 2.6s'); the failure surfaces only during page-data collection for the dynamic episode route. Document as pre-existing; do NOT pull in the user's uncommitted loader fixes (separate concern, separate commit)."
+    - "componentsBlock regex match on .build-log-prose block returns 15+ .build-log-prose occurrences (verified by integration_full_test_suite_green). Earlier sentinel siblings (tokens.test.ts, spacing.test.ts) work on smaller @theme blocks where occurrence count is low. The integration assertion uses .match(/\\.build-log-prose/g)?.length >= 15 — a sentinel that the block is structurally intact."
+    - "Drop cap selector requires both '>' (direct child) AND ':first-child' to scope the Oxblood color to ONLY the first h2 directly inside a .build-log-prose container — h2 elements nested in wrappers or appearing after other content don't get the drop cap. edge_drop_cap_first_child_constraint test asserts the '>' is present; edge_drop_cap_not_on_subsequent_h2 asserts the inverse (.build-log-prose h2::first-letter without scoping must NOT exist)."
+
+  reusable_utilities:
+    not_applicable: "Pure CSS section — no exports, no functions, no types created. The CSS class .build-log-prose itself was already shipped by bpd-2.1 and is the consumer's only surface; this section only changed what's inside."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/__tests__/brand/{tokens,spacing,fonts,type-scale,build-log-prose}.test.ts (5 sibling files now share readFileSync + componentsBlock regex + extractRule helper)"
+      description: |
+        Brand-sentinel helper extraction trigger is now FIRMLY MET — 5 sibling
+        files duplicate the same readFileSync + componentsBlock regex +
+        extractRule(selector) idiom. Per established deferral pattern from
+        so-2.1 → so-2.2 → so-2.3 → so-2.4, cross-section refactors that touch
+        >3 sections belong in a dedicated section, not inside any individual
+        styling-overhaul-N.x section's scope.
+
+        Proposed extraction: src/__tests__/brand/_helpers.ts exporting:
+          export const css: string;                    // readFileSync('src/app/globals.css')
+          export const themeBlock: string;             // @theme inline match
+          export const componentsBlock: string;        // @layer components match
+          export const extractRule: (sel: string) => string;
+        All 5 siblings then `import { componentsBlock, extractRule } from './_helpers';`
+        with zero behavior change. Greenlit by all 5 test files passing
+        their respective sentinel assertions today.
+
+        The bpd-2.3 RSC-purity sentinel (readFileSync + literal grep for
+        'use client') is a DIFFERENT family — single-line grep, not regex
+        extraction — and should stay inline rather than join the _helpers
+        module. so-2.3 knowledge already documented this distinction.
+
+        Recommended schedule: ship a dedicated brand-sentinel-test-helpers
+        refactor section AFTER any so-3.x sibling lands its 6th sentinel,
+        OR opportunistically when the next so section happens to touch one
+        of these files anyway.
+      priority: medium
+      sections_affected: 5
+      ready: true
+    - target: "src/lib/content/{episodes,cases}.ts:24"
+      description: "Object.freeze cache assignment — open since bpd-1.1 (now 12 sections deferred). Still not blocking any feature."
+      priority: low
+
+  refactor_zero_change_streak: 12
+  refactor_streak_note: |
+    12th consecutive zero-source-code-change refactor section
+    (so-1.1, so-1.2, so-1.3, ce-2.2, ce-1.3, bpd-2.3, ce-2.1, ce-3.1, so-2.1,
+    so-2.2, so-2.3, now so-2.4). Pattern is now exceptionally stable for
+    planning-doc-driven implementations across both CSS-token (so-1.x, so-2.x)
+    and brand-primitive (so-2.3 DropAccent) styling sections. The discipline
+    of treating the planning doc as the canonical spec — and refusing to
+    locally "improve" what it already specifies — is paying compound dividends.
+
+  blocker_cleared: |
+    styling-overhaul Phase 2 (Typography) COMPLETE. Status:
+      - 2.1 (font loading swap): COMPLETE
+      - 2.2 (type scale + utilities): COMPLETE
+      - 2.3 (DropAccent primitive): COMPLETE
+      - 2.4 (.build-log-prose retrofit): COMPLETE (this section)
+    Phase 3 (Material Language — 3.1 surface primitives, 3.2 textures,
+    3.3 brushstroke seam) is fully unblocked. Sections so-3.1, so-3.2, so-3.3
+    can all start in parallel — they don't depend on each other and don't
+    depend on any further so-2 work.
+
+    Brand-sentinel-test-helpers refactor is also unblocked but deferred to
+    its own dedicated section (see cross_section_cleanup_opportunities_carried_forward).
+
+    Live build-log routes (/build-log/jobs/[slug], /[phase], /status) now
+    ship Cinzel headings, Oxblood drop cap on the first h2 of each prose
+    container, Shadow code surfaces, Oxblood blockquote rule, and the
+    editorial-craft link underline (1px thickness + 3px offset). Visual
+    regression on these routes should be verified in a dev session before
+    the visit; the so-2.4 tests verify CSS structure, not pixel output.
+
 styling-overhaul-2.3:
   completed_at: "2026-06-06"
   patterns_established:

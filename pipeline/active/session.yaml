@@ -2,9 +2,9 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-2.4
+  current_section: styling-overhaul-3.1
   current_agent: pending
-  current_stage: styling-overhaul-2.3-complete
+  current_stage: styling-overhaul-2.4-complete
   concurrent_jobs:
     - id: cohort-enrollment-3.2
       phase: cohort-enrollment
@@ -19,6 +19,100 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-2.4
+    name: ".build-log-prose retrofit (Cinzel headings, Oxblood drop cap, Shadow code surfaces)"
+    completed_at: "2026-06-06"
+    commit_hash: "pending"
+    commit_message: "Add .build-log-prose retrofit with 40 tests (styling-overhaul-2.4)"
+    tests: 40
+    files_new: 1     # src/__tests__/brand/build-log-prose.test.ts
+    files_modified: 1  # src/app/globals.css
+    files_deleted: 1   # vitest.config.ts (inline preflight fix — stale .ts blocked next-auth resolution in worktree; .mts is canonical)
+    pushed: false
+    notes: |
+      Fourth and final feature of styling-overhaul Phase 2 (Typography).
+      Phase 2 (Typography) is now COMPLETE.
+
+      Pure CSS retrofit. Single-file edit to src/app/globals.css replacing
+      the existing .build-log-prose @layer components block (15 selectors
+      including new > h2:first-child::first-letter Oxblood drop cap and
+      new a:not(.build-log-anchor) link styling). Token-driven throughout:
+      consumes --pair-text-on-marble, --leading-body, --text-body-1/-3,
+      --font-display/-body/-mono (so-2.1), --text-display-2/-3,
+      --tracking-display, --leading-display (so-2.2), --color-oxblood/-bone/
+      -shadow/-parchment/-ink/-muted, --edge-color/-subtle, --radius-soft/
+      -card, --space-2/3/4/5/6/7 (so-1.1, so-1.2). Zero new tokens.
+
+      Magic-value purge (verified by infra_no_old_magic_values_in_prose_block):
+        var(--color-foreground) → var(--pair-text-on-marble)
+        var(--color-accent) → var(--color-oxblood)
+        1.7 line-height → var(--leading-body)
+        2.5rem h2 margin → var(--space-7)
+        1rem font-size → var(--text-body-1)
+        hard-coded 4px/6px radii → var(--radius-soft/-card)
+        color-mix(in oklab) blockquote bg → solid var(--color-parchment)
+
+      Test pattern: src/__tests__/brand/build-log-prose.test.ts (NEW) — 5th
+      brand-sentinel sibling (after tokens.test.ts so-1.1, spacing.test.ts
+      so-1.2, fonts.test.ts so-2.1, type-scale.test.ts so-2.2). Same
+      readFileSync + componentsBlock regex + extractRule(selector) pattern.
+      40 tests: 23 unit + 3 integration + 3 a11y + 4 infra + 5 edge + 1 err
+      + 1 data. 5 categories explicitly N/A: security/permission/contract
+      (no input/auth/network/API surface), error_recovery has 1 (font
+      fallback chain check), data_integrity has 1 (every var(--x) inside
+      prose block resolves to a globals.css declaration). Coverage matrix:
+      all 17 checklist items covered.
+
+      MarkdownDocument.tsx consumer was already wired in bpd-2.1 — no
+      consumer changes in 2.4. The retrofit takes effect on every
+      /build-log/jobs/[slug] and /build-log/jobs/[slug]/[phase] route the
+      moment the CSS lands, with no per-page edits.
+
+      Refactor produced ZERO code changes — 12th consecutive zero-source-
+      change refactor section (so-1.1, so-1.2, so-1.3, ce-2.2, ce-1.3,
+      bpd-2.3, ce-2.1, ce-3.1, so-2.1, so-2.2, so-2.3, now so-2.4). All
+      audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint
+      warnings.
+
+      Cross-section DRY trigger at the 5th brand-sentinel sibling now
+      firmly met. Captured to knowledge.yaml deferred_followups for a
+      dedicated brand-sentinel-test-helpers refactor section (which can
+      extract the readFileSync + componentsBlock + extractRule helper
+      across all 5 siblings simultaneously).
+
+      Inline preflight fix landed: deleted vitest.config.ts (the .ts
+      version) which had no server.deps.inline for next-auth and was
+      shadowing the canonical vitest.config.mts. In the user's main repo
+      this file already shows D in git status (uncommitted deletion) so
+      this section's commit promotes that deletion to history. Without
+      the fix, auth route + middleware integration tests fail to resolve
+      next-auth's internal env.js imports under vitest's Node ESM resolver.
+
+      Build status: npm run build hits the pre-existing
+      loader_build_incompat at /episodes/[slug] generateStaticParams. This
+      is unchanged from the worktree's origin/main HEAD (4b5ae41) and has
+      ZERO BEARING on this CSS-only section — the user has uncommitted
+      loader fixes in main (M src/lib/content/episodes.ts/cases.ts/
+      loader.ts) that resolve this independently. CSS compilation stage
+      itself is clean ('Compiled successfully in 2.6s'). Documented in
+      green-progress.yaml + beats.yaml#green.npm_build_passes.
+
+      Concurrent runs: worktree branched from clean origin/main, so this
+      run is isolated from the user's main-repo working tree (which has
+      many in-flight uncommitted changes across other concurrent sections).
+      Commit explicitly stages ONLY this section's files (1 new + 1
+      modified + 1 deleted) plus shared state (session.yaml, knowledge.yaml,
+      currentwork/styling-overhaul/README.md). Per-worktree isolation via
+      /worktree-claim (CLAIM-04 bind-mounts node_modules from main; env
+      files symlinked).
+
+      Blocker cleared: styling-overhaul Phase 2 (Typography) COMPLETE.
+      Phase 3 (Material Language) is next:
+        - so-3.1, so-3.2, so-3.3 can all start in parallel
+        - The next so section by canonical numeric order is so-3.1
+        - Brand-sentinel-test-helpers refactor is also unblocked but
+          deferred to its own dedicated section
+
   - id: styling-overhaul-2.3
     name: "DropAccent oversized-punctuation primitive"
     completed_at: "2026-06-06"
