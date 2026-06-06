@@ -1,15 +1,15 @@
 session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
-  current_phase: "storefront-auth"
-  current_section: "storefront-auth-4.2"
-  current_agent: finish
-  current_stage: "storefront-auth-4.2-finish"
+  current_phase: "styling-overhaul"
+  current_section: "styling-overhaul-1.1"
+  current_agent: discovery
+  current_stage: "styling-overhaul-1.1-complete"
   concurrent_jobs: []
 
 context_window:
-  iteration: 1
-  total_items: 8
+  iteration: 0
+  total_items: 0
   completed_items: 0
 
 completed_sections:
@@ -680,11 +680,92 @@ completed_sections:
     files_new: 8
     files_modified: 3
     pushed: true
+  - id: "storefront-auth-4.2"
+    name: "SEO + Error Boundaries + Lighthouse Sweep"
+    completed_at: "2026-04-14"
+    commit_hash: "68914e0"
+    commit_message: "Add SEO + error boundaries with 25 tests (storefront-auth-4.2)"
+    tests: 25
+    files_new: 5
+    files_modified: 12
+    pushed: true
+
+  - id: "styling-overhaul-1.1"
+    name: "Palette swap + contrast pairs + dark-mode removal"
+    completed_at: "2026-06-06"
+    commit_hash: pending
+    commit_message: pending
+    tests: 38  # 23 unit + 5 integration + 3 a11y + 2 infra + 5 edge; security/perm/contract/err/data N/A; full suite 936 passed | 30 skipped (was 908 passed pre-section)
+    files_new: 1   # src/__tests__/brand/tokens.test.ts
+    files_modified: 2  # src/app/globals.css + currentwork/styling-overhaul/README.md (status flip)
+    files_deleted: 1   # src/app/__tests__/globals-css.test.ts (obsolete wf-1.3 leftover, superseded)
+    pushed: false  # set true after push
+    notes: |
+      First section of styling-overhaul (so) job — kicks off the brand reset.
+      Pure CSS-tokens-only edit to src/app/globals.css: replaces the wf-1.3
+      placeholder @theme block (ink/parchment/ember/steel/mist/signal +
+      prefers-color-scheme: dark + Geist font-feature-settings) with the
+      editorial brand palette (Marble #F7F4EC, Parchment #F0E6D2, Ink
+      #1C1814, Oxblood #6B2020, Verdigris #2F5D50, Bone #E8DCC4, Shadow
+      #2A2520) + 6 semantic surface aliases + 10 explicit contrast pair
+      tokens (4 text + 3 accent + 3 dark CTA). Drops the dark-mode @media
+      override block entirely (one-mode brand). Drops font-feature-settings
+      ss01/cv11 from body (Geist-specific; Phase 2.1 swaps the font stack).
+      Preserves --font-display/--font-body/--font-mono aliases pointing at
+      Geist temporarily (Phase 2.1 reassigns).
+
+      Test file: src/__tests__/brand/tokens.test.ts (NEW). 38 tests using
+      the canonical readFileSync(join(process.cwd(), 'src/app/globals.css'))
+      + regex pattern from llmstxt.test.ts. Covers every palette hex (7),
+      every semantic alias (6), every contrast pair token (10), the body
+      block (background+foreground+font-body), forbidden patterns (no
+      #000/#fff in @theme block, no @media prefers-color-scheme: dark
+      anywhere, no font-feature-settings in body, no --color-ember/steel/
+      mist/signal residue), and the @theme block coverage assertions.
+      Categories: 23 unit + 5 integration + 3 a11y + 2 infra + 5 edge;
+      security + permission + contract + error_recovery + data_integrity
+      N/A per Discovery (CSS tokens have no API/user input/auth/runtime).
+
+      Cross-section cleanup: src/app/__tests__/globals-css.test.ts deleted.
+      Pre-existing wf-1.3 leftover; encoded the OLD palette + dark-mode +
+      font-feature assertions verbatim — fully inverse of this section's
+      mandate. Planning doc README is explicit: "leftovers from wf-1.3
+      when no real brand spec existed... to be wholesale replaced".
+      Replacement test file covers the same scope with the new palette.
+      Net suite delta: -10 obsolete + 38 new = +28 (908 → 936 passing).
+
+      Transitional patch: .build-log-prose @layer block had 5 var(--color-mist)
+      / color-mix(--color-mist ...) references that would (a) silently break
+      at runtime and (b) trip the edge_no_old_palette_tokens_remain test.
+      Substituted to var(--color-bone) / color-mix(--color-ink 15%, transparent) /
+      color-mix(--color-bone 50%, transparent) in 5 declarations
+      (h2 border-bottom, code:not(pre code) bg, table th/td border, table th bg,
+      blockquote bg). Phase 2.4 (.build-log-prose retrofit) is the dedicated
+      section that rewrites the entire block with Cinzel headings + Oxblood
+      drop cap + Shadow code surfaces — current patch is the minimum to
+      keep build-log routes rendering until 2.4 lands.
+
+      Refactor produced ZERO code changes — implementation already idiomatic
+      (precedent: ce-1.3, bpd-2.3). Audits: clean DRY, type-safe, no hardcoded
+      smell (hex values ARE the brand spec, not fake-value smell). One cross-
+      section DRY finding deferred (4-call-site threshold for static-file-
+      content helper extraction; so-3.3 + so-9.2 will trigger).
+
+      Concurrent runs: working tree has prior modifications from earlier
+      session work (CLAUDE.md, currentwork/website-foundation/*,
+      src/lib/content/*, storefront-auth-3.3 dir deletions). Commit explicitly
+      stages ONLY this section's files (globals.css, tokens.test.ts deletion
+      of globals-css.test.ts, README status flip, session.yaml, knowledge.yaml).
+
+      Blocker cleared: styling-overhaul-1.2 (spacing + radius scale, 8px grid,
+      restrained corners) can start in parallel with 1.3 (brand doc rewrite +
+      design-system doc). Phase 2 (typography) gates on 1.2 landing the
+      vertical-rhythm tokens.
 
 resume_point:
-  last_action: "section_storefront_auth_4.1_completed"
-  next_action: "/pipeline sa 4.2 (SEO + Error Boundaries + Lighthouse)"
-  notes: "storefront-auth Phase 4 in progress. 4.1 complete (account UI). Next: 4.2 (SEO polish, error boundaries, Lighthouse sweep)."
+  last_action: "section_styling_overhaul_1.1_completed"
+  next_action: "styling-overhaul-1.2 (spacing + radius scale) or 1.3 (brand doc rewrite + design-system doc) — both parallelizable"
+  notes: "styling-overhaul Phase 1 started. 1.1 complete (brand palette + dark-mode removal). Phase 1 sections 1.1/1.2/1.3 are independently parallelizable per the planning doc dependency graph."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

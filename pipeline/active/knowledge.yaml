@@ -1806,3 +1806,56 @@ storefront-auth-3.1:
       - "JSON-LD price must be string with toFixed(2), not number — schema.org requires decimal string"
       - "When adding a new NAV_ITEMS entry, update hardcoded count assertions in Header.test.tsx and the data_header_nav_items expected array"
       - "Sitemap edge case test has hardcoded static route count — must be updated when adding new static routes"
+
+styling-overhaul-1.1:
+  completed_at: "2026-06-06"
+  commit_message: "Add brand palette tokens with 38 tests (styling-overhaul-1.1)"
+
+  patterns_established:
+    - description: "CSS tokens sentinel pattern — file-content + regex Vitest assertions on globals.css extracted @theme block + body block"
+      file: "src/__tests__/brand/tokens.test.ts"
+      reusable_for: "Future brand sentinels (so-1.2 spacing/radius scale, so-3.3 forbidden-pattern, so-9.2 contrast guard, so-9.1 legibility) — extract themeBlock/bodyBlock via top-level IIFE regex, then per-test toMatch/not.toMatch assertions on the slice. process.cwd() not import.meta.url (jsdom)."
+    - description: "Three-tier Tailwind 4 @theme structure — palette literals → semantic aliases → explicit contrast pair tokens"
+      file: "src/app/globals.css"
+      reusable_for: "Any future palette swap. Pattern: 7 hex palette tokens at top, then 6 semantic surface aliases via var(), then named pair tokens (--pair-{role}-on-{surface}) to encode contrast intent. Components consume the pair tokens, not the underlying hexes — single point of change."
+    - description: "color-mix(in oklab, var(--color-ink) {n}%, transparent) for derived translucent/muted values instead of separate grey tokens"
+      file: "src/app/globals.css"
+      reusable_for: "Any muted/translucent variant — keeps warm anchor without introducing a fighting grey. 65% for muted text, 15-20% for subtle dividers (matches the planned 1.2 edge-color spec)."
+
+  gotchas:
+    - "Removing a CSS custom property (--color-mist) from the @theme block breaks every var(--color-mist) reference elsewhere in globals.css. The edge_no_old_palette_tokens_remain test uses /--color-mist\\b/ which matches the substring INSIDE var(--color-mist), not just declarations. Must scrub all uses, not just the declaration. .build-log-prose has 5 such refs — patched transitionally to var(--color-bone) / color-mix(ink 15%) until Phase 2.4 retrofits properly."
+    - "Pre-existing wf-1.3 src/app/__tests__/globals-css.test.ts encoded the OLD placeholder palette (asserted --color-ember/steel/mist/signal + prefers-color-scheme: dark + font-feature-settings). A palette-swap section that REPLACES wf-1.3 must DELETE such inverse-spec sentinels, not refactor them. Planning-doc authorization is the green light (so README explicitly says 'leftovers from wf-1.3, to be wholesale replaced'). Net suite: -10 obsolete + 38 new = +28."
+    - "Tailwind 4 'use @theme inline { }' inside @media (prefers-color-scheme: dark) {} was the old dark-mode pattern. Removing both the outer @media block AND ensuring no token override blocks remain in any media query is required for the brand's one-mode mandate (the edge test only checks for `prefers-color-scheme: dark`, but future sentinels should also guard against `prefers-contrast`/`prefers-reduced-motion` overrides drifting tokens)."
+    - "Hex value invariants: planning doc gives exact hexes (#F7F4EC marble, #1C1814 ink, #6B2020 oxblood, #2F5D50 verdigris, #F0E6D2 parchment, #E8DCC4 bone, #2A2520 shadow). Tests assert exact match (case-insensitive on hex, exact on capitalization in the regex spec). When the brand spec adjusts in 1.3 (e.g., marble redacted to #F5F2EA or #FAF7EE per planning doc note), both globals.css AND tokens.test.ts hex assertions must update together."
+
+  reusable_utilities: []
+  # No new shared utilities. The themeBlock / bodyBlock regex extraction
+  # could be extracted to src/__tests__/helpers/static-file-content.ts when
+  # 3+ brand-sentinel files share it (deferred per refactor-progress).
+
+  cross_section_cleanup_opportunities_added:
+    - target: "src/app/globals.css .build-log-prose @layer block"
+      description: "5 declarations transitionally patched from var(--color-mist) to var(--color-bone) / color-mix(in oklab, var(--color-ink) 15%, transparent). Phase 2.4 (.build-log-prose retrofit) is the dedicated section to rewrite with Cinzel headings + Oxblood drop cap + Shadow code surfaces."
+      priority: scheduled
+      decision: defer-to-2.4
+
+    - target: "src/__tests__/brand/ helper extraction"
+      description: "When 3+ brand sentinel test files share the readFileSync(join(process.cwd(), ...)) + regex pattern (currently only tokens.test.ts), extract src/__tests__/helpers/static-file-content.ts with a readStaticFile(relativePath) helper. so-3.3 and so-9.2 will trigger this threshold."
+      priority: low
+      decision: defer-to-threshold-trigger
+
+  open_questions_resolved:
+    - id: build_log_prose_token_breakage
+      severity: P2
+      status: resolved-transitionally
+      next_action: "Phase 2.4 (.build-log-prose retrofit) does the real rewrite — current patch is the minimum to keep build-log routes rendering coherently"
+
+  scope_recap: |
+    CSS-tokens-only section. Single source file modified (src/app/globals.css),
+    one test file added (src/__tests__/brand/tokens.test.ts, 38 tests),
+    one obsolete test file deleted (src/app/__tests__/globals-css.test.ts).
+    No schemas, no API, no DB, no UI components, no hooks, no forms, no nav.
+    38 section tests cover all 11 checklist items at 100%. Full suite: 936 passed |
+    30 skipped (pre-existing DB-gated) | 0 failed; lint clean; tsc clean;
+    npm run build clean (Tailwind 4 + 52 static pages prerendered).
+

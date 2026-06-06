@@ -1,39 +1,48 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Brand palette — muted confident colors per brand-identity doc */
-  --color-ink: #0a0a0a;          /* near-black text on light */
-  --color-parchment: #faf8f3;    /* warm off-white background */
-  --color-ember: #c2410c;        /* accent — rusted orange (the "fabled" side) */
-  --color-steel: #475569;        /* secondary text, borders */
-  --color-mist: #e2e8f0;         /* subtle dividers, hover states */
-  --color-signal: #0891b2;       /* link color — teal ("10X" tech side) */
+  /* Material palette — every color is the color of a real ancient object */
+  --color-marble: #F7F4EC;       /* bright warm white with grey-tan veining */
+  --color-parchment: #F0E6D2;    /* secondary warm — used where marble is impractical */
+  --color-ink: #1C1814;          /* headlines, body, button fills — warm near-black, never pure */
+  --color-oxblood: #6B2020;      /* the one saturated accent — headlines, logo, series tags */
+  --color-verdigris: #2F5D50;    /* aged-bronze patina green — completion / success only */
+  --color-bone: #E8DCC4;         /* secondary parchment for layered surfaces */
+  --color-shadow: #2A2520;       /* warm dark grey for vignettes, edges, code surfaces */
 
-  --color-background: var(--color-parchment);
+  /* Semantic surface aliases */
+  --color-background: var(--color-marble);
   --color-foreground: var(--color-ink);
-  --color-muted: var(--color-steel);
-  --color-accent: var(--color-ember);
-  --color-link: var(--color-signal);
+  --color-muted: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --color-accent: var(--color-oxblood);
+  --color-success: var(--color-verdigris);
+  --color-link: var(--color-oxblood);
 
+  /* Explicit contrast pairs (Three Hierarchy Levels) */
+  --pair-text-on-marble: var(--color-ink);
+  --pair-text-on-bone: var(--color-ink);
+  --pair-text-on-parchment: var(--color-ink);
+  --pair-text-on-shadow: var(--color-parchment);
+
+  --pair-accent-on-marble: var(--color-oxblood);
+  --pair-accent-on-bone: var(--color-oxblood);
+  --pair-accent-on-shadow: var(--color-parchment);
+
+  /* Dark CTA — the rare Ink + Oxblood combination, reserved for primary button hover */
+  --pair-dark-cta-fg: var(--color-marble);
+  --pair-dark-cta-bg: var(--color-ink);
+  --pair-dark-cta-accent: var(--color-oxblood);
+
+  /* Font aliases — Phase 2.1 repoints these to Cinzel / Inter / JetBrains Mono */
   --font-display: var(--font-geist-sans);
   --font-body: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  @theme inline {
-    --color-background: #0d0d0f;
-    --color-foreground: #e8e8e3;
-    --color-muted: #94a3b8;
-    --color-mist: #1e293b;
-  }
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-body), system-ui, sans-serif;
-  font-feature-settings: "ss01", "cv11";
 }
 
 @layer components {
@@ -48,7 +57,7 @@ body {
     font-size: 1.5rem;
     line-height: 1.3;
     font-weight: 600;
-    border-bottom: 1px solid var(--color-mist);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 15%, transparent);
     padding-bottom: 0.25rem;
   }
   .build-log-prose h3 {
@@ -62,7 +71,7 @@ body {
     margin-bottom: 1rem;
   }
   .build-log-prose code:not(pre code) {
-    background: var(--color-mist);
+    background: var(--color-bone);
     border-radius: 4px;
     padding: 0.125rem 0.375rem;
     font-size: 0.875em;
@@ -86,19 +95,19 @@ body {
   }
   .build-log-prose th,
   .build-log-prose td {
-    border: 1px solid var(--color-mist);
+    border: 1px solid color-mix(in oklab, var(--color-ink) 15%, transparent);
     padding: 0.5rem 0.75rem;
     text-align: left;
     vertical-align: top;
   }
   .build-log-prose th {
-    background: var(--color-mist);
+    background: var(--color-bone);
     font-weight: 600;
   }
   .build-log-prose blockquote {
     border-left: 4px solid var(--color-accent);
     padding: 0.5rem 1rem;
-    background: color-mix(in oklab, var(--color-mist) 50%, transparent);
+    background: color-mix(in oklab, var(--color-bone) 50%, transparent);
     margin: 1.25rem 0;
     font-style: italic;
   }
