@@ -5,13 +5,13 @@ import path from 'node:path';
 const COMPOSE_PATH = path.resolve(__dirname, '..', '..', 'docker-compose.yml');
 
 describe('docker-compose.yml', () => {
-  it('infra_docker_compose_postgres_16_alpine: services.postgres uses postgres:16-alpine + healthcheck + named volume', () => {
+  it('infra_docker_compose_postgres_18_alpine: services.postgres uses postgres:18-alpine + healthcheck + named volume', () => {
     expect(existsSync(COMPOSE_PATH)).toBe(true);
     const yaml = readFileSync(COMPOSE_PATH, 'utf8');
 
     expect(yaml).toMatch(/services:/);
     expect(yaml).toMatch(/postgres:/);
-    expect(yaml).toMatch(/image:\s*postgres:16-alpine/);
+    expect(yaml).toMatch(/image:\s*postgres:18-alpine/);
     expect(yaml).toMatch(/healthcheck:/);
     expect(yaml).toMatch(/pg_isready/);
     expect(yaml).toMatch(/volumes:/);
