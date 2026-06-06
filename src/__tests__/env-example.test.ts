@@ -20,6 +20,9 @@ describe('.env.example safety', () => {
     expect(text).toMatch(/^STRIPE_SECRET_KEY=/m);
     expect(text).toMatch(/^STRIPE_WEBHOOK_SECRET=/m);
     expect(text).toMatch(/^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=/m);
+    // infra_env_example_documents_vars (cohort-enrollment-2.2)
+    expect(text).toMatch(/^RESEND_COHORT_WAITLIST_AUDIENCE_ID=/m);
+    expect(text).toMatch(/^RESEND_FROM_COHORTS=/m);
 
     const dbUrl = /^DATABASE_URL=(.+)$/m.exec(text)?.[1] ?? '';
     expect(dbUrl).toMatch(/localhost/i);
@@ -30,6 +33,8 @@ describe('.env.example safety', () => {
       'STRIPE_SECRET_KEY',
       'STRIPE_WEBHOOK_SECRET',
       'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+      'RESEND_COHORT_WAITLIST_AUDIENCE_ID',
+      'RESEND_FROM_COHORTS',
     ];
     for (const key of emptyExpected) {
       const re = new RegExp(`^${key}=(.*)$`, 'm');

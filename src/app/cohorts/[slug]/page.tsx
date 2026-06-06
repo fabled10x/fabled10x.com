@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Container } from '@/components/site/Container';
 import { getAllCohorts, getCohortBySlug } from '@/lib/content/cohorts';
 import { CohortDetailHero } from '@/components/cohorts/CohortDetailHero';
+import { WaitlistForm } from '@/components/cohorts/WaitlistForm';
 
 type RouteParams = {
   params: Promise<{ slug: string }>;
@@ -54,10 +55,7 @@ export default async function CohortDetailPage({ params }: RouteParams) {
         </h2>
         <div className="mt-6 rounded-md border border-mist p-6 text-sm text-muted">
           {meta.status === 'announced' ? (
-            <p>
-              Waitlist form coming online soon. This cohort&apos;s applications
-              open in Phase 2 of the build.
-            </p>
+            <WaitlistForm cohortSlug={meta.slug} sourceTag="cohort-detail" />
           ) : meta.status === 'open' ? (
             <p>
               Application form coming online in Phase 3. Signed-in applicants

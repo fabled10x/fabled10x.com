@@ -2,17 +2,132 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "styling-overhaul"
-  current_section: "styling-overhaul-1.2"
-  current_agent: discovery
-  current_stage: "styling-overhaul-1.2-discovery-complete"
-  concurrent_jobs: []
+  current_section: "styling-overhaul-2.1"
+  current_agent: pending
+  current_stage: "styling-overhaul-1.3-complete"
+  # Phase 1 (Foundation Tokens) COMPLETE: 1.1 palette, 1.2 spacing/radius/edge,
+  # 1.3 brand+design-system docs all shipped. Next: Phase 2 (Typography) starts
+  # with 2.1 font loading (Cinzel + Inter + JetBrains Mono).
+  concurrent_jobs:
+    - id: "cohort-enrollment-3.1"
+      phase: "cohort-enrollment"
+      stage: "cohort-enrollment-2.2-complete"
+      current_agent: pending
+      note: "ce-2.2 shipped (waitlist form + server action + confirmation email, 43 tests). Phase 2 (Waitlist + Persistence) COMPLETE. ce-3.1 (CohortApplicationInputSchema) is the next ce section."
 
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 
+# Reset for styling-overhaul-1.3 below
+
 completed_sections:
+  - id: "cohort-enrollment-2.2"
+    name: "Waitlist Form + submitWaitlist Server Action + Confirmation Email"
+    completed_at: "2026-06-06"
+    commit_hash: pending
+    commit_message: pending
+    tests: 43  # 14 unit + 7 integration + 5 security + 3 a11y + 2 infra + 5 edge + 3 err + 2 data + 3 contract; permission N/A; full suite 1085 passing | 60 skipped (was 1042 passing pre-section)
+    files_new: 6  # actions.ts, WaitlistForm.tsx, cohort-waitlist-confirmation.ts + 3 test files
+    files_modified: 4  # /cohorts/[slug]/page.tsx, .env.example, env-example.test.ts, dependencies.test.ts, page.test.tsx (5; .env.example was a content append, the rest are code/test edits)
+    pushed: false  # set true after push
+    notes: |
+      Second feature of cohort-enrollment Phase 2 (Waitlist + Persistence).
+      Merged old 2.2 (form + action) + 2.3 (email + env) per /condense ce.
+      Wires the announced-status cohort detail page CTA to a real waitlist
+      flow: anonymous or signed-in visitor submits email → Zod validate →
+      getCohortBySlug guard → auth() optional userId → db.insert.onConflictDoNothing
+      → if inserted: best-effort Resend audience.create + Resend emails.send
+      confirmation. DB row is canonical source of truth; downstream side-effects
+      wrapped in try/swallow.
+
+      Patterns reused: wf-4.1 useActionState + per-call Resend (vs sa-3.2
+      module-cached singleton — codebase has both), sa-3.2 inline-HTML email
+      template (with divergence: silent-return on missing env instead of throw),
+      sa-2.1 Drizzle .onConflictDoNothing dedupe, sa-2.2 vi.hoisted env stub
+      pattern. New pattern established: useActionState mock via vi.mock('react')
+      with importActual + override — reusable for any future client form test
+      where deterministic (state, formAction, isPending) drive is needed.
+
+      Refactor produced ZERO code changes — 5th consecutive section (ce-1.3,
+      bpd-2.3, so-1.1, so-1.2, now ce-2.2). 4 cross-section improvements
+      identified + deferred per documented trigger conditions (planning doc
+      Phase 4 / 3-call-site threshold). All audits clean: zero any/as/@ts-ignore,
+      0 ESLint warnings, build clean (52 static pages prerendered).
+
+      Test edit during red: cohort detail page's unit_detail_cta_announced
+      changed from placeholder copy assertion ('Waitlist form coming online')
+      to WaitlistForm mount assertion (data-testid='waitlist-form'). Acceptable
+      pattern: test asserted obsolete behavior being replaced by this section.
+
+      Concurrent runs: working tree has prior modifications from earlier
+      session work (CLAUDE.md, currentwork/website-foundation/*, src/lib/content/*,
+      storefront-auth-3.3 dir deletions, vitest.config.ts deletion). Commit
+      explicitly stages ONLY this section's files (3 new source + 3 new test +
+      4 modifications) plus shared state (session.yaml, knowledge.yaml,
+      currentwork/cohort-enrollment/README.md).
+
+      Blocker cleared: ce Phase 2 (Waitlist + Persistence) COMPLETE.
+      ce-3.1 (CohortApplicationInputSchema Zod validator) is the next ce
+      section — unblocks ce-3.2 application flow.
+
+  - id: "styling-overhaul-1.3"
+    name: "Brand doc rewrite + design-system doc"
+    completed_at: "2026-06-06"
+    commit_hash: "466f9c3"  # primary commit (7089182 was an earlier parallel-agent commit; 0ad6327 is fixup)
+    commit_message: "Add brand doc rewrite + design-system doc with 46 tests (styling-overhaul-1.3)"
+    tests: 46
+    files_new: 13  # src/__tests__/brand/docs.test.ts + 12 docs/* files newly tracked (brand-identity, design-system, plus content-architecture, launch-strategy, production-workflow, revenue-projections, website-impl-plan, future-jobs, deployment-runbook, lll-impl-plan, etc.)
+    files_modified: 3  # .gitignore (remove docs/), currentwork/styling-overhaul/README.md (status flip), pipeline/active/knowledge.yaml
+    pushed: true
+    notes: |
+      Pure docs section. Two phases happened concurrently during this run:
+      (1) Parallel agent landed commit 7089182 first ("Add brand docs tests
+          with 46 tests") — shipped the test file and an early knowledge.yaml
+          entry, but docs/ was still gitignored so the doc CONTENT didn't
+          ship.
+      (2) Primary agent in 466f9c3 unignored docs/ globally (user choice via
+          AskUserQuestion vs the alternative of whitelisting only the 2
+          brand docs), then committed the actual docs/ contents — 12+
+          previously-untracked planning docs joined the repo (brand-identity,
+          design-system, content-architecture, launch-strategy, production-
+          workflow, revenue-projections, website-implementation-plan,
+          large-language-library-implementation-plan, deployment-runbook,
+          future-jobs, playlists/, videos/).
+      (3) Post-merge fixup 0ad6327 deduped the resulting two so-1.3 entries
+          in knowledge.yaml (parsing was broken by duplicate top-level keys,
+          which surfaced as integration_knowledge_yaml_parses_real failing).
+      46 tests guard prose content; one test-edit during green replaced two
+      \Z anchors with $ (JS regex doesn't support \Z). Refactor produced
+      ZERO code changes — cross-section DRY readFileSync helper deferred to
+      so-2.2 trigger. Phase 1 (Foundation Tokens) of styling-overhaul
+      COMPLETE; Phase 2 (Typography) unblocked starting with 2.1.
+
+  - id: "cohort-enrollment-2.1"
+    name: "Drizzle Migration + Four New Cohort Tables"
+    completed_at: "2026-06-06"
+    commit_hash: "3003879"
+    commit_message: "Add cohort tables with 58 tests (cohort-enrollment-2.1)"
+    tests: 58
+    files_new: 6  # 4 tests + cohort-application.ts + 0002_cohort_enrollment.sql (+ snapshot)
+    files_modified: 6  # schema.ts, index.ts, journal, vitest.config.mts, README.md, knowledge.yaml
+    pushed: true
+    notes: |
+      Pure infrastructure section — DB schema, types, migration. No API, no UI.
+      4 Drizzle tables (cohort_waitlist, cohort_applications, cohort_admissions,
+      cohort_enrollments) with FK cascades, UNIQUE constraints, CHECK constraints
+      sourced from imported TS tuples via sql.raw. Forward-decl
+      src/content/schemas/cohort-application.ts with APPLICATION_COMMITMENT_LEVELS
+      tuple (ce-3.1 will extend). Migration 0002_cohort_enrollment.sql + snapshot.
+      vitest.config.mts fileParallelism: false added for shared-DB integration
+      test isolation (sa-2.1 + ce-2.1 cross-truncate users via cascades; full
+      suite ~4s → ~30s). 58 tests = 24 unit + 10 integration + 12 edge + 8 data
+      + 6 infra (5 N/A categories: security, perm, contract, a11y, err_recovery
+      — all explicitly justified). Follow-up: sa-2.2 auth.test.ts has 4
+      pre-existing fails when DATABASE_URL is set (signIn() needs
+      work_unit_async_storage mocking).
+
   - id: "website-foundation-1.1"
     name: "Case Content Schema"
     completed_at: "2026-04-11"
@@ -693,12 +808,12 @@ completed_sections:
   - id: "styling-overhaul-1.2"
     name: "Spacing + radius scale (8px grid, restrained corners)"
     completed_at: "2026-06-06"
-    commit_hash: pending
-    commit_message: pending
+    commit_hash: "1f2523c"
+    commit_message: "Add brand spacing + radius scale with 32 tests (styling-overhaul-1.2)"
     tests: 32  # 20 unit + 5 integration + 2 infra + 5 edge; security/perm/contract/a11y/err/data N/A; full suite 968 passed | 30 skipped (was 940 passed pre-section)
     files_new: 1   # src/__tests__/brand/spacing.test.ts
     files_modified: 1  # src/app/globals.css
-    pushed: false  # will be set true after push
+    pushed: true
     notes: |
       Second section of styling-overhaul (so) job — Phase 1 spacing /
       radius / edge token append. Pure additive CSS edit to
@@ -818,9 +933,9 @@ completed_sections:
       vertical-rhythm tokens.
 
 resume_point:
-  last_action: "section_styling_overhaul_1.1_completed"
-  next_action: "styling-overhaul-1.2 (spacing + radius scale) or 1.3 (brand doc rewrite + design-system doc) — both parallelizable"
-  notes: "styling-overhaul Phase 1 started. 1.1 complete (brand palette + dark-mode removal). Phase 1 sections 1.1/1.2/1.3 are independently parallelizable per the planning doc dependency graph."
+  last_action: "section_cohort_enrollment_2.2_completed"
+  next_action: "cohort-enrollment-3.1 (CohortApplicationInputSchema Zod validator) — unblocks ce-3.2 application flow. styling-overhaul-1.3 also complete; next so section is 2.1 (typography font loading)."
+  notes: "cohort-enrollment Phase 2 (Waitlist + Persistence) COMPLETE — 2.1 (tables) + 2.2 (form + action + email) shipped. styling-overhaul Phase 1 also complete (1.1/1.2/1.3 all shipped). Two parallel job tracks both ready for their next Phase."
 
 notes: |
   fabled10x project initialized on 2026-04-11.

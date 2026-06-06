@@ -2114,3 +2114,93 @@ styling-overhaul-1.3:
 # Note: a parallel agent committed an earlier (now-stale) so-1.3 entry here
 # that said docs were gitignored. The unignore landed in 466f9c3; the stale
 # duplicate is removed. Canonical so-1.3 knowledge entry is at line 2013.
+
+cohort-enrollment-2.2:
+  completed_at: "2026-06-06"
+  section_name: "Waitlist Form + submitWaitlist Server Action + Confirmation Email"
+  patterns_established:
+    - description: "useActionState mocked deterministically in component tests"
+      file: "src/components/cohorts/__tests__/WaitlistForm.test.tsx"
+      reusable_for: |
+        Any future client-form test where you want to drive (state, formAction,
+        isPending) directly instead of running the full action. vi.mock('react', ...)
+        with importActual + override of useActionState only.
+    - description: "Drizzle insert chain mocked via vi.hoisted"
+      file: "src/components/cohorts/__tests__/actions.test.ts"
+      reusable_for: |
+        Any future server action that writes via Drizzle .insert().values()
+        .onConflictDoNothing().returning(). Each method returns an object
+        chaining the next, all created in a single vi.hoisted block so vi.mock
+        replaces @/db/client cleanly before module load. Pattern: ce-3.2,
+        ce-4.x, ef-1.x, any sa-3.x decision/writeback work.
+    - description: "Server action with best-effort downstream side-effects"
+      file: "src/components/cohorts/actions.ts"
+      reusable_for: |
+        Any action where DB row is canonical truth and Resend (or similar
+        external service) sends are best-effort. Pattern: validate → guard →
+        auth() → insert(.onConflictDoNothing) → if inserted: try-catch each
+        side-effect → return success. Idempotent dedupe via UNIQUE catches
+        the resubmit case without an extra read.
+    - description: "Inline-HTML email helper with silent-on-missing-env return"
+      file: "src/lib/email/cohort-waitlist-confirmation.ts"
+      reusable_for: |
+        Marketing-adjacent transactional emails where dev ergonomics matter
+        (helper should not blow up local submits when RESEND_API_KEY is unset).
+        Diverges from sa-3.2 purchase-confirmation which throws on env missing.
+        Choose silent-return when the helper is called from a best-effort
+        wrapper; choose throw when the caller expects strict delivery.
+    - description: "escapeHtml(value): HTML entity escape for &<>\"' (inline)"
+      file: "src/lib/email/cohort-waitlist-confirmation.ts"
+      reusable_for: |
+        Any email helper that interpolates operator-authored MDX frontmatter
+        (cohort title, product name, etc.) into raw HTML. Single call site as
+        of ce-2.2; second call site (likely ce-4.2 decision email) should
+        trigger extraction to src/lib/email/_html.ts per 3-call-site rule.
+    - description: "formatDate(iso, UTC anchor) for cohort dates"
+      file: "src/lib/email/cohort-waitlist-confirmation.ts"
+      reusable_for: |
+        Any cohort-related rendering that takes ISO date strings and renders
+        them as 'September 14, 2026' with timezone: 'UTC' in the Intl.DateTimeFormat
+        options so test-runner TZ does not shift the date. Now duplicated across
+        5 sites (CohortCard, CohortDetailHero, PurchaseList, purchases/[id]/page,
+        this helper). Extraction planned for ce-4.3 per planning-doc Open Items.
+  gotchas:
+    - |
+      z.email() accepts long local-parts (~250 chars of 'a'). If you intend
+      to enforce RFC-5321 limits with .email().max(N), test the boundary
+      carefully — Zod v4's email regex does NOT enforce the 64-char local-part
+      limit. The .max(254) check is on TOTAL string length.
+    - |
+      Action must gate Resend audience.create on inserted.length > 0
+      (NOT just on env vars). Otherwise dedupe submits would still hit the
+      external service. data_consistency_unique_pair_dedupe + sec_dos_idempotent_dedupe
+      both assert this gating.
+    - |
+      WaitlistForm test must mock '@/auth', '@/db/client', '@/lib/content/cohorts',
+      and '@/lib/email/cohort-waitlist-confirmation' all via vi.hoisted to
+      avoid db_client_eager_guard tripping at module load (sa-2.2 inheritance).
+      Pattern carries through to ce-3.2 ApplicationForm + sa-4.x action tests.
+    - |
+      Existing test edit during red: cohort detail page's unit_detail_cta_announced
+      changed from placeholder copy assertion ('Waitlist form coming online') to
+      WaitlistForm mount assertion (data-testid='waitlist-form'). Acceptable when
+      the test asserts behavior being replaced by the current section. Document
+      in red-progress.yaml.test_edits_made.
+  reusable_utilities:
+    - function: "escapeHtml(value: string): string"
+      file: "src/lib/email/cohort-waitlist-confirmation.ts"
+      purpose: "HTML entity escape for raw-string email templates; covers &<>\"'"
+    - function: "formatDate(iso: string): string"
+      file: "src/lib/email/cohort-waitlist-confirmation.ts (and 4 other sites)"
+      purpose: "Render ISO date as 'September 14, 2026' with UTC anchor — TZ-stable"
+    - function: "WaitlistInputSchema (Zod)"
+      file: "src/components/cohorts/actions.ts"
+      purpose: |
+        z.object({email: z.email().max(254), cohortSlug: z.string().regex(...), sourceTag: z.string().max(128).optional()}) —
+        general template for future cohort form schemas. ce-3.1 CohortApplicationInputSchema will mirror this shape.
+  refactor_zero_change_streak:
+    - "ce-1.3, bpd-2.3, so-1.1, so-1.2, ce-2.2 — 5th consecutive section where refactor produces zero code changes"
+  open_followups:
+    - "formatDate extraction (5 call sites; planning-doc-deferred to ce-4.3)"
+    - "escapeHtml extraction at 2nd call site (likely ce-4.2 decision email)"
+    - "Resend client singleton vs per-call: codebase split (sa-3.2 singleton, wf-4.1 per-call); not standardized; ce-2.2 matches wf-4.1 per-call pattern for server actions"

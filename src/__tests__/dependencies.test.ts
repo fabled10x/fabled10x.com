@@ -6,6 +6,12 @@ describe('package dependencies', () => {
     expect(pkg.dependencies).toHaveProperty('resend');
   });
 
+  it('infra_dep_resend_zod_present', () => {
+    // cohort-enrollment-2.2: regression guard — both deps must be present
+    expect(pkg.dependencies).toHaveProperty('resend');
+    expect(pkg.dependencies).toHaveProperty('zod');
+  });
+
   it('infra_dependencies_postgres_in_package_json', () => {
     expect(pkg.dependencies).toHaveProperty('postgres');
   });

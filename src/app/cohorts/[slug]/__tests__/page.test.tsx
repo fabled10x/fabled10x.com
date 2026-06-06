@@ -15,6 +15,24 @@ vi.mock('@/components/cohorts/CohortDetailHero', () => ({
   ),
 }));
 
+vi.mock('@/components/cohorts/WaitlistForm', () => ({
+  WaitlistForm: ({
+    cohortSlug,
+    sourceTag,
+  }: {
+    cohortSlug: string;
+    sourceTag?: string;
+  }) => (
+    <div
+      data-testid="waitlist-form"
+      data-cohort-slug={cohortSlug}
+      data-source-tag={sourceTag ?? ''}
+    >
+      WaitlistForm
+    </div>
+  ),
+}));
+
 import { render, screen } from '@testing-library/react';
 import { notFound } from 'next/navigation';
 import { getAllCohorts, getCohortBySlug } from '@/lib/content/cohorts';
@@ -118,7 +136,15 @@ describe('CohortDetailPage', () => {
   it('unit_detail_cta_announced', async () => {
     mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_ANNOUNCED);
     await renderDetail();
-    expect(screen.getByText(/Waitlist form coming online/i)).toBeInTheDocument();
+    expect(screen.getByTestId('waitlist-form')).toBeInTheDocument();
+  });
+
+  it('integration_detail_page_renders_form_for_announced', async () => {
+    mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_ANNOUNCED);
+    await renderDetail();
+    const form = screen.getByTestId('waitlist-form');
+    expect(form.getAttribute('data-cohort-slug')).toBe('ai-delivery-2026-q3');
+    expect(form.getAttribute('data-source-tag')).toBe('cohort-detail');
   });
 
   it('unit_detail_cta_open', async () => {
