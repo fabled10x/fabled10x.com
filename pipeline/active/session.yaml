@@ -2,15 +2,101 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-3.3
-  current_agent: finish
-  current_stage: styling-overhaul-3.3-complete
+  current_section: styling-overhaul-4.2
+  current_agent: pending
+  current_stage: styling-overhaul-4.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-4.1
+    name: Logo lockup + SVG
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add Logo lockup + SVG with 40 tests (styling-overhaul-4.1)
+    tests: 40
+    files_new: 2
+    files_modified: 4
+    pushed: false
+    notes: |
+      First feature of styling-overhaul Phase 4 (Logo + Chrome). Logo is a
+      pure presentational React Server Component — first brand-set artifact
+      that downstream Phase 4.2 (Header restyle), 4.3 (Footer restyle), 7.1
+      (homepage hero), and 8.2 (opengraph-image family) all consume.
+
+      Implementation matches planning doc verbatim. LogoProps interface
+      (size?: 'sm'|'md'|'lg' | mono?: boolean | className?: string) +
+      sizeScale Record<NonNullable<size>, {wordmark, mark, gap}> for size-
+      driven dimensions. wordmarkColor + markColor switch on mono prop —
+      default uses var(--color-ink) + var(--color-oxblood); mono resolves
+      both to currentColor for inheriting-surface contexts. Wrapper <span>
+      uses Tailwind `inline-flex items-baseline ${className}` + inline gap
+      from sizeScale + aria-label='Fabled 10X'. Inner <span aria-hidden>
+      renders 'FABLED' in var(--font-display) weight 900 uppercase
+      letterSpacing 0.06em lineHeight 1. Inner <span aria-hidden> renders
+      {10x} in var(--font-mono) weight 500 lineHeight 1.
+
+      NEW public/logo.svg — 480x80 viewBox static fallback for surfaces
+      without web fonts (third-party newsletters, etc.). Cinzel-900 'FABLED'
+      fill=#1C1814, JetBrains-Mono '{10x}' fill=#6B2020. Phase 8.2 og:image
+      pipeline will re-render via ImageResponse with local font bytes.
+
+      40 tests = 19 unit + 3 integration + 4 a11y + 5 infra + 5 edge + 4
+      data. 5 categories N/A: security/permission/contract (no input/auth/
+      API — STRIDE applies globally), error_recovery (sync render no
+      failure surface), serializer (no models).
+
+      Cross-section sentinel sync: Surfaces.test.tsx +
+      BrushstrokeSeam.test.tsx whitelist Sets BOTH extended with 'Logo' —
+      every brand barrel sibling must enumerate the closed set.
+      BrushstrokeSeam sibling discovered at full-suite run (planning only
+      called out the Surfaces sync); both have the SAME closed-set
+      invariant and now stay in lockstep. Whitelist Set duplication +
+      readFileSync + themeBlock/componentsBlock regex helpers across 5+
+      brand sentinels captured in knowledge.yaml deferred_followups for a
+      dedicated brand-sentinel-test-helpers refactor section.
+
+      Test-quality fixes (NOT test-intent): 3 currentColor assertions
+      compared case-insensitively — jsdom serializes CSS color keywords as
+      lowercase ('currentcolor'); .toLowerCase() on both sides preserves
+      intent. ESLint @next/next/no-html-link-for-pages fix: changed
+      <a href='/'> to <a href='#logo'> in integration_logo_inside_header_
+      link_context — anchor-wrapping intent unchanged.
+
+      Refactor produced ZERO source-code changes — 14th consecutive
+      section with effectively-zero source-refactor changes (so-1.1, 1.2,
+      1.3, ce-2.2, ce-1.3, bpd-2.3, ce-2.1, ce-3.1, so-2.1, 2.2, 2.3, 2.4,
+      ce-4.3, now so-4.1). All audits clean: 0 any/as/@ts-ignore in
+      section files, 0 ESLint warnings, 0 type errors, build clean (52
+      static pages prerendered — Cohort/Episode/Product SSG routes
+      unaffected).
+
+      Shipping pattern: Logo ships STANDALONE for downstream Phase 4.2 /
+      4.3 / 7.1 / 8.2 consumption. No parent page mounts Logo in 4.1 per
+      planning doc — same audit-as-infrastructure pattern as so-3.1
+      Surfaces, so-3.2 BrushstrokeSeam, so-2.3 DropAccent, bpd-2.1
+      MarkdownDocument. implementation_audit scope: infrastructure (no
+      orphan — primitive intentionally ships ahead of consumers).
+
+      Concurrent runs: worktree branched from clean origin/main HEAD
+      (2f9ced3 so-3.3), isolated from main-repo working tree. Commit
+      stages this section's files (Logo.tsx + Logo.test.tsx + logo.svg
+      new; brand barrel + Surfaces + BrushstrokeSeam test whitelists
+      modified) plus shared state (session.yaml, knowledge.yaml,
+      currentwork/styling-overhaul/README.md, pipeline/active/styling-
+      overhaul-4.1/beats.yaml). Per-worktree isolation via /worktree-claim
+      (CLAIM-04 bind-mounts node_modules from main; no env files to
+      symlink — static-site repo; CLAIM-04a PWTC N/A — no test-DB infra).
+
+      Blocker cleared: styling-overhaul Phase 4 (Logo + Chrome) foundation
+      landed. so-4.2 (Header restyle — consumes Logo + Marble), so-4.3
+      (Footer restyle — consumes Logo + Parchment), so-4.4 (Layout
+      primitives — Container widths + Section + SectionDivider) can all
+      start in parallel now that Logo + Marble + Parchment +
+      BrushstrokeSeam are shipped. so-4.2 is the canonical next so section
+      by numeric order.
   - id: cohort-enrollment-4.3
     name: Account Cohorts View + SEO/Sitemap/Robots/Nav/Middleware Polish
     completed_at: '2026-06-06'

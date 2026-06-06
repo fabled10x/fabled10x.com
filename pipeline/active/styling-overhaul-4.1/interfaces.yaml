@@ -1,0 +1,37 @@
+version: 1
+section_id: "styling-overhaul-4.1"
+
+typescript_types:
+  - name: "LogoProps"
+    file: "src/components/brand/Logo.tsx"
+    fields:
+      - name: "size"
+        type: "'sm' | 'md' | 'lg' | undefined"
+        optional: true
+        sensitivity: public
+      - name: "mono"
+        type: "boolean | undefined"
+        optional: true
+        sensitivity: public
+      - name: "className"
+        type: "string | undefined"
+        optional: true
+        sensitivity: public
+
+zod_schemas:
+  not_applicable: "Pure presentational primitive — no runtime data validation. Props are TypeScript-locked at compile time. Same justification as so-2.3 DropAccent, so-3.1 Surfaces, so-3.2 BrushstrokeSeam."
+
+api_endpoints:
+  not_applicable: "Pure UI primitive — no API endpoints created or consumed. public/logo.svg is a static file served by Next.js — not an API surface."
+
+stride_global:
+  reason: "Section creates a presentational React Server Component + a static SVG asset. No input handling, no auth, no API surface, no DB. STRIDE applies at the application level (handled in storefront-auth + cohort-enrollment sections), not at the primitive level. Same justification as so-3.1, so-3.2, so-2.3, so-2.4."
+
+serializers:
+  not_applicable: "No API responses, no models — pure presentational primitive."
+
+response_contracts:
+  not_applicable: "No API endpoints."
+
+permission_matrix:
+  not_applicable: "No API endpoints, no auth-gated surface. public/logo.svg is a static asset served by Next.js public directory (anonymously reachable by design — it's the brand asset for external embeds)."

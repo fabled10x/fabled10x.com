@@ -4772,3 +4772,59 @@ styling-overhaul-3.3:
       commit on that work will fast-forward.
 
       '
+
+styling-overhaul-4.1:
+  completed_at: '2026-06-06'
+  patterns_established:
+    - description: |
+        Brand-set Logo lockup as pure presentational RSC — wrapper-with-aria-label
+        + two aria-hidden inner spans, sizeScale Record<NonNullable<size>,
+        {wordmark, mark, gap}> for parametric size, mono prop toggles default
+        brand tokens vs currentColor. Reusable for any future brand mark that
+        needs sizing + monochrome variants on inheriting-color surfaces.
+      file: src/components/brand/Logo.tsx
+      reusable_for: |
+        any brand-tier presentational primitive needing size variants + an
+        explicit monochrome mode for og:image / icon strip / dark-section
+        compositions.
+  gotchas:
+    - |
+        jsdom serializes CSS color keywords as lowercase. `element.style.color`
+        for inline `style={{ color: 'currentColor' }}` returns 'currentcolor',
+        NOT 'currentColor'. Tests asserting inline-style color values must
+        compare case-insensitively (.toLowerCase() on both sides). var(--token)
+        values are unaffected — they round-trip exactly.
+    - |
+        Cross-section closed-set sentinel propagation: when a new brand-barrel
+        sibling ships, BOTH the Surfaces.test.tsx whitelist Set AND the
+        BrushstrokeSeam.test.tsx whitelist Set must be extended. They are
+        independent closed-set assertions over the same Set; missing one will
+        pass the section's own tests + suite-level focused run but fail at full
+        npm test. Discovered planning should explicitly enumerate ALL sibling
+        whitelist Sets to extend, not just the one nearest the new primitive.
+    - |
+        Next.js @next/next/no-html-link-for-pages ESLint rule fires on
+        <a href="/"> even in test files. The rule is path-based — any href
+        that maps to a known Next route triggers it. Using <a href="#fragment">
+        bypasses the rule when the test's intent is just to wrap a child in an
+        anchor element (not exercise Next routing).
+  reusable_utilities:
+    - function: 'inline-style brand-color test pattern'
+      file: src/components/brand/__tests__/Logo.test.tsx
+      purpose: |
+        Pattern for asserting inline-style CSS values in jsdom-rendered
+        presentational primitives. Wrapper-with-aria-label as selector anchor,
+        querySelectorAll('span[aria-hidden="true"]') for inner-spans extraction,
+        case-insensitive comparison for CSS color keywords (currentColor),
+        exact-string comparison for var(--token) values.
+  deferred_followups:
+    - |
+        brand-sentinel-test-helpers refactor section: extract readFileSync +
+        themeBlock/componentsBlock regex helpers (now in 5+ brand sentinel
+        tests: tokens, spacing, fonts, type-scale, build-log-prose) AND the
+        brand-barrel whitelist Set (now in 2 brand sentinel tests:
+        Surfaces.test.tsx + BrushstrokeSeam.test.tsx). Trigger firmly met
+        across 7 files. Extraction target: src/components/brand/__tests__/_
+        sentinel-helpers.ts or similar. Bundles cleanly with the prior so-2.1+
+        deferred entries.
+  out_of_scope_changes_landed: []

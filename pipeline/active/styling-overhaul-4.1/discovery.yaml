@@ -1,0 +1,210 @@
+version: 1
+section:
+  id: "styling-overhaul-4.1"
+  name: "Logo lockup + SVG"
+  planning_file: "currentwork/styling-overhaul/phase-4-logo-chrome.md"
+  line_range: [15, 135]
+
+checklist_items:
+  - id: 1
+    text: "NEW src/components/brand/Logo.tsx — <Logo size?='sm'|'md'|'lg' mono?=false className?=''>"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 2
+    text: "LogoProps interface: size ('sm'|'md'|'lg') | mono (boolean) | className (string)"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 3
+    text: "sizeScale Record<NonNullable<size>, {wordmark,mark,gap}> — sm:1rem/0.875rem/0.25rem, md:1.5rem/1.25rem/0.375rem, lg:2.5rem/2rem/0.5rem"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 4
+    text: "Default size='md', default mono=false, default className=''"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 5
+    text: "wordmarkColor = mono ? 'currentColor' : 'var(--color-ink)'"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 6
+    text: "markColor = mono ? 'currentColor' : 'var(--color-oxblood)'"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 7
+    text: "wordmarkStyle: fontFamily 'var(--font-display), serif', fontWeight 900, fontSize from sizeScale, letterSpacing '0.06em', textTransform 'uppercase', lineHeight 1"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 8
+    text: "markStyle: fontFamily 'var(--font-mono), ui-monospace, monospace', fontWeight 500, fontSize from sizeScale, lineHeight 1"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 9
+    text: "Outer wrapper: <span className='inline-flex items-baseline {className}'> style={gap: s.gap} aria-label='Fabled 10X'"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 10
+    text: "Inner spans: <span style={wordmarkStyle} aria-hidden='true'>FABLED</span> + <span style={markStyle} aria-hidden='true'>{'{10x}'}</span>"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 11
+    text: "Pure presentational RSC — no 'use client' directive, no I/O, no state"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 12
+    text: "NEW public/logo.svg — 480x80 viewBox, Cinzel-900 'FABLED' fill=#1C1814 + JetBrains Mono '{10x}' fill=#6B2020 fallback for surfaces without web fonts"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 13
+    text: "Barrel re-export: src/components/brand/index.ts adds `export { Logo } from './Logo';`"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 14
+    text: "Surfaces.test.tsx#infra_surface_barrel_export_count whitelist Set extended to include 'Logo' (mechanical cross-section sync, precedent so-3.2)"
+    status: pending
+    priority: P0
+    dependencies: [13]
+
+analysis:
+  total_items: 14
+  complexity: medium
+  estimated_tests: 36
+
+implementation_order:
+  - group: 1
+    label: "Schema & Types"
+    items: ["LogoProps interface (sm/md/lg + mono + className)", "sizeScale Record"]
+    parallel: true
+  - group: 2
+    label: "Logic"
+    items: []
+    parallel: true
+    depends_on: [1]
+    not_applicable: "Pure presentational primitive — no hooks/serializers/utils"
+  - group: 3
+    label: "UI"
+    items: ["Logo.tsx component (FABLED + {10x} inline-flex lockup)", "public/logo.svg static fallback"]
+    parallel: true
+    depends_on: [1]
+  - group: 4
+    label: "Integration"
+    items: ["src/components/brand/index.ts barrel re-export", "Surfaces.test.tsx whitelist extension"]
+    parallel: false
+    depends_on: [3]
+
+dependencies:
+  npm_packages:
+    - name: "react"
+      version: "current"
+      dev: false
+      purpose: "Already in tree — JSX + CSSProperties type"
+  content_schemas:
+    not_applicable: "No content types — pure presentational primitive"
+  internal_dependencies:
+    - module: "src/components/brand/index.ts"
+      imports: ["Logo (export added)"]
+      exists: true
+    - module: "src/components/brand/__tests__/Surfaces.test.tsx"
+      imports: ["whitelist Set add 'Logo' — mechanical cross-section sync"]
+      exists: true
+  missing_dependencies:
+    not_applicable: "No new NPM packages or modules — Logo uses existing var(--color-ink), var(--color-oxblood), var(--font-display), var(--font-mono) tokens already shipped in so-1.1/2.1/2.2"
+
+patterns:
+  component_pattern:
+    example_file: "src/components/brand/DropAccent.tsx"
+    example_lines: [1, 32]
+    key_aspects:
+      - "Pure RSC, no 'use client' directive"
+      - "Default props via destructure (size='large')"
+      - "Record<Size, classString> for size-driven swap (sizeScale here, sizeClass in DropAccent)"
+      - "Inline aria-hidden on decorative spans"
+    template: |
+      import type { CSSProperties } from 'react';
+      interface LogoProps {
+        size?: 'sm' | 'md' | 'lg';
+        mono?: boolean;
+        className?: string;
+      }
+      const sizeScale: Record<NonNullable<LogoProps['size']>, { wordmark: string; mark: string; gap: string }> = {
+        sm: { wordmark: '1rem',   mark: '0.875rem', gap: '0.25rem' },
+        md: { wordmark: '1.5rem', mark: '1.25rem',  gap: '0.375rem' },
+        lg: { wordmark: '2.5rem', mark: '2rem',     gap: '0.5rem' },
+      };
+      export function Logo({ size = 'md', mono = false, className = '' }: LogoProps) {
+        const s = sizeScale[size];
+        const wordmarkColor = mono ? 'currentColor' : 'var(--color-ink)';
+        const markColor = mono ? 'currentColor' : 'var(--color-oxblood)';
+        const wordmarkStyle: CSSProperties = {
+          fontFamily: 'var(--font-display), serif',
+          fontWeight: 900,
+          fontSize: s.wordmark,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: wordmarkColor,
+          lineHeight: 1,
+        };
+        const markStyle: CSSProperties = {
+          fontFamily: 'var(--font-mono), ui-monospace, monospace',
+          fontWeight: 500,
+          fontSize: s.mark,
+          color: markColor,
+          lineHeight: 1,
+        };
+        return (
+          <span className={`inline-flex items-baseline ${className}`} style={{ gap: s.gap }} aria-label="Fabled 10X">
+            <span style={wordmarkStyle} aria-hidden="true">FABLED</span>
+            <span style={markStyle} aria-hidden="true">{'{10x}'}</span>
+          </span>
+        );
+      }
+  hook_pattern:
+    not_applicable: "No hooks — pure RSC"
+  api_route_pattern:
+    not_applicable: "No API endpoints"
+  test_pattern:
+    example_file: "src/components/brand/__tests__/DropAccent.test.tsx"
+    example_lines: [1, 240]
+    key_aspects:
+      - "render() + container.querySelector for aria-hidden span lookup"
+      - "regex match against className for class assertions"
+      - "readFileSync + path.join(process.cwd(), 'src/components/brand/<File>.tsx') for no-'use client' source grep"
+      - "import * as brandBarrel from '..' to verify barrel re-export"
+      - "iterate over SIZES[] / GLYPHS[] for parametric tests"
+    template: |
+      import { readFileSync } from 'node:fs';
+      import { join } from 'node:path';
+      import { render } from '@testing-library/react';
+      import { describe, it, expect } from 'vitest';
+      import { Logo } from '../Logo';
+      import * as brandBarrel from '..';
+
+      function getWrapperSpan(container: HTMLElement): HTMLSpanElement | null {
+        return container.querySelector('span[aria-label="Fabled 10X"]');
+      }
+      function getWordmarkSpan(container: HTMLElement): HTMLSpanElement | null {
+        return getWrapperSpan(container)?.querySelector('span[aria-hidden="true"]:first-child') ?? null;
+      }
+
+cross_section_lookups:
+  recently_completed:
+    - section: "styling-overhaul-3.3"
+      patterns: ["forbidden-patterns sentinel scans src/ for gradients, UI shadows, pure primaries — Logo uses inline-flex + tokens only, no gradient/shadow/pure-rgb"]
+    - section: "styling-overhaul-3.2"
+      patterns: ["BrushstrokeSeam set Surfaces.test.tsx whitelist precedent — add new brand barrel sibling to expected Set"]
+    - section: "styling-overhaul-3.1"
+      patterns: ["Surfaces.test.tsx infra_surface_barrel_export_count enforces closed-set membership — new sibling must be added to the whitelist"]
+    - section: "styling-overhaul-2.3"
+      patterns: ["DropAccent canonical mirror — RSC + aria-hidden parts + size Record + barrel export pattern"]

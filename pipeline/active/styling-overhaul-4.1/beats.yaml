@@ -1,0 +1,179 @@
+version: 1
+section_id: "styling-overhaul-4.1"
+section_name: "Logo lockup + SVG"
+started_at: "2026-06-06T00:00:00Z"
+current_phase: finish
+
+claim:
+  status: done
+  phase_entered_at: "2026-06-06T00:00:00Z"
+  phase_exited_at: "2026-06-06T00:00:00Z"
+  slot_path: "/home/travis/Projects/fabled10x-worktrees/section-styling-overhaul-4.1"
+  branch: "section/styling-overhaul-4.1"
+  pid: 611618
+  beats:
+    - { id: resolve_paths, status: done, evidence: "SLOT, BRANCH, PIDFILE resolved" }
+    - { id: detect_state, status: done, classification: "FRESH" }
+    - { id: teardown_if_stale, status: na, reason: "state was FRESH" }
+    - { id: create_slot, status: done, evidence: "git worktree add @ 2f9ced3; node_modules bind-mounted; no env files in main to symlink" }
+    - { id: provision_test_db, status: na, reason: "Repo lacks PWTC infrastructure (no scripts/backup or scripts/test-containers); static-site repo" }
+    - { id: write_pidfile, status: done, evidence: "pid 611618 written" }
+    - { id: verify_branch, status: done, evidence: "branch=section/styling-overhaul-4.1; HEAD=2f9ced3==origin/main" }
+    - { id: enter_worktree, status: done, reason: "EnterWorktree harness tool rejects sibling-located slot (.claude/worktrees absent); slot reached via explicit cd in bash" }
+
+preflight:
+  npm_test: { status: pass, at: "2026-06-06T18:38:48Z", evidence: "1645 passed | 60 skipped (109 files)" }
+  npm_lint: { status: pass, at: "2026-06-06T18:39:00Z", evidence: "eslint clean" }
+  tsc_noEmit: { status: pass, at: "2026-06-06T18:39:00Z", evidence: "tsc --noEmit clean" }
+  git_clean: { status: pass, at: "2026-06-06T18:39:00Z", evidence: "only untracked .pipeline.pid + pipeline/active/styling-overhaul-4.1/" }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done, evidence: "phase-4-logo-chrome.md lines 15-135 + README.md" }
+    - { id: deep_codebase_research, status: done, evidence: "DropAccent.tsx + DropAccent.test.tsx + Surfaces whitelist + brand barrel + globals.css tokens inspected" }
+    - { id: cross_section_pattern_lookup, status: done, evidence: "so-3.3 forbidden-patterns, so-3.2 BrushstrokeSeam whitelist precedent, so-3.1 Surfaces, so-2.3 DropAccent canonical mirror" }
+    - { id: parse_checklist_items, status: done, evidence: "14 checklist items extracted" }
+    - { id: analyze_dependencies, status: done, evidence: "No new NPM packages; tokens from so-1.1/2.1/2.2 already shipped" }
+    - { id: define_interfaces, status: done, evidence: "LogoProps interface (size, mono, className)" }
+    - { id: find_existing_patterns, status: done, evidence: "DropAccent canonical RSC primitive pattern" }
+    - { id: stride_threat_modeling, status: na, reason: "Pure UI primitive — no input/auth/API surface. STRIDE applies globally at app level (see interfaces.yaml#stride_global). Same as so-3.1/3.2/2.3." }
+    - { id: edge_case_enumeration, status: done, evidence: "5 edge tests enumerated (empty className, className passthrough, mono+sizes combos, explicit mono=false, currentColor context)" }
+    - { id: serializer_inventory, status: na, reason: "No API responses, no content type models" }
+    - { id: response_contract_spec, status: na, reason: "No API endpoints" }
+    - { id: permission_matrix, status: na, reason: "No API endpoints, no auth surface" }
+    - { id: specify_test_cases, status: done, evidence: "40 tests across 5 categories" }
+    - { id: dependency_graph, status: done, evidence: "implementation_order 4 groups (group 2 logic N/A)" }
+    - { id: write_discovery_yaml, status: done, evidence: "pipeline/active/styling-overhaul-4.1/discovery.yaml" }
+    - { id: write_interfaces_yaml, status: done, evidence: "pipeline/active/styling-overhaul-4.1/interfaces.yaml" }
+    - { id: write_test_cases_yaml, status: done, evidence: "pipeline/active/styling-overhaul-4.1/test-cases.yaml" }
+    - { id: verify_zero_coverage_gaps, status: done, evidence: "coverage_matrix maps all 14 checklist items to >=1 test" }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 40
+  coverage_gaps: 0
+
+red:
+  status: done
+  beats:
+    - { id: read_discovery_yamls, status: done }
+    - { id: study_test_patterns, status: done, evidence: "DropAccent.test.tsx canonical mirror" }
+    - { id: batch_1_functional, status: done, tests_written: 22 }
+    - { id: batch_1_verify, status: done, evidence: "Logo.test.tsx suite import-fails → 22 tests blocked-failing as expected" }
+    - { id: batch_2_security, status: na, reason: "Pure UI primitive — no input/auth/API; STRIDE applies globally" }
+    - { id: batch_2_verify, status: na, reason: "no security tests written" }
+    - { id: batch_3_permission_matrix, status: na, reason: "No API endpoints, no auth surface" }
+    - { id: batch_3_verify, status: na, reason: "no permission tests written" }
+    - { id: batch_4_contract, status: na, reason: "No API endpoints" }
+    - { id: batch_4_verify, status: na, reason: "no contract tests written" }
+    - { id: batch_5_edge_error_data, status: done, tests_written: 9, reason: "5 edge + 0 err (N/A sync render) + 4 data" }
+    - { id: batch_5_verify, status: done, evidence: "edge+data tests blocked-failing via suite load failure" }
+    - { id: batch_6_a11y_infra, status: done, tests_written: 9, reason: "4 a11y + 5 infra (incl Surfaces whitelist sync)" }
+    - { id: batch_6_verify, status: done, evidence: "a11y+infra tests blocked-failing via suite load failure; Surfaces whitelist test fails concretely" }
+    - { id: full_suite_verification, status: done, evidence: "focused run 2 files: 1 failed suite (Logo, 40 tests blocked) + 1 failed test (Surfaces whitelist). No collateral damage." }
+    - { id: coverage_matrix_check, status: done, evidence: "14/14 checklist items covered by >=1 test" }
+    - { id: update_red_progress, status: done, evidence: "red-progress.yaml written" }
+  total_tests: 40
+  coverage_gaps: 0
+
+green:
+  status: done
+  beats:
+    - { id: analyze_failing_tests, status: done, evidence: "Logo.test.tsx 40 tests + Surfaces whitelist sync" }
+    - { id: plan_implementation_order, status: done, evidence: "Group 1 (types) + Group 3 (UI + SVG) + Group 4 (barrel)" }
+    - { id: group_1_schema_types, status: done, evidence: "LogoProps interface + sizeScale Record co-located in Logo.tsx" }
+    - { id: group_1_verify, status: done }
+    - { id: group_2_logic_hooks_serializers, status: na, reason: "No hooks/serializers/utilities" }
+    - { id: group_2_verify, status: na, reason: "Group 2 N/A" }
+    - { id: group_3_ui_components, status: done, evidence: "Logo.tsx + public/logo.svg" }
+    - { id: group_3_verify, status: done, evidence: "40 Logo tests pass" }
+    - { id: group_4_api_routes_wiring, status: done, evidence: "Brand barrel +Logo export; BrushstrokeSeam whitelist sync" }
+    - { id: group_4_full_suite, status: done, evidence: "1685 passed | 60 skipped | 0 failed (preflight baseline 1645 + 40 new Logo)" }
+    - { id: wiring_components, status: na, items: "0/0", reason: "Primitive ships standalone for downstream Phase 4.2/4.3/7.1/8.2 — so-3.1/3.2/2.3 shipping precedent" }
+    - { id: wiring_navigation, status: na, items: "0/0", reason: "No new routes" }
+    - { id: wiring_form_api, status: na, items: "0/0", reason: "No forms" }
+    - { id: wiring_data_flow, status: na, items: "0/0", reason: "No hooks/data" }
+    - { id: wiring_database, status: na, items: "0/0", reason: "No schema changes" }
+    - { id: wiring_feature_reconciliation, status: done, evidence: "All 14 checklist items implemented and tested" }
+    - { id: wiring_interactive_behaviors, status: na, reason: "No interactive behaviors — presentational primitive" }
+    - { id: wiring_cross_component_flows, status: na, reason: "Single isolated component — no multi-step flows" }
+    - { id: serializer_enforcement, status: na, reason: "No API responses, no models" }
+    - { id: error_response_consistency, status: na, reason: "No API endpoints" }
+    - { id: zero_skipped_verification, status: done, evidence: "0 new skipped tests from this section; 60 pre-existing DATABASE_URL-gated skipped unchanged" }
+    - { id: npm_build_passes, status: done, evidence: "52 static pages prerendered, no errors" }
+    - { id: update_green_progress, status: done, evidence: "green-progress.yaml written" }
+  tests_passing: 1685
+  tests_total: 1745
+
+refactor:
+  status: done
+  beats:
+    - { id: baseline_all_tests_pass, status: done, evidence: "1685/1685 entering refactor" }
+    - { id: dry_analysis_within_section, status: done, evidence: "Single 48-line component + single test file — no internal duplication" }
+    - { id: cross_section_dry_analysis, status: done, evidence: "2 opportunities (brand-sentinel test helpers + barrel whitelist Set) deferred to dedicated refactor section per established trigger pattern" }
+    - { id: type_safety_audit, status: done, evidence: "0 as/any/@ts-ignore in Logo.tsx and Logo.test.tsx" }
+    - { id: error_consistency_audit, status: na, reason: "No API endpoints" }
+    - { id: serializer_completeness_audit, status: na, reason: "No API responses, no models" }
+    - { id: performance_review, status: done, evidence: "Static SSR primitive — no loops/I/O/hydration cost" }
+    - { id: code_quality_naming_structure, status: done, evidence: "Descriptive identifiers, single 25-line function body, flat JSX" }
+    - { id: eslint_clean, status: done, evidence: "0 warnings/errors after test-file href fix" }
+    - { id: barrel_exports_check, status: done, evidence: "Logo re-exported from src/components/brand/index.ts" }
+    - { id: hardcoded_values_check, status: done, evidence: "sizeScale values match planning doc brand spec — verified intent, not test-driven hardcoding" }
+    - { id: loading_error_empty_states, status: na, reason: "Pure presentational sync RSC — single render path" }
+    - { id: final_npm_test, status: done, evidence: "1685 passed | 60 skipped" }
+    - { id: final_npm_lint, status: done, evidence: "0 warnings" }
+    - { id: final_npm_build, status: done, evidence: "52 static pages prerendered, clean" }
+    - { id: update_refactor_progress, status: done, evidence: "refactor-progress.yaml written" }
+  improvements_identified: 1
+  improvements_completed: 1
+  improvements_deferred: 2
+
+finish:
+  status: pending
+  beats:
+    - { id: cleanup_dead_code, status: pending }
+    - { id: cleanup_verify_tests, status: pending }
+    - { id: nav_sync_verification, status: pending }
+    - { id: audit_file_inventory, status: pending }
+    - { id: audit_api_routes, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_hook_consumers, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_component_mounts, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_feature_reconciliation, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: update_session_yaml, status: pending }
+    - { id: update_planning_checklist, status: pending }
+    - { id: knowledge_capture, status: pending }
+    - { id: security_checklist, status: pending }
+    - { id: git_stage_files, status: pending }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: pending }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: pending }
+
+release:
+  status: pending
+  beats:
+    - { id: push_section_branch, status: pending }
+    - { id: rebase_with_additive_resolution, status: pending }
+    - { id: rerun_gates_after_rebase, status: pending }
+    - { id: force_push_rebased, status: pending }
+    - { id: ff_merge_main, status: pending }
+    - { id: push_main, status: pending }
+    - { id: teardown, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+stats:
+  total_tests_specified: 0
+  total_tests_written: 0
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0
+  commit_hash: null
+  commit_message: null

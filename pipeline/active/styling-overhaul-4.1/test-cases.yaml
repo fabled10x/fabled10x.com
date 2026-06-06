@@ -1,0 +1,316 @@
+version: 1
+section_id: "styling-overhaul-4.1"
+
+unit_tests:
+  - id: "unit_logo_renders_FABLED_wordmark"
+    description: "Logo renders 'FABLED' inside the first aria-hidden span"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [1, 10]
+  - id: "unit_logo_renders_curly_brace_mark"
+    description: "Logo renders '{10x}' inside the second aria-hidden span"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [1, 10]
+  - id: "unit_logo_sm_size_dimensions"
+    description: "size='sm' renders wordmark 1rem, mark 0.875rem, gap 0.25rem"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [3]
+  - id: "unit_logo_md_size_dimensions"
+    description: "size='md' renders wordmark 1.5rem, mark 1.25rem, gap 0.375rem"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [3]
+  - id: "unit_logo_lg_size_dimensions"
+    description: "size='lg' renders wordmark 2.5rem, mark 2rem, gap 0.5rem"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [3]
+  - id: "unit_logo_default_size_is_md"
+    description: "Omitting size prop produces identical DOM to size='md'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [4]
+  - id: "unit_logo_mono_uses_currentColor_for_both_parts"
+    description: "mono=true sets both wordmark and mark color to 'currentColor'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [5, 6]
+  - id: "unit_logo_default_mono_uses_brand_tokens"
+    description: "mono unspecified — wordmark color='var(--color-ink)', mark color='var(--color-oxblood)'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [4, 5, 6]
+  - id: "unit_logo_wordmark_font_family_display"
+    description: "Wordmark inline style fontFamily is 'var(--font-display), serif'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [7]
+  - id: "unit_logo_wordmark_font_weight_900"
+    description: "Wordmark inline style fontWeight is 900"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [7]
+  - id: "unit_logo_wordmark_uppercase_textTransform"
+    description: "Wordmark inline style textTransform is 'uppercase'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [7]
+  - id: "unit_logo_wordmark_letter_spacing_06em"
+    description: "Wordmark inline style letterSpacing is '0.06em'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [7]
+  - id: "unit_logo_wordmark_line_height_1"
+    description: "Wordmark inline style lineHeight is 1"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [7]
+  - id: "unit_logo_mark_font_family_mono"
+    description: "Mark inline style fontFamily is 'var(--font-mono), ui-monospace, monospace'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [8]
+  - id: "unit_logo_mark_font_weight_500"
+    description: "Mark inline style fontWeight is 500"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [8]
+  - id: "unit_logo_mark_line_height_1"
+    description: "Mark inline style lineHeight is 1"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [8]
+  - id: "unit_logo_wrapper_inline_flex_items_baseline"
+    description: "Wrapper span className contains 'inline-flex' and 'items-baseline'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [9]
+  - id: "unit_logo_wrapper_gap_from_size_scale"
+    description: "Wrapper span inline style gap matches size scale (sm:0.25rem, md:0.375rem, lg:0.5rem)"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [3, 9]
+  - id: "unit_logo_inner_spans_aria_hidden_true"
+    description: "Both inner FABLED and {10x} spans carry aria-hidden='true'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: unit
+    priority: P0
+    checklist_items: [10]
+
+integration_tests:
+  - id: "integration_logo_inside_header_link_context"
+    description: "Logo inside a parent <Link> + className combine — full DOM tree integrity preserved"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: integration
+    priority: P0
+    checklist_items: [9]
+    database_required: false
+    msw_handlers: []
+  - id: "integration_logo_barrel_export"
+    description: "import * from '@/components/brand' exposes Logo (deep + barrel parity)"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: integration
+    priority: P0
+    checklist_items: [13]
+    database_required: false
+    msw_handlers: []
+  - id: "integration_logo_svg_file_reachable_via_public"
+    description: "public/logo.svg exists at known path — Next.js public/ surfaces it at /logo.svg"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: integration
+    priority: P0
+    checklist_items: [12]
+    database_required: false
+    msw_handlers: []
+
+security_tests:
+  not_applicable: "Pure presentational primitive — no input, no auth, no API. STRIDE applies globally at application level (see interfaces.yaml#stride_global). Same justification as so-3.1, so-3.2, so-2.3, so-2.4."
+
+accessibility_tests:
+  - id: "a11y_logo_wrapper_announces_brand_label"
+    description: "Wrapper span aria-label='Fabled 10X' — screen readers announce the brand once"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: accessibility
+    wcag_category: perceivable
+    component: "Logo"
+    requirements: ["Wrapper has aria-label='Fabled 10X'", "Wrapper has no other accessible-name override (role, aria-labelledby)"]
+  - id: "a11y_logo_inner_parts_hidden_from_screen_readers"
+    description: "Inner FABLED + {10x} spans aria-hidden — not announced as 'FABLED open brace 10x close brace'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: accessibility
+    wcag_category: perceivable
+    component: "Logo"
+    requirements: ["Both inner spans aria-hidden='true'", "Neither inner span carries aria-label or role"]
+  - id: "a11y_logo_text_content_matches_visual"
+    description: "DOM textContent contains 'FABLED' + '{10x}' so non-AT readers see the brand"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: accessibility
+    wcag_category: robust
+    component: "Logo"
+    requirements: ["wrapper.textContent === 'FABLED{10x}'"]
+  - id: "a11y_logo_mono_preserves_aria"
+    description: "mono=true does not change aria-label or aria-hidden semantics"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: accessibility
+    wcag_category: perceivable
+    component: "Logo"
+    requirements: ["mono=true wrapper aria-label still 'Fabled 10X'", "inner spans still aria-hidden='true'"]
+
+infrastructure_tests:
+  - id: "infra_brand_barrel_re_exports_logo"
+    description: "src/components/brand/index.ts exports Logo (named export)"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: infrastructure
+    concern: headers
+  - id: "infra_logo_no_use_client_directive"
+    description: "src/components/brand/Logo.tsx is a pure RSC — first line is NOT 'use client'"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: infrastructure
+    concern: headers
+  - id: "infra_logo_svg_file_exists"
+    description: "public/logo.svg file exists on disk"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: infrastructure
+    concern: headers
+  - id: "infra_logo_svg_has_valid_root_element"
+    description: "public/logo.svg starts with <svg ...> root element + xmlns + viewBox 0 0 480 80"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: infrastructure
+    concern: headers
+  - id: "infra_surface_barrel_export_count_includes_logo"
+    description: "Surfaces.test.tsx#infra_surface_barrel_export_count whitelist Set extended to include 'Logo'"
+    file: "src/components/brand/__tests__/Surfaces.test.tsx"
+    test_type: infrastructure
+    concern: headers
+
+edge_case_tests:
+  - id: "edge_logo_empty_className_no_double_space"
+    description: "className='' (default) — wrapper class string has no doubled spaces (trim/filter applied)"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: edge_case
+    category: input
+    input: "className=''"
+    expected: "Wrapper className === 'inline-flex items-baseline ' or single-trailing-space tolerated; no '  ' double-space"
+    checklist_items: [9]
+  - id: "edge_logo_className_passthrough"
+    description: "className='custom-x' — wrapper className contains 'custom-x' alongside base classes"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: edge_case
+    category: input
+    input: "className='custom-x'"
+    expected: "Wrapper className matches /inline-flex/ AND /items-baseline/ AND /custom-x/"
+    checklist_items: [9]
+  - id: "edge_logo_mono_combined_with_each_size"
+    description: "mono=true × {sm, md, lg} — every combination keeps currentColor on both parts and correct dimensions"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: edge_case
+    category: state
+    input: "mono=true × size combinatorial"
+    expected: "wordmark color='currentColor' regardless of size; sizeScale dimensions preserved"
+    checklist_items: [3, 5, 6]
+  - id: "edge_logo_mono_false_explicit"
+    description: "Explicit mono=false equals default (omitted mono) — same DOM"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: edge_case
+    category: input
+    input: "mono={false}"
+    expected: "Same className + same inline styles as <Logo /> with mono omitted"
+    checklist_items: [4]
+  - id: "edge_logo_renders_in_currentColor_context"
+    description: "mono Logo inside a parent with style={{color:'red'}} — currentColor resolves to red in DOM"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: edge_case
+    category: state
+    input: "parent.style.color='red' + mono=true"
+    expected: "Both wordmark + mark style.color === 'currentColor' (literal string); inherited via CSS resolution"
+    checklist_items: [5, 6]
+
+error_recovery_tests:
+  not_applicable: "Sync render — no failure surface, no async operation, no error path. Same as so-2.3 DropAccent / so-3.1 Surfaces / so-3.2 BrushstrokeSeam justification."
+
+data_integrity_tests:
+  - id: "data_logo_svg_contains_FABLED_word"
+    description: "public/logo.svg contains the FABLED wordmark text"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: data_integrity
+    concern: consistency
+    expected: "SVG fileContents matches /FABLED/"
+    checklist_items: [12]
+  - id: "data_logo_svg_contains_curly_mark"
+    description: "public/logo.svg contains the {10x} curly-brace mark text"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: data_integrity
+    concern: consistency
+    expected: "SVG fileContents matches /\\{10x\\}/"
+    checklist_items: [12]
+  - id: "data_logo_svg_uses_brand_colors_ink_and_oxblood"
+    description: "SVG fills the wordmark with #1C1814 (Ink) and the mark with #6B2020 (Oxblood)"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: data_integrity
+    concern: consistency
+    expected: "SVG fileContents matches /fill=\"#1C1814\"/ AND /fill=\"#6B2020\"/"
+    checklist_items: [12]
+  - id: "data_logo_svg_uses_brand_fonts_in_text_attrs"
+    description: "SVG text font-family attributes specify Cinzel + JetBrains Mono"
+    file: "src/components/brand/__tests__/Logo.test.tsx"
+    test_type: data_integrity
+    concern: consistency
+    expected: "SVG fileContents matches /Cinzel/ AND /JetBrains Mono/"
+    checklist_items: [12]
+
+contract_tests:
+  not_applicable: "No API endpoints, no response shapes."
+
+permission_tests:
+  not_applicable: "No API endpoints, no auth-gated surface."
+
+test_summary:
+  total_unit: 19
+  total_integration: 3
+  total_security: 0
+  total_accessibility: 4
+  total_infrastructure: 5
+  total_edge_case: 5
+  total_error_recovery: 0
+  total_data_integrity: 4
+  total_contract: 0
+  total_permission: 0
+  estimated_coverage: 100%
+  total_tests: 40
+
+coverage_matrix:
+  item_1: ["unit_logo_renders_FABLED_wordmark", "unit_logo_renders_curly_brace_mark"]
+  item_2: ["unit_logo_renders_FABLED_wordmark"]
+  item_3: ["unit_logo_sm_size_dimensions", "unit_logo_md_size_dimensions", "unit_logo_lg_size_dimensions", "unit_logo_wrapper_gap_from_size_scale", "edge_logo_mono_combined_with_each_size"]
+  item_4: ["unit_logo_default_size_is_md", "unit_logo_default_mono_uses_brand_tokens", "edge_logo_mono_false_explicit"]
+  item_5: ["unit_logo_mono_uses_currentColor_for_both_parts", "unit_logo_default_mono_uses_brand_tokens", "edge_logo_mono_combined_with_each_size", "edge_logo_renders_in_currentColor_context"]
+  item_6: ["unit_logo_mono_uses_currentColor_for_both_parts", "unit_logo_default_mono_uses_brand_tokens", "edge_logo_mono_combined_with_each_size", "edge_logo_renders_in_currentColor_context"]
+  item_7: ["unit_logo_wordmark_font_family_display", "unit_logo_wordmark_font_weight_900", "unit_logo_wordmark_uppercase_textTransform", "unit_logo_wordmark_letter_spacing_06em", "unit_logo_wordmark_line_height_1"]
+  item_8: ["unit_logo_mark_font_family_mono", "unit_logo_mark_font_weight_500", "unit_logo_mark_line_height_1"]
+  item_9: ["unit_logo_wrapper_inline_flex_items_baseline", "unit_logo_wrapper_gap_from_size_scale", "integration_logo_inside_header_link_context", "edge_logo_empty_className_no_double_space", "edge_logo_className_passthrough"]
+  item_10: ["unit_logo_renders_FABLED_wordmark", "unit_logo_renders_curly_brace_mark", "unit_logo_inner_spans_aria_hidden_true", "a11y_logo_inner_parts_hidden_from_screen_readers"]
+  item_11: ["infra_logo_no_use_client_directive"]
+  item_12: ["integration_logo_svg_file_reachable_via_public", "infra_logo_svg_file_exists", "infra_logo_svg_has_valid_root_element", "data_logo_svg_contains_FABLED_word", "data_logo_svg_contains_curly_mark", "data_logo_svg_uses_brand_colors_ink_and_oxblood", "data_logo_svg_uses_brand_fonts_in_text_attrs"]
+  item_13: ["integration_logo_barrel_export", "infra_brand_barrel_re_exports_logo"]
+  item_14: ["infra_surface_barrel_export_count_includes_logo"]
+  coverage_gaps: 0

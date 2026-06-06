@@ -4,3 +4,4 @@ export { Parchment } from './Parchment';
 export { Bone } from './Bone';
 export { Shadow } from './Shadow';
 export { BrushstrokeSeam, type BrushstrokeDirection } from './BrushstrokeSeam';
+export { Logo } from './Logo';

@@ -1,0 +1,94 @@
+version: 1
+section_id: "styling-overhaul-4.1"
+agent: refactor
+status: completed
+
+improvements_identified:
+  - type: lint
+    location: "src/components/brand/__tests__/Logo.test.tsx:188"
+    description: "Test used <a href=\"/\"> which Next.js @next/next/no-html-link-for-pages flags. Test intent was 'render Logo inside an anchor wrapper' — exact href irrelevant."
+    priority: medium
+
+deferred:
+  - type: cross_section_dry
+    description: "5 brand-sentinel sibling tests duplicate readFileSync + themeBlock/componentsBlock regex extractors (tokens, spacing, fonts, type-scale, build-log-prose, plus the closed-set whitelist Set now in 2 places: Surfaces.test.tsx + BrushstrokeSeam.test.tsx)"
+    reason: "Captured to knowledge.yaml deferred_followups during so-2.1+ — dedicated brand-sentinel-test-helpers refactor section. Extraction now spans 7 files; pulling helpers out as a one-off here would entangle this primitive section with cross-cutting test infra."
+    priority: medium
+    trigger: "Now firmly met — 7 sibling files. Surface as dedicated refactor section after Phase 4 completes."
+
+  - type: cross_section_dry
+    description: "Brand barrel whitelist Set (\"DropAccent, Marble, Parchment, Bone, Shadow, BrushstrokeSeam, Logo\") now duplicated across Surfaces.test.tsx and BrushstrokeSeam.test.tsx — every new brand primitive forces a 2-file edit"
+    reason: "Same as above — bundles with brand-sentinel-test-helpers refactor. Could extract to src/components/brand/__tests__/_barrel-whitelist.ts."
+    priority: low
+
+improvements_made:
+  - type: lint
+    files: ["src/components/brand/__tests__/Logo.test.tsx"]
+    description: "Changed <a href=\"/\"> to <a href=\"#logo\"> in integration_logo_inside_header_link_context — satisfies @next/next/no-html-link-for-pages without altering test intent (anchor still wraps Logo, className still threaded through)"
+    tests_after: "40/40 Logo + 1685/1685 full suite"
+
+audits:
+  dry_within_section:
+    status: clean
+    findings: "Single component file (48 lines) + single test file. No internal duplication."
+
+  cross_section_dry:
+    status: deferred
+    findings: "2 cross-section opportunities captured + deferred per established trigger conditions (see deferred above)"
+
+  type_safety:
+    status: clean
+    findings: "Zero `as`, `any`, `@ts-ignore`, `@ts-expect-error` in section files. LogoProps generic-free, sizeScale Record TypeScript-locked."
+    command: "grep -nE \"as any|: any|@ts-ignore|@ts-expect-error\" src/components/brand/Logo.tsx src/components/brand/__tests__/Logo.test.tsx"
+    result: "no findings"
+
+  error_response_consistency:
+    status: na
+    reason: "No API endpoints"
+
+  serializer_completeness:
+    status: na
+    reason: "No API responses, no models"
+
+  performance:
+    status: clean
+    findings: "Static SSR primitive — no loops, no I/O, no hydration cost. Inline styles instead of dynamic className computation (single render path)."
+
+  code_quality_naming:
+    status: clean
+    findings: "All identifiers descriptive (sizeScale, wordmarkColor, markColor, wordmarkStyle, markStyle). Component is one function, ~25 lines body, no nesting beyond JSX."
+
+  eslint:
+    status: clean
+    findings: "0 warnings, 0 errors after the test-file href fix"
+
+  barrel_exports:
+    status: clean
+    findings: "src/components/brand/index.ts re-exports Logo; consumed via `@/components/brand` namespace in production code"
+
+  hardcoded_values:
+    status: clean
+    findings: "sizeScale values (1rem, 1.5rem, 2.5rem, etc.) match the planning doc spec verbatim — not 'hardcoded to match tests', they ARE the brand spec the tests verify against."
+
+  loading_error_empty_states:
+    status: na
+    reason: "Pure presentational sync RSC — no loading/error/empty state surface; one render path always succeeds"
+
+summary:
+  total_identified: 1
+  total_completed: 1
+  total_deferred: 2
+  tests_passing: "1685/1685 (60 skipped — pre-existing DATABASE_URL-gated, unchanged)"
+  lint_warnings: 0
+  type_errors: 0
+  build_status: clean
+
+streak_note: |
+  14th consecutive section with effectively ZERO source-code refactor changes
+  (so-1.1, 1.2, 1.3, ce-2.2, ce-1.3, bpd-2.3, ce-2.1, ce-3.1, so-2.1, 2.2, 2.3, 2.4, ce-4.3, now so-4.1).
+  Logo.tsx ships verbatim from the planning doc — no improvement opportunity within
+  this section's scope. The 1 improvement landed (test-file ESLint fix) is a test
+  quality fix not a source refactor.
+
+next_phase: finish
+ready_for_finish: true
