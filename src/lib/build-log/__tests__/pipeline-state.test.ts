@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
+const { liveSectionIdsMock } = vi.hoisted(() => ({
+  liveSectionIdsMock: vi.fn(async () => new Set<string>()),
+}));
+
+vi.mock('../worktree-state', () => ({
+  getLiveSectionIds: liveSectionIdsMock,
+}));
+
 const PIPELINE_DIR = path.join(process.cwd(), 'pipeline', 'active');
 const SESSION_PATH = path.join(PIPELINE_DIR, 'session.yaml');
 const KNOWLEDGE_PATH = path.join(PIPELINE_DIR, 'knowledge.yaml');
@@ -56,6 +64,7 @@ open_questions: []
 beforeEach(() => {
   vi.restoreAllMocks();
   vi.resetModules();
+  liveSectionIdsMock.mockResolvedValue(new Set<string>());
 });
 
 // ── Unit tests: mapSession / mapKnowledge / extractSectionId / rollup ───
@@ -350,6 +359,168 @@ completed_sections: []
   });
 });
 
+describe('pipeline-state.ts: rollupForJob with live sections', () => {
+  const SINGLE_JOB = {
+    slug: 'job-x',
+    title: 'Job X',
+    context: '',
+    readmeBody: 'b',
+    phases: [],
+    features: [
+      { id: '1.1', name: 'f1', phase: '1', size: 'S', status: 'p' },
+      { id: '1.2', name: 'f2', phase: '1', size: 'S', status: 'p' },
+      { id: '1.3', name: 'f3', phase: '1', size: 'S', status: 'p' },
+    ],
+  };
+
+  it('live=1, completed=0 → in-progress, liveFeatures=1, percent=0', async () => {
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [SINGLE_JOB] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections: []\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['job-x-1.1']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0]).toMatchObject({
+      slug: 'job-x',
+      completedFeatures: 0,
+      liveFeatures: 1,
+      percentComplete: 0,
+      status: 'in-progress',
+    });
+  });
+
+  it('live=0, completed=1 → in-progress (legacy path unchanged)', async () => {
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [SINGLE_JOB] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections:\n  - "job-x-1.1"\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set<string>());
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0]).toMatchObject({
+      completedFeatures: 1,
+      liveFeatures: 0,
+      status: 'in-progress',
+    });
+  });
+
+  it('live=1 for already-completed feature → counted in both, no double-count of completed', async () => {
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [SINGLE_JOB] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections:\n  - "job-x-1.1"\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['job-x-1.1']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0].completedFeatures).toBe(1);
+    expect(rollup[0].liveFeatures).toBe(1);
+  });
+
+  it('live unrelated to any job feature → liveFeatures=0, falls back to planned', async () => {
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [SINGLE_JOB] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections: []\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['stray-section-9.9']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0].liveFeatures).toBe(0);
+    expect(rollup[0].status).toBe('planned');
+  });
+
+  it('all features complete → status stays complete even if a stale live entry lingers', async () => {
+    const ONE_FEATURE = {
+      ...SINGLE_JOB,
+      features: [SINGLE_JOB.features[0]],
+    };
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [ONE_FEATURE] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections:\n  - "job-x-1.1"\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['job-x-1.1']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0].status).toBe('complete');
+    expect(rollup[0].percentComplete).toBe(100);
+  });
+
+  it('live section matched by slug prefix → in-progress even when features array is empty', async () => {
+    vi.doMock('../jobs', () => ({
+      getAllJobs: async () => [
+        {
+          slug: 'cohort-enrollment',
+          title: 'Cohort Enrollment',
+          context: '',
+          readmeBody: 'b',
+          phases: [],
+          features: [],
+        },
+      ],
+    }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections: []\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['cohort-enrollment-4.1']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0]).toMatchObject({
+      slug: 'cohort-enrollment',
+      totalFeatures: 0,
+      completedFeatures: 0,
+      liveFeatures: 0,
+      percentComplete: null,
+      status: 'in-progress',
+    });
+  });
+
+  it('longest-prefix wins when one slug is a prefix of another', async () => {
+    vi.doMock('../jobs', () => ({
+      getAllJobs: async () => [
+        {
+          slug: 'cohort',
+          title: 'Cohort',
+          context: '',
+          readmeBody: 'b',
+          phases: [],
+          features: [],
+        },
+        {
+          slug: 'cohort-enrollment',
+          title: 'Cohort Enrollment',
+          context: '',
+          readmeBody: 'b',
+          phases: [],
+          features: [],
+        },
+      ],
+    }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections: []\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set(['cohort-enrollment-4.1']));
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    const cohortJob = rollup.find((r) => r.slug === 'cohort')!;
+    const cohortEnrollJob = rollup.find((r) => r.slug === 'cohort-enrollment')!;
+    expect(cohortEnrollJob.status).toBe('in-progress');
+    expect(cohortJob.status).toBe('unknown');
+  });
+
+  it('getLiveSectionIds returns empty (graceful degrade) → rollup matches legacy behavior', async () => {
+    vi.doMock('../jobs', () => ({ getAllJobs: async () => [SINGLE_JOB] }));
+    mockYamlFiles({
+      [SESSION_PATH]: `session:\n  id: "x"\ncompleted_sections:\n  - "job-x-1.1"\n`,
+    });
+    liveSectionIdsMock.mockResolvedValue(new Set<string>());
+    const { getJobsRollup } = await import('../pipeline-state');
+    const rollup = await getJobsRollup();
+    expect(rollup[0].completedFeatures).toBe(1);
+    expect(rollup[0].liveFeatures).toBe(0);
+    expect(rollup[0].status).toBe('in-progress');
+  });
+});
+
 describe('pipeline-state.ts: getSessionStatus / getKnowledgeFile (unit)', () => {
   it('unit_get_session_status_parses_mocked_yaml: minimal yaml → valid SessionStatus', async () => {
     mockYamlFiles({ [SESSION_PATH]: MINIMAL_SESSION_YAML });
@@ -477,35 +648,6 @@ completed_sections:
     expect(rollup[0].completedFeatures).toBe(2);
     expect(rollup[0].percentComplete).toBe(100);
     expect(rollup[0].status).toBe('complete');
-  });
-
-  it('edge_state_session_cache_hit_reuses_reference: two calls → same ref, readFile invoked once', async () => {
-    const readSpy = vi.spyOn(fs, 'readFile').mockImplementation(async (p) => {
-      const key = String(p);
-      if (key === SESSION_PATH) return MINIMAL_SESSION_YAML;
-      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
-    });
-    const { getSessionStatus } = await import('../pipeline-state');
-    const first = await getSessionStatus();
-    const second = await getSessionStatus();
-    expect(second).toBe(first);
-    expect(readSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('edge_state_independent_caches: getSessionStatus does not populate knowledgeCache', async () => {
-    const readSpy = vi.spyOn(fs, 'readFile').mockImplementation(async (p) => {
-      const key = String(p);
-      if (key === SESSION_PATH) return MINIMAL_SESSION_YAML;
-      if (key === KNOWLEDGE_PATH) return MINIMAL_KNOWLEDGE_YAML;
-      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
-    });
-    const { getSessionStatus, getKnowledgeFile } = await import('../pipeline-state');
-    await getSessionStatus();
-    expect(readSpy).toHaveBeenCalledTimes(1);
-    await getKnowledgeFile();
-    expect(readSpy).toHaveBeenCalledTimes(2);
-    const kCalls = readSpy.mock.calls.filter((c) => String(c[0]) === KNOWLEDGE_PATH);
-    expect(kCalls).toHaveLength(1);
   });
 
   it('edge_input_unknown_keys_in_knowledge_passthrough: unknown top-level keys preserved', async () => {

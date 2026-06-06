@@ -59,6 +59,7 @@ function makeRollup(overrides: Partial<JobRollupEntry>): JobRollupEntry {
     title: 'Demo Job',
     totalFeatures: 0,
     completedFeatures: 0,
+    liveFeatures: 0,
     percentComplete: null,
     status: 'unknown',
     ...overrides,

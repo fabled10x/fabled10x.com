@@ -18,6 +18,7 @@ const baseRollup: JobRollupEntry = {
   alias: 'dj',
   totalFeatures: 6,
   completedFeatures: 3,
+  liveFeatures: 0,
   percentComplete: 50,
   status: 'in-progress',
 };

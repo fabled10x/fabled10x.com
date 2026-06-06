@@ -12,6 +12,10 @@ vi.mock('@/lib/build-log/pipeline-state', () => ({
   getJobsRollup: vi.fn(),
 }));
 
+vi.mock('@/lib/build-log/worktree-state', () => ({
+  getLiveWorktrees: vi.fn(),
+}));
+
 vi.mock('@/components/build-log/JobsRollupTable', () => ({
   JobsRollupTable: ({ rows }: { rows: readonly { slug: string; title: string }[] }) => (
     <div data-testid="jobs-rollup-table" data-row-count={rows.length}>
@@ -39,6 +43,7 @@ import {
   getKnowledgeFile,
   getJobsRollup,
 } from '@/lib/build-log/pipeline-state';
+import { getLiveWorktrees } from '@/lib/build-log/worktree-state';
 import StatusPage, { metadata } from '../page';
 import type {
   SessionStatus,
@@ -49,6 +54,7 @@ import type {
 const mockSession = vi.mocked(getSessionStatus);
 const mockKnowledge = vi.mocked(getKnowledgeFile);
 const mockRollup = vi.mocked(getJobsRollup);
+const mockLiveWorktrees = vi.mocked(getLiveWorktrees);
 
 function makeSession(overrides: Partial<SessionStatus> = {}): SessionStatus {
   return {
@@ -82,6 +88,7 @@ function makeRollupEntry(overrides: Partial<JobRollupEntry> = {}): JobRollupEntr
     alias: 'dj',
     totalFeatures: 5,
     completedFeatures: 1,
+    liveFeatures: 0,
     percentComplete: 20,
     status: 'in-progress',
     ...overrides,
@@ -99,6 +106,7 @@ describe('/build-log/status page', () => {
     mockSession.mockResolvedValue(makeSession());
     mockKnowledge.mockResolvedValue(makeKnowledge());
     mockRollup.mockResolvedValue([]);
+    mockLiveWorktrees.mockResolvedValue([]);
   });
 
   it('unit_status_page_renders_h1_pipeline_status', async () => {
@@ -151,6 +159,80 @@ describe('/build-log/status page', () => {
     expect(mockSession).toHaveBeenCalledTimes(1);
     expect(mockKnowledge).toHaveBeenCalledTimes(1);
     expect(mockRollup).toHaveBeenCalledTimes(1);
+    expect(mockLiveWorktrees).toHaveBeenCalledTimes(1);
+  });
+
+  it('integration_status_page_renders_live_worktrees_section', async () => {
+    mockLiveWorktrees.mockResolvedValue([
+      {
+        sectionId: 'cohort-enrollment-4.1',
+        slotPath: '/tmp/wt/section-cohort-enrollment-4.1',
+        branch: 'refs/heads/section/cohort-enrollment-4.1',
+        pid: 42,
+        currentPhase: 'red',
+      },
+      {
+        sectionId: 'styling-overhaul-3.1',
+        slotPath: '/tmp/wt/section-styling-overhaul-3.1',
+        branch: 'refs/heads/section/styling-overhaul-3.1',
+        pid: 99,
+      },
+    ]);
+    const { container } = await renderPage();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /Live worktrees/i }),
+    ).toBeInTheDocument();
+    const section = container.querySelector(
+      'section[aria-labelledby="live-worktrees"]',
+    );
+    expect(section).not.toBeNull();
+    expect(section!.textContent).toMatch(/cohort-enrollment-4\.1/);
+    expect(section!.textContent).toMatch(/styling-overhaul-3\.1/);
+    expect(section!.textContent).toMatch(/phase: red/);
+    expect(section!.textContent).toMatch(/pid: 42/);
+    expect(section!.textContent).toMatch(/pid: 99/);
+  });
+
+  it('edge_state_live_worktrees_empty_shows_idle_message', async () => {
+    mockLiveWorktrees.mockResolvedValue([]);
+    const { container } = await renderPage();
+    const section = container.querySelector(
+      'section[aria-labelledby="live-worktrees"]',
+    );
+    expect(section).not.toBeNull();
+    expect(section!.textContent).toMatch(/No live pipeline sections/i);
+  });
+
+  it('edge_state_live_worktree_missing_current_phase_renders_em_dash', async () => {
+    mockLiveWorktrees.mockResolvedValue([
+      {
+        sectionId: 'foo-1.1',
+        slotPath: '/tmp/wt/section-foo-1.1',
+        branch: 'refs/heads/section/foo-1.1',
+        pid: 7,
+      },
+    ]);
+    const { container } = await renderPage();
+    const section = container.querySelector(
+      'section[aria-labelledby="live-worktrees"]',
+    );
+    expect(section!.textContent).toMatch(/phase: —/);
+  });
+
+  it('edge_state_live_worktree_missing_pid_renders_em_dash', async () => {
+    mockLiveWorktrees.mockResolvedValue([
+      {
+        sectionId: 'foo-1.1',
+        slotPath: '/tmp/wt/section-foo-1.1',
+        branch: 'refs/heads/section/foo-1.1',
+        currentPhase: 'red',
+      },
+    ]);
+    const { container } = await renderPage();
+    const section = container.querySelector(
+      'section[aria-labelledby="live-worktrees"]',
+    );
+    expect(section!.textContent).toMatch(/pid: —/);
   });
 
   it('integration_status_page_completed_sections_renders_li_per_entry', async () => {
@@ -192,6 +274,7 @@ describe('/build-log/status page', () => {
     const { container } = await renderPage();
     expect(container.querySelector('section[aria-labelledby="current-state"] h2#current-state')).not.toBeNull();
     expect(container.querySelector('section[aria-labelledby="rollup"] h2#rollup')).not.toBeNull();
+    expect(container.querySelector('section[aria-labelledby="live-worktrees"] h2#live-worktrees')).not.toBeNull();
     expect(container.querySelector('section[aria-labelledby="completed"] h2#completed')).not.toBeNull();
     expect(container.querySelector('section[aria-labelledby="notes"] h2#notes')).not.toBeNull();
   });

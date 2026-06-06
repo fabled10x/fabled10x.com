@@ -4,6 +4,8 @@ import { JobCard } from '@/components/build-log/JobCard';
 import { getAllJobs } from '@/lib/build-log/jobs';
 import { getJobsRollup } from '@/lib/build-log/pipeline-state';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Build log',
   description:

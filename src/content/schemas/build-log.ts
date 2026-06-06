@@ -71,6 +71,7 @@ export interface JobRollupEntry {
   alias?: string;
   totalFeatures: number;
   completedFeatures: number;
+  liveFeatures: number;
   percentComplete: number | null;
   status: 'planned' | 'in-progress' | 'complete' | 'unknown';
 }

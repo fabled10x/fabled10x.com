@@ -12,13 +12,20 @@ import {
   KnowledgeFileSchema,
 } from '@/content/schemas/validators';
 import { getAllJobs } from './jobs';
+import { getRepoRoot } from './repo-root';
+import { getLiveSectionIds } from './worktree-state';
 
-const PIPELINE_DIR = path.join(process.cwd(), 'pipeline', 'active');
-const SESSION_PATH = path.join(PIPELINE_DIR, 'session.yaml');
-const KNOWLEDGE_PATH = path.join(PIPELINE_DIR, 'knowledge.yaml');
-
-let sessionCache: SessionStatus | null = null;
-let knowledgeCache: KnowledgeFile | null = null;
+async function pipelinePaths(): Promise<{
+  session: string;
+  knowledge: string;
+}> {
+  const root = await getRepoRoot();
+  const dir = path.join(root, 'pipeline', 'active');
+  return {
+    session: path.join(dir, 'session.yaml'),
+    knowledge: path.join(dir, 'knowledge.yaml'),
+  };
+}
 
 function mapCompletedEntry(entry: unknown): unknown {
   if (typeof entry === 'string') return entry;
@@ -81,19 +88,17 @@ function mapKnowledge(raw: Record<string, unknown>): unknown {
 }
 
 export async function getSessionStatus(): Promise<SessionStatus> {
-  if (sessionCache) return sessionCache;
-  const text = await fs.readFile(SESSION_PATH, 'utf8');
+  const { session } = await pipelinePaths();
+  const text = await fs.readFile(session, 'utf8');
   const parsed = parseYaml(text) as Record<string, unknown>;
-  sessionCache = SessionStatusSchema.parse(mapSession(parsed));
-  return sessionCache;
+  return SessionStatusSchema.parse(mapSession(parsed));
 }
 
 export async function getKnowledgeFile(): Promise<KnowledgeFile> {
-  if (knowledgeCache) return knowledgeCache;
-  const text = await fs.readFile(KNOWLEDGE_PATH, 'utf8');
+  const { knowledge } = await pipelinePaths();
+  const text = await fs.readFile(knowledge, 'utf8');
   const parsed = parseYaml(text) as Record<string, unknown>;
-  knowledgeCache = KnowledgeFileSchema.parse(mapKnowledge(parsed));
-  return knowledgeCache;
+  return KnowledgeFileSchema.parse(mapKnowledge(parsed));
 }
 
 function extractSectionId(
@@ -105,39 +110,74 @@ function extractSectionId(
 function computeStatus(
   total: number,
   completed: number,
+  live: number,
 ): Pick<JobRollupEntry, 'percentComplete' | 'status'> {
-  if (total === 0) return { percentComplete: null, status: 'unknown' };
-  if (completed === 0) return { percentComplete: 0, status: 'planned' };
+  if (total === 0) {
+    if (live > 0) return { percentComplete: null, status: 'in-progress' };
+    return { percentComplete: null, status: 'unknown' };
+  }
   if (completed === total) return { percentComplete: 100, status: 'complete' };
-  return {
-    percentComplete: Math.round((completed / total) * 100),
-    status: 'in-progress',
-  };
+  const pct = Math.round((completed / total) * 100);
+  if (live > 0) return { percentComplete: pct, status: 'in-progress' };
+  if (completed === 0) return { percentComplete: 0, status: 'planned' };
+  return { percentComplete: pct, status: 'in-progress' };
 }
 
 function rollupForJob(
   job: Job,
   completedSectionIds: ReadonlySet<string>,
+  liveSectionIds: ReadonlySet<string>,
+  ownedLiveCount: number,
 ): JobRollupEntry {
   const total = job.features.length;
-  const completed = job.features.filter((f) =>
-    completedSectionIds.has(`${job.slug}-${f.id}`),
-  ).length;
+  let completed = 0;
+  let liveMatched = 0;
+  for (const f of job.features) {
+    const key = `${job.slug}-${f.id}`;
+    if (completedSectionIds.has(key)) completed++;
+    if (liveSectionIds.has(key)) liveMatched++;
+  }
+  const live = Math.max(liveMatched, ownedLiveCount);
   return {
     slug: job.slug,
     title: job.title,
     alias: job.alias,
     totalFeatures: total,
     completedFeatures: completed,
-    ...computeStatus(total, completed),
+    liveFeatures: liveMatched,
+    ...computeStatus(total, completed, live),
   };
 }
 
+function ownerSlugFor(
+  sectionId: string,
+  slugsByLengthDesc: readonly string[],
+): string | null {
+  for (const slug of slugsByLengthDesc) {
+    if (sectionId.startsWith(`${slug}-`)) return slug;
+  }
+  return null;
+}
+
 export async function getJobsRollup(): Promise<readonly JobRollupEntry[]> {
-  const [jobs, session] = await Promise.all([
+  const [jobs, session, liveSet] = await Promise.all([
     getAllJobs(),
     getSessionStatus(),
+    getLiveSectionIds(),
   ]);
   const completedSet = new Set(session.completedSections.map(extractSectionId));
-  return Object.freeze(jobs.map((j) => rollupForJob(j, completedSet)));
+  const slugsByLengthDesc = jobs
+    .map((j) => j.slug)
+    .slice()
+    .sort((a, b) => b.length - a.length);
+  const ownedCounts = new Map<string, number>();
+  for (const sectionId of liveSet) {
+    const owner = ownerSlugFor(sectionId, slugsByLengthDesc);
+    if (owner) ownedCounts.set(owner, (ownedCounts.get(owner) ?? 0) + 1);
+  }
+  return Object.freeze(
+    jobs.map((j) =>
+      rollupForJob(j, completedSet, liveSet, ownedCounts.get(j.slug) ?? 0),
+    ),
+  );
 }

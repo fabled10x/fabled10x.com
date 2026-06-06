@@ -8,6 +8,9 @@ import {
   getKnowledgeFile,
   getJobsRollup,
 } from '@/lib/build-log/pipeline-state';
+import { getLiveWorktrees } from '@/lib/build-log/worktree-state';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Pipeline status · Build log',
@@ -52,10 +55,11 @@ function extractSectionId(
 }
 
 export default async function StatusPage() {
-  const [session, knowledge, rollup] = await Promise.all([
+  const [session, knowledge, rollup, liveWorktrees] = await Promise.all([
     getSessionStatus(),
     getKnowledgeFile(),
     getJobsRollup(),
+    getLiveWorktrees(),
   ]);
 
   return (
@@ -119,6 +123,33 @@ export default async function StatusPage() {
             Jobs at a glance
           </h2>
           <JobsRollupTable rows={rollup} />
+        </section>
+
+        <section className="mb-10" aria-labelledby="live-worktrees">
+          <h2 id="live-worktrees" className="text-2xl font-display mb-4">
+            Live worktrees
+          </h2>
+          {liveWorktrees.length === 0 ? (
+            <p className="text-muted italic">
+              No live pipeline sections — main repo is idle.
+            </p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {liveWorktrees.map((w) => (
+                <li
+                  key={w.sectionId}
+                  className="flex flex-wrap gap-x-4 gap-y-1 font-mono"
+                >
+                  <span className="text-accent">{w.sectionId}</span>
+                  <span className="text-muted">
+                    phase: {w.currentPhase ?? '—'}
+                  </span>
+                  <span className="text-muted">pid: {w.pid ?? '—'}</span>
+                  <span className="text-muted truncate">{w.slotPath}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="mb-10" aria-labelledby="completed">
