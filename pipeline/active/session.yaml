@@ -1,1039 +1,1410 @@
 session:
-  id: "2026-04-11-001"
-  started_at: "2026-04-11T00:00:00Z"
-  current_phase: "styling-overhaul"
-  current_section: "styling-overhaul-2.2"
-  current_agent: pending
-  current_stage: "styling-overhaul-2.1-complete"
-  # Phase 1 (Foundation Tokens) COMPLETE. Phase 2 (Typography) Feature 2.1
-  # (font loading swap Cinzel + Inter + JetBrains Mono) SHIPPED. Next: so-2.2
-  # (type scale + display-rule utilities) consumes --font-display/--font-body/
-  # --font-mono written onto <html> by so-2.1.
+  id: 2026-04-11-001
+  started_at: '2026-04-11T00:00:00Z'
+  current_phase: styling-overhaul
+  current_section: styling-overhaul-2.2
+  current_agent: refactor
+  current_stage: styling-overhaul-2.2-refactor-complete
   concurrent_jobs:
-    - id: "cohort-enrollment-3.2"
-      phase: "cohort-enrollment"
-      stage: "cohort-enrollment-3.1-complete"
+    - id: cohort-enrollment-3.2
+      phase: cohort-enrollment
+      stage: cohort-enrollment-3.1-complete
       current_agent: pending
-      note: "ce-3.1 shipped (CohortApplicationInputSchema + labels map + interface, 28 tests). Phase 3 Feature 3.1 COMPLETE. ce-3.2 (apply page + middleware extension + ApplicationForm + submitApplication action + applicant confirmation email) is the next ce section — large feature, merged from old 3.2+3.3+3.4."
-
+      note: ce-3.1 shipped (CohortApplicationInputSchema + labels map + interface,
+        28 tests). Phase 3 Feature 3.1 COMPLETE. ce-3.2 (apply page + middleware extension
+        + ApplicationForm + submitApplication action + applicant confirmation email)
+        is the next ce section — large feature, merged from old 3.2+3.3+3.4.
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
-
-# Reset for styling-overhaul-1.3 below
-
 completed_sections:
-  - id: "styling-overhaul-2.1"
-    name: "Font loading swap (Cinzel + Inter + JetBrains Mono)"
-    completed_at: "2026-06-06"
-    commit_hash: pending
-    commit_message: pending
-    tests: 25  # 12 unit + 4 integration + 2 a11y + 3 infra + 6 edge + 1 err + 1 data; security/permission/contract N/A; full suite 1140 passing | 60 skipped
+  - id: styling-overhaul-2.1
+    name: Font loading swap (Cinzel + Inter + JetBrains Mono)
+    completed_at: '2026-06-06'
+    commit_hash: '7406809'
+    commit_message: Add font loading swap with 25 tests (styling-overhaul-2.1)
+    tests: 25
     files_new: 1
     files_modified: 3
-    pushed: false
-    notes: |
-      First feature of styling-overhaul Phase 2 (Typography). Pure
-      module-config + CSS-tokens swap. layout.tsx now imports Cinzel
-      (display, weight 900), Inter (body, weights 400/600/700), and
-      JetBrains_Mono (mono, weights 400/500) from next/font/google —
-      each with display:'swap'. <html> className composes the three
-      .variable strings plus h-full antialiased; metadata block + shell
-      composition unchanged. globals.css @theme inline font aliases
-      (--font-display / --font-body / --font-mono) re-point to
-      var(--font-{role}) — self-referencing the variables next/font writes
-      onto <html>. All --font-geist-* references removed.
+    pushed: true
+    notes: 'First section of styling-overhaul Phase 2 (Typography). Pure
 
-      New brand sentinel test file src/__tests__/brand/fonts.test.ts
-      mirrors so-1.1 tokens.test.ts / so-1.2 spacing.test.ts pattern.
-      Layout test mock for 'next/font/google' swapped to mock the three
-      new families; four new tests in a layout-font-wiring describe block
-      cover className composition, three-font shell render, degraded-mock
-      error recovery, and className well-formedness.
+      typography wiring — replaces Geist/Geist_Mono with the brand-spec
 
-      Refactor produced ZERO code changes — same canonical-N/A pipeline
-      shape as so-1.1/1.2: serializers, response_contracts,
-      permission_matrix, all DB / API / auth / form wiring beats N/A;
-      STRIDE collapses to "static font-config only".
+      font stack: Cinzel (display, weight 900) + Inter (body, weights
 
-      Phase 2 downstream sections so-2.2 (type scale utilities), so-2.3
-      (DropAccent primitive), so-2.4 (.build-log-prose retrofit) all
-      consume --font-display / --font-body / --font-mono — so-2.1 is a
-      hard prerequisite for the rest of Phase 2.
+      400/600/700) + JetBrains_Mono (mono, weights 400/500), all latin
 
-  - id: "cohort-enrollment-3.1"
-    name: "CohortApplicationInput Schema + Validator"
-    completed_at: "2026-06-06"
-    commit_hash: "3c564af"
-    commit_message: "Add CohortApplicationInput schema + validator with 28 tests (cohort-enrollment-3.1)"
-    tests: 28  # 11 unit + 6 security + 2 infra + 8 edge + 1 err + 2 data; permission/contract/a11y/integration N/A; full suite 1140 passing | 60 skipped (was 1085 passing pre-section in this branch — note: between-section delta includes concurrent so-2.1 work)
+      subset + display:swap.
+
+
+      Implementation pattern: layout.tsx WRITES --font-display /
+
+      --font-body / --font-mono onto <html> via three font.variable
+
+      strings; globals.css @theme inline RE-DECLARES the same alias
+
+      names so Tailwind utilities (font-display, font-body, font-mono)
+
+      resolve through them. CSS self-references like
+
+      --font-display: var(--font-display) are intentional — next/font
+
+      writes at runtime, @theme re-declares at build-time.
+
+
+      Test pattern: src/__tests__/brand/fonts.test.ts (NEW) — sibling
+
+      of tokens.test.ts (so-1.1) + spacing.test.ts (so-1.2). Combines
+
+      the readFileSync + theme-block regex pattern with new per-loader
+
+      call-shape scans against layoutSrc to assert each font''s weight /
+
+      subsets / display options. 25 tests: 12 unit + 4 integration +
+
+      6 edge + 3 infra + 2 a11y + 1 err + 1 data. Security / contract /
+
+      permission N/A per interfaces.yaml#stride_global (no endpoints /
+
+      input / auth surface).
+
+
+      layout.test.tsx mock alignment: vi.mock(''next/font/google'',...)
+
+      had to exactly mirror the new import surface (Cinzel + Inter +
+
+      JetBrains_Mono — Geist entries removed). During red, the linter
+
+      kept both old and new mock entries so layout.tsx still loaded
+
+      with stale imports; green dropped the Geist entries.
+
+
+      Refactor produced ZERO code changes — 8th consecutive zero-change
+
+      refactor section (so-1.1, so-1.2, so-1.3, ce-2.2, ce-1.3, bpd-2.3,
+
+      ce-2.1, ce-3.1, now so-2.1). One cross-section DRY trigger
+
+      condition met: readFileSync + theme-block extractor now in 3
+
+      sibling test files. Per established deferral pattern, captured to
+
+      knowledge.yaml#styling-overhaul-2.1.deferred_followups for so-2.2
+
+      to consider in its own scope.
+
+
+      All audits clean: zero `as any` / `: any` / `@ts-ignore` in
+
+      section files; ESLint clean (0 warnings); full suite 1140
+
+      passing | 60 skipped (60 = pre-existing DATABASE_URL-gated).
+
+
+      Build status: npm run build was clean in green phase (52 static
+
+      pages prerendered) — 8th consecutive section after sa-2.1, ce-1.2,
+
+      bpd-3.1, sa-3.x, so-1.1, so-1.2, ce-2.2 with loader_build_incompat
+
+      fully resolved.
+
+
+      Concurrent runs: cohort-enrollment-3.1 (commit 3c564af) landed
+
+      in tree during this run. so-2.1 commit explicitly stages only
+
+      this section''s files (layout.tsx, globals.css, layout.test.tsx,
+
+      fonts.test.ts new, README status flip, session.yaml, knowledge.yaml).
+
+
+      Blocker cleared: styling-overhaul Phase 2 (Typography) foundation
+
+      is in place. so-2.2 (type scale + display-rule utilities) is the
+
+      next so section — consumes --font-display/-body/-mono written
+
+      onto <html>. so-2.3 (DropAccent) can parallelize with so-2.2.
+
+      so-2.4 (.build-log-prose retrofit) sequences AFTER so-2.2.
+
+      '
+  - id: cohort-enrollment-3.1
+    name: CohortApplicationInput Schema + Validator
+    completed_at: '2026-06-06'
+    commit_hash: 3c564af
+    commit_message: Add CohortApplicationInput schema + validator with 28 tests (cohort-enrollment-3.1)
+    tests: 28
     files_new: 0
-    files_modified: 3  # cohort-application.ts (extend), validators.ts (append schema + type), validators.test.ts (append tests)
-    files_modified_tests: 1  # cohort-application.test.ts (append 4 tests)
+    files_modified: 3
+    files_modified_tests: 1
     pushed: false
-    notes: |
-      Feature 3.1 of cohort-enrollment Phase 3 (Application Flow). Pure
-      schema/validator section — no UI, no API, no DB. Extended the
-      forward-decl cohort-application.ts (shipped in ce-2.1) with the
-      labels Record + CohortApplicationInput interface, and appended
-      CohortApplicationInputSchema (Zod) + CohortApplicationInputType to
-      validators.ts.
-
-      Deviations from planning doc:
-      (1) Tuple values kept as ['light','standard','intense'] from ce-2.1
-          rather than planning doc's ['exploring','serious','all-in']. The
-          cohort_applications.commitment_level CHECK constraint shipped in
-          0002_cohort_enrollment.sql enforces the former — DB wins. Labels
-          rewritten to fit. Planning doc updated with a "shipped" note
-          documenting the deviation.
-      (2) Zod 4 `z.coerce.number()` instead of planning doc's Zod 3
-          `z.number({ coerce: true })`.
-      (3) `z.preprocess` for empty-string → undefined coercion instead of
-          planning doc's `.or(z.literal('').transform(...))` chain (which
-          doesn't work as written because `.optional()` already accepts '').
-      (4) referralSource max-length message reads "max 200 characters"
-          rather than "under 200" to match the test's substring assertion.
-
-      Refactor produced ZERO code changes — 6th consecutive section
-      (ce-1.3, bpd-2.3, so-1.1, so-1.2, ce-2.2, ce-3.1). All audits clean:
-      0 any/as/@ts-ignore, 0 ESLint warnings, build clean. Three new
-      patterns captured in knowledge.yaml: formdata_empty_string_preprocess,
-      zod4_coerce_number_for_formdata, db_zod_tuple_invariant.
-
-      28 tests = 11 unit (4 in cohort-application.test.ts, 7 in
-      validators.test.ts) + 6 security (Tampering + DoS) + 2 infra (barrel
-      wiring) + 8 edge (boundary lengths, FormData coercion, fractional
-      hours) + 1 err (aggregated safeParse) + 2 data (interface↔schema
-      satisfies + DB↔Zod tuple invariant). 4 categories explicitly N/A:
-      integration (no I/O), accessibility (no UI), permission (no routes),
-      contract (no API responses).
-
-      Concurrent context: styling-overhaul-2.1 is the active primary
-      section per session.current_section. The phase-transition hook gates
-      against current_section's beats.yaml, so /refactor → /finish skill
-      invocations from ce-3.1 (a concurrent_jobs entry) were blocked by the
-      hook. Refactor + Finish phases for ce-3.1 were executed inline
-      instead, with full beat-level updates to ce-3.1's beats.yaml. This is
-      expected when working on a concurrent_jobs section while a different
-      current_section is active.
-
-  - id: "cohort-enrollment-2.2"
-    name: "Waitlist Form + submitWaitlist Server Action + Confirmation Email"
-    completed_at: "2026-06-06"
+    notes: "Feature 3.1 of cohort-enrollment Phase 3 (Application Flow). Pure\nschema/validator\
+      \ section — no UI, no API, no DB. Extended the\nforward-decl cohort-application.ts\
+      \ (shipped in ce-2.1) with the\nlabels Record + CohortApplicationInput interface,\
+      \ and appended\nCohortApplicationInputSchema (Zod) + CohortApplicationInputType\
+      \ to\nvalidators.ts.\n\nDeviations from planning doc:\n(1) Tuple values kept\
+      \ as ['light','standard','intense'] from ce-2.1\n    rather than planning doc's\
+      \ ['exploring','serious','all-in']. The\n    cohort_applications.commitment_level\
+      \ CHECK constraint shipped in\n    0002_cohort_enrollment.sql enforces the former\
+      \ — DB wins. Labels\n    rewritten to fit. Planning doc updated with a \"shipped\"\
+      \ note\n    documenting the deviation.\n(2) Zod 4 `z.coerce.number()` instead\
+      \ of planning doc's Zod 3\n    `z.number({ coerce: true })`.\n(3) `z.preprocess`\
+      \ for empty-string → undefined coercion instead of\n    planning doc's `.or(z.literal('').transform(...))`\
+      \ chain (which\n    doesn't work as written because `.optional()` already accepts\
+      \ '').\n(4) referralSource max-length message reads \"max 200 characters\"\n\
+      \    rather than \"under 200\" to match the test's substring assertion.\n\n\
+      Refactor produced ZERO code changes — 6th consecutive section\n(ce-1.3, bpd-2.3,\
+      \ so-1.1, so-1.2, ce-2.2, ce-3.1). All audits clean:\n0 any/as/@ts-ignore, 0\
+      \ ESLint warnings, build clean. Three new\npatterns captured in knowledge.yaml:\
+      \ formdata_empty_string_preprocess,\nzod4_coerce_number_for_formdata, db_zod_tuple_invariant.\n\
+      \n28 tests = 11 unit (4 in cohort-application.test.ts, 7 in\nvalidators.test.ts)\
+      \ + 6 security (Tampering + DoS) + 2 infra (barrel\nwiring) + 8 edge (boundary\
+      \ lengths, FormData coercion, fractional\nhours) + 1 err (aggregated safeParse)\
+      \ + 2 data (interface↔schema\nsatisfies + DB↔Zod tuple invariant). 4 categories\
+      \ explicitly N/A:\nintegration (no I/O), accessibility (no UI), permission (no\
+      \ routes),\ncontract (no API responses).\n\nConcurrent context: styling-overhaul-2.1\
+      \ is the active primary\nsection per session.current_section. The phase-transition\
+      \ hook gates\nagainst current_section's beats.yaml, so /refactor → /finish skill\n\
+      invocations from ce-3.1 (a concurrent_jobs entry) were blocked by the\nhook.\
+      \ Refactor + Finish phases for ce-3.1 were executed inline\ninstead, with full\
+      \ beat-level updates to ce-3.1's beats.yaml. This is\nexpected when working\
+      \ on a concurrent_jobs section while a different\ncurrent_section is active.\n"
+  - id: cohort-enrollment-2.2
+    name: Waitlist Form + submitWaitlist Server Action + Confirmation Email
+    completed_at: '2026-06-06'
     commit_hash: pending
     commit_message: pending
-    tests: 43  # 14 unit + 7 integration + 5 security + 3 a11y + 2 infra + 5 edge + 3 err + 2 data + 3 contract; permission N/A; full suite 1085 passing | 60 skipped (was 1042 passing pre-section)
-    files_new: 6  # actions.ts, WaitlistForm.tsx, cohort-waitlist-confirmation.ts + 3 test files
-    files_modified: 4  # /cohorts/[slug]/page.tsx, .env.example, env-example.test.ts, dependencies.test.ts, page.test.tsx (5; .env.example was a content append, the rest are code/test edits)
-    pushed: false  # set true after push
-    notes: |
-      Second feature of cohort-enrollment Phase 2 (Waitlist + Persistence).
+    tests: 43
+    files_new: 6
+    files_modified: 4
+    pushed: false
+    notes: 'Second feature of cohort-enrollment Phase 2 (Waitlist + Persistence).
+
       Merged old 2.2 (form + action) + 2.3 (email + env) per /condense ce.
+
       Wires the announced-status cohort detail page CTA to a real waitlist
+
       flow: anonymous or signed-in visitor submits email → Zod validate →
+
       getCohortBySlug guard → auth() optional userId → db.insert.onConflictDoNothing
+
       → if inserted: best-effort Resend audience.create + Resend emails.send
+
       confirmation. DB row is canonical source of truth; downstream side-effects
+
       wrapped in try/swallow.
 
+
       Patterns reused: wf-4.1 useActionState + per-call Resend (vs sa-3.2
+
       module-cached singleton — codebase has both), sa-3.2 inline-HTML email
+
       template (with divergence: silent-return on missing env instead of throw),
+
       sa-2.1 Drizzle .onConflictDoNothing dedupe, sa-2.2 vi.hoisted env stub
-      pattern. New pattern established: useActionState mock via vi.mock('react')
+
+      pattern. New pattern established: useActionState mock via vi.mock(''react'')
+
       with importActual + override — reusable for any future client form test
+
       where deterministic (state, formAction, isPending) drive is needed.
 
+
       Refactor produced ZERO code changes — 5th consecutive section (ce-1.3,
+
       bpd-2.3, so-1.1, so-1.2, now ce-2.2). 4 cross-section improvements
+
       identified + deferred per documented trigger conditions (planning doc
+
       Phase 4 / 3-call-site threshold). All audits clean: zero any/as/@ts-ignore,
+
       0 ESLint warnings, build clean (52 static pages prerendered).
 
-      Test edit during red: cohort detail page's unit_detail_cta_announced
-      changed from placeholder copy assertion ('Waitlist form coming online')
-      to WaitlistForm mount assertion (data-testid='waitlist-form'). Acceptable
+
+      Test edit during red: cohort detail page''s unit_detail_cta_announced
+
+      changed from placeholder copy assertion (''Waitlist form coming online'')
+
+      to WaitlistForm mount assertion (data-testid=''waitlist-form''). Acceptable
+
       pattern: test asserted obsolete behavior being replaced by this section.
 
+
       Concurrent runs: working tree has prior modifications from earlier
+
       session work (CLAUDE.md, currentwork/website-foundation/*, src/lib/content/*,
+
       storefront-auth-3.3 dir deletions, vitest.config.ts deletion). Commit
-      explicitly stages ONLY this section's files (3 new source + 3 new test +
+
+      explicitly stages ONLY this section''s files (3 new source + 3 new test +
+
       4 modifications) plus shared state (session.yaml, knowledge.yaml,
+
       currentwork/cohort-enrollment/README.md).
 
+
       Blocker cleared: ce Phase 2 (Waitlist + Persistence) COMPLETE.
+
       ce-3.1 (CohortApplicationInputSchema Zod validator) is the next ce
+
       section — unblocks ce-3.2 application flow.
 
-  - id: "styling-overhaul-1.3"
-    name: "Brand doc rewrite + design-system doc"
-    completed_at: "2026-06-06"
-    commit_hash: "466f9c3"  # primary commit (7089182 was an earlier parallel-agent commit; 0ad6327 is fixup)
-    commit_message: "Add brand doc rewrite + design-system doc with 46 tests (styling-overhaul-1.3)"
+      '
+  - id: styling-overhaul-1.3
+    name: Brand doc rewrite + design-system doc
+    completed_at: '2026-06-06'
+    commit_hash: 466f9c3
+    commit_message: Add brand doc rewrite + design-system doc with 46 tests (styling-overhaul-1.3)
     tests: 46
-    files_new: 13  # src/__tests__/brand/docs.test.ts + 12 docs/* files newly tracked (brand-identity, design-system, plus content-architecture, launch-strategy, production-workflow, revenue-projections, website-impl-plan, future-jobs, deployment-runbook, lll-impl-plan, etc.)
-    files_modified: 3  # .gitignore (remove docs/), currentwork/styling-overhaul/README.md (status flip), pipeline/active/knowledge.yaml
+    files_new: 13
+    files_modified: 3
     pushed: true
-    notes: |
-      Pure docs section. Two phases happened concurrently during this run:
-      (1) Parallel agent landed commit 7089182 first ("Add brand docs tests
-          with 46 tests") — shipped the test file and an early knowledge.yaml
-          entry, but docs/ was still gitignored so the doc CONTENT didn't
-          ship.
-      (2) Primary agent in 466f9c3 unignored docs/ globally (user choice via
-          AskUserQuestion vs the alternative of whitelisting only the 2
-          brand docs), then committed the actual docs/ contents — 12+
-          previously-untracked planning docs joined the repo (brand-identity,
-          design-system, content-architecture, launch-strategy, production-
-          workflow, revenue-projections, website-implementation-plan,
-          large-language-library-implementation-plan, deployment-runbook,
-          future-jobs, playlists/, videos/).
-      (3) Post-merge fixup 0ad6327 deduped the resulting two so-1.3 entries
-          in knowledge.yaml (parsing was broken by duplicate top-level keys,
-          which surfaced as integration_knowledge_yaml_parses_real failing).
-      46 tests guard prose content; one test-edit during green replaced two
-      \Z anchors with $ (JS regex doesn't support \Z). Refactor produced
-      ZERO code changes — cross-section DRY readFileSync helper deferred to
-      so-2.2 trigger. Phase 1 (Foundation Tokens) of styling-overhaul
-      COMPLETE; Phase 2 (Typography) unblocked starting with 2.1.
-
-  - id: "cohort-enrollment-2.1"
-    name: "Drizzle Migration + Four New Cohort Tables"
-    completed_at: "2026-06-06"
-    commit_hash: "3003879"
-    commit_message: "Add cohort tables with 58 tests (cohort-enrollment-2.1)"
+    notes: "Pure docs section. Two phases happened concurrently during this run:\n\
+      (1) Parallel agent landed commit 7089182 first (\"Add brand docs tests\n   \
+      \ with 46 tests\") — shipped the test file and an early knowledge.yaml\n   \
+      \ entry, but docs/ was still gitignored so the doc CONTENT didn't\n    ship.\n\
+      (2) Primary agent in 466f9c3 unignored docs/ globally (user choice via\n   \
+      \ AskUserQuestion vs the alternative of whitelisting only the 2\n    brand docs),\
+      \ then committed the actual docs/ contents — 12+\n    previously-untracked planning\
+      \ docs joined the repo (brand-identity,\n    design-system, content-architecture,\
+      \ launch-strategy, production-\n    workflow, revenue-projections, website-implementation-plan,\n\
+      \    large-language-library-implementation-plan, deployment-runbook,\n    future-jobs,\
+      \ playlists/, videos/).\n(3) Post-merge fixup 0ad6327 deduped the resulting\
+      \ two so-1.3 entries\n    in knowledge.yaml (parsing was broken by duplicate\
+      \ top-level keys,\n    which surfaced as integration_knowledge_yaml_parses_real\
+      \ failing).\n46 tests guard prose content; one test-edit during green replaced\
+      \ two\n\\Z anchors with $ (JS regex doesn't support \\Z). Refactor produced\n\
+      ZERO code changes — cross-section DRY readFileSync helper deferred to\nso-2.2\
+      \ trigger. Phase 1 (Foundation Tokens) of styling-overhaul\nCOMPLETE; Phase\
+      \ 2 (Typography) unblocked starting with 2.1.\n"
+  - id: cohort-enrollment-2.1
+    name: Drizzle Migration + Four New Cohort Tables
+    completed_at: '2026-06-06'
+    commit_hash: '3003879'
+    commit_message: Add cohort tables with 58 tests (cohort-enrollment-2.1)
     tests: 58
-    files_new: 6  # 4 tests + cohort-application.ts + 0002_cohort_enrollment.sql (+ snapshot)
-    files_modified: 6  # schema.ts, index.ts, journal, vitest.config.mts, README.md, knowledge.yaml
+    files_new: 6
+    files_modified: 6
     pushed: true
-    notes: |
-      Pure infrastructure section — DB schema, types, migration. No API, no UI.
+    notes: 'Pure infrastructure section — DB schema, types, migration. No API, no
+      UI.
+
       4 Drizzle tables (cohort_waitlist, cohort_applications, cohort_admissions,
+
       cohort_enrollments) with FK cascades, UNIQUE constraints, CHECK constraints
+
       sourced from imported TS tuples via sql.raw. Forward-decl
+
       src/content/schemas/cohort-application.ts with APPLICATION_COMMITMENT_LEVELS
+
       tuple (ce-3.1 will extend). Migration 0002_cohort_enrollment.sql + snapshot.
+
       vitest.config.mts fileParallelism: false added for shared-DB integration
+
       test isolation (sa-2.1 + ce-2.1 cross-truncate users via cascades; full
+
       suite ~4s → ~30s). 58 tests = 24 unit + 10 integration + 12 edge + 8 data
+
       + 6 infra (5 N/A categories: security, perm, contract, a11y, err_recovery
+
       — all explicitly justified). Follow-up: sa-2.2 auth.test.ts has 4
+
       pre-existing fails when DATABASE_URL is set (signIn() needs
+
       work_unit_async_storage mocking).
 
-  - id: "website-foundation-1.1"
-    name: "Case Content Schema"
-    completed_at: "2026-04-11"
-    commit_hash: "dea757a"
-    commit_message: "Add Case content schema with 14 tests (website-foundation-1.1)"
+      '
+  - id: website-foundation-1.1
+    name: Case Content Schema
+    completed_at: '2026-04-11'
+    commit_hash: dea757a
+    commit_message: Add Case content schema with 14 tests (website-foundation-1.1)
     tests: 14
     files_new: 2
     files_modified: 1
     pushed: true
-  - id: "website-foundation-1.2"
-    name: "Zod Runtime Validators"
-    completed_at: "2026-04-11"
-    commit_hash: "0f822fb"
-    commit_message: "Add Zod validators with 22 tests (website-foundation-1.2)"
+  - id: website-foundation-1.2
+    name: Zod Runtime Validators
+    completed_at: '2026-04-11'
+    commit_hash: 0f822fb
+    commit_message: Add Zod validators with 22 tests (website-foundation-1.2)
     tests: 22
-    files_new: 2  # validators.ts, validators.test.ts
-    files_modified: 3  # index.ts, package.json, package-lock.json
+    files_new: 2
+    files_modified: 3
     pushed: true
-  - id: "website-foundation-1.3"
-    name: "Brand Design System"
-    completed_at: "2026-04-11"
-    commit_hash: "5449969"
-    commit_message: "Add brand design system with 14 tests (website-foundation-1.3)"
+  - id: website-foundation-1.3
+    name: Brand Design System
+    completed_at: '2026-04-11'
+    commit_hash: '5449969'
+    commit_message: Add brand design system with 14 tests (website-foundation-1.3)
     tests: 14
     files_new: 2
     files_modified: 2
     pushed: true
-  - id: "website-foundation-1.4"
-    name: "Site Shell"
-    completed_at: "2026-04-11"
-    commit_hash: "4cc308b"
-    commit_message: "Add site shell with 34 tests (website-foundation-1.4)"
+  - id: website-foundation-1.4
+    name: Site Shell
+    completed_at: '2026-04-11'
+    commit_hash: 4cc308b
+    commit_message: Add site shell with 34 tests (website-foundation-1.4)
     tests: 34
     files_new: 9
     files_modified: 7
     pushed: true
-
-  - id: "website-foundation-2.1"
-    name: "MDX Pipeline + Content Loaders"
-    completed_at: "2026-04-12"
-    commit_hash: "33a6f8a"
-    commit_message: "Add MDX pipeline + content loaders with 27 tests (website-foundation-2.1)"
+  - id: website-foundation-2.1
+    name: MDX Pipeline + Content Loaders
+    completed_at: '2026-04-12'
+    commit_hash: 33a6f8a
+    commit_message: Add MDX pipeline + content loaders with 27 tests (website-foundation-2.1)
     tests: 27
     files_new: 8
     files_modified: 2
     pushed: true
-
-  - id: "website-foundation-2.2"
-    name: "Seed Content"
-    completed_at: "2026-04-12"
-    commit_hash: "4e9c53a"
-    commit_message: "Add seed content with 11 tests (website-foundation-2.2)"
+  - id: website-foundation-2.2
+    name: Seed Content
+    completed_at: '2026-04-12'
+    commit_hash: 4e9c53a
+    commit_message: Add seed content with 11 tests (website-foundation-2.2)
     tests: 11
     files_new: 3
     files_modified: 0
     pushed: true
-
-  - id: "website-foundation-3.1"
-    name: "Homepage Rebuild"
-    completed_at: "2026-04-12"
-    commit_hash: "f4c6954"
-    commit_message: "Add homepage rebuild with 25 tests (website-foundation-3.1)"
+  - id: website-foundation-3.1
+    name: Homepage Rebuild
+    completed_at: '2026-04-12'
+    commit_hash: f4c6954
+    commit_message: Add homepage rebuild with 25 tests (website-foundation-3.1)
     tests: 25
     files_new: 3
     files_modified: 3
     pushed: true
-
-  - id: "website-foundation-3.2"
-    name: "Episodes (Index + Detail)"
-    completed_at: "2026-04-12"
-    commit_hash: "26ab862"
-    commit_message: "Add episodes index + detail with 43 tests (website-foundation-3.2)"
+  - id: website-foundation-3.2
+    name: Episodes (Index + Detail)
+    completed_at: '2026-04-12'
+    commit_hash: 26ab862
+    commit_message: Add episodes index + detail with 43 tests (website-foundation-3.2)
     tests: 43
     files_new: 6
     files_modified: 0
     pushed: true
-
-  - id: "website-foundation-3.3"
-    name: "Cases (Index + Detail)"
-    completed_at: "2026-04-12"
-    commit_hash: "ffa0d40"
-    commit_message: "Add cases index + detail with 40 tests (website-foundation-3.3)"
+  - id: website-foundation-3.3
+    name: Cases (Index + Detail)
+    completed_at: '2026-04-12'
+    commit_hash: ffa0d40
+    commit_message: Add cases index + detail with 40 tests (website-foundation-3.3)
     tests: 40
-    files_new: 4  # 2 pages + 2 test files
-    files_modified: 3  # knowledge.yaml, session.yaml, phase-3-pages.md
+    files_new: 4
+    files_modified: 3
     pushed: true
-    notes: "Inherited pre-existing P1 build failure from 3.2 (loader dynamic import). Logged as knowledge.yaml gotcha + open_question for dedicated loader-v2 followup job."
-
-  - id: "website-foundation-3.4"
-    name: "About Page"
-    completed_at: "2026-04-12"
-    commit_hash: "e637c7f"
-    commit_message: "Add about page with 19 tests (website-foundation-3.4)"
+    notes: Inherited pre-existing P1 build failure from 3.2 (loader dynamic import).
+      Logged as knowledge.yaml gotcha + open_question for dedicated loader-v2 followup
+      job.
+  - id: website-foundation-3.4
+    name: About Page
+    completed_at: '2026-04-12'
+    commit_hash: e637c7f
+    commit_message: Add about page with 19 tests (website-foundation-3.4)
     tests: 19
-    files_new: 2  # page.tsx + test
-    files_modified: 3  # knowledge.yaml, session.yaml, phase-3-pages.md
+    files_new: 2
+    files_modified: 3
     pushed: true
-    notes: "Complexity-S static prose page, first sync RSC in phase 3. No refactoring needed. /about route now resolves (previously 404)."
+    notes: Complexity-S static prose page, first sync RSC in phase 3. No refactoring
+      needed. /about route now resolves (previously 404).
+  - id: website-foundation-4.1
+    name: Capture + SEO + Polish
+    completed_at: '2026-04-12'
+    commit_hash: 9489a5f
+    commit_message: Add capture + SEO with 63 tests (website-foundation-4.1)
+    tests: 63
+    files_new: 8
+    files_modified: 16
+    pushed: true
+    notes: 'Final section of website-foundation job. Email capture via Resend (useActionState
+      +
 
-  - id: "website-foundation-4.1"
-    name: "Capture + SEO + Polish"
-    completed_at: "2026-04-12"
-    commit_hash: "9489a5f"
-    commit_message: "Add capture + SEO with 63 tests (website-foundation-4.1)"
-    tests: 63  # 63 new tests written this section (34 unit + 3 integration + 4 security + 4 a11y + 4 infra + 6 edge + 3 error + 3 data + 2 N/A categories); total suite now 308
-    files_new: 8  # actions.ts + sitemap.ts + robots.ts + 5 new test files (actions, sitemap, robots, dependencies, llmstxt)
-    files_modified: 16  # EmailCapture + LllCrosslinks + layout + 2 detail pages + 5 test files + llms.txt + package.json + package-lock.json + README.md + knowledge.yaml + session.yaml
-    pushed: true  # will be set true after push
-    notes: |
-      Final section of website-foundation job. Email capture via Resend (useActionState +
-      server action with degraded env fallback), LLL crosslinks rewrite with slug extraction,
+      server action with degraded env fallback), LLL crosslinks rewrite with slug
+      extraction,
+
       per-page SEO metadata (OG + Twitter) + JSON-LD (VideoObject for episodes, CreativeWork
-      for cases), dynamic sitemap from content loaders, permissive robots, llms.txt sitemap
-      reference. Inherited loader P1 gotcha — npm run build skipped per knowledge.yaml
-      open_question loader_build_incompat.
-    job_complete: true
 
-  - id: "build-in-public-docs-1.1"
-    name: "Schemas + Job-Tree Loader"
-    completed_at: "2026-04-12"
-    commit_hash: "e0ba60e"
-    commit_message: "Add build-log schemas + job-tree loader with 70 tests (build-in-public-docs-1.1)"
-    tests: 70  # 31 unit + 9 integration + 9 security + 10 edge + 4 err + 5 data; total suite 378 (was 308)
-    files_new: 7  # build-log.ts, parse-readme.ts, parse-phase.ts, jobs.ts + 3 test files
-    files_modified: 4  # validators.ts, validators.test.ts (added), index.ts, currentwork/website-foundation/README.md
+      for cases), dynamic sitemap from content loaders, permissive robots, llms.txt
+      sitemap
+
+      reference. Inherited loader P1 gotcha — npm run build skipped per knowledge.yaml
+
+      open_question loader_build_incompat.
+
+      '
+    job_complete: true
+  - id: build-in-public-docs-1.1
+    name: Schemas + Job-Tree Loader
+    completed_at: '2026-04-12'
+    commit_hash: e0ba60e
+    commit_message: Add build-log schemas + job-tree loader with 70 tests (build-in-public-docs-1.1)
+    tests: 70
+    files_new: 7
+    files_modified: 4
     pushed: true
-    notes: |
-      First section of build-in-public-docs (bpd) job. 7 TS interfaces +
+    notes: 'First section of build-in-public-docs (bpd) job. 7 TS interfaces +
+
       6 Zod schemas for the build-log domain (Job/JobPhase/SessionStatus/
+
       KnowledgeFile/JobRollupEntry). Two pure-fn markdown parsers
+
       (parseReadme, parsePhaseHeader with dual-format bold-key support).
+
       Filesystem walker getAllJobs/getJobBySlug/getJobPhase with module
+
       cache + Object.freeze; empty/ENOENT returns frozen []. Bumped
+
       JobFeatureSchema.name cap 200→500 to fit real-world feature names.
+
       Scope decisions: deferred yaml package install to 1.2 per planning
+
       doc; used hand-built fixtures for live-yaml integration tests.
+
       Added missing **Alias:** wf line to website-foundation README to
+
       enforce project convention. Inherited loader P1 — npm run build
+
       skipped (loader_build_incompat). Followup cleanup opportunity:
+
       add Object.freeze to episodes.ts/cases.ts cache assignments
+
       (captured in knowledge.yaml).
 
-  - id: "build-in-public-docs-2.1"
-    name: "<MarkdownDocument> Component"
-    completed_at: "2026-04-12"
-    commit_hash: "5fc65d7"
-    commit_message: "Add MarkdownDocument component with 24 tests (build-in-public-docs-2.1)"
-    tests: 24  # 11 unit + 2 integration + 2 security + 3 a11y + 3 edge + 1 err + 1 data + 1 infra; total suite 432 (was 408)
-    files_new: 3  # MarkdownDocument.tsx, __tests__/MarkdownDocument.test.tsx, index.ts (barrel)
-    files_modified: 3  # globals.css (+ .build-log-prose @layer block), package.json, package-lock.json (6 new deps + 25 transitive)
+      '
+  - id: build-in-public-docs-2.1
+    name: <MarkdownDocument> Component
+    completed_at: '2026-04-12'
+    commit_hash: 5fc65d7
+    commit_message: Add MarkdownDocument component with 24 tests (build-in-public-docs-2.1)
+    tests: 24
+    files_new: 3
+    files_modified: 3
     pushed: true
-    notes: |
-      Third section of bpd job. Pure React Server Component wrapping
-      react-markdown v9 + remark-gfm + rehype-{slug,autolink-headings,highlight}
-      + highlight.js (github-dark.css theme). Component overrides: h1→h2 demote
-      (preserves page outline since parent pages mount their own h1), table→
-      wrapped in div.overflow-x-auto for mobile-safe GFM table rendering.
-      CSS styling via .build-log-prose @layer components block in globals.css
-      (~82 lines) using existing wf 1.3 brand tokens.
-      Defense-in-depth: rehype-raw explicitly omitted — raw HTML in markdown
-      is escaped as text, not executed. Verified by sec_* tests.
-      Complexity S — all 24 tests green on first green-phase run.
-      Single refactor improvement: added src/components/build-log/index.ts
-      barrel export matching src/components/site/ convention.
-      Inherited P1 loader_build_incompat — npm run build skipped again
-      (consistent with bpd 1.1/1.2 and pre-existing wf issue).
-      Blocker cleared: bpd 2.2 and bpd 2.3 can now parallelize; both consume
-      MarkdownDocument via `import { MarkdownDocument } from '@/components/build-log'`.
+    notes: 'Third section of bpd job. Pure React Server Component wrapping
 
-  - id: "build-in-public-docs-2.2"
-    name: "/build-log Index + Job + Phase Pages"
-    completed_at: "2026-04-12"
-    commit_hash: "24d2647"
-    commit_message: "Add build-log index + job + phase pages with 51 tests (build-in-public-docs-2.2)"
-    tests: 51  # 22 unit + 10 integration + 2 security + 4 a11y + 2 infra + 6 edge + 3 err + 2 data; section-scoped 143/143; full suite 483 + 51 = 534 if storefront-auth-1.1 product files were complete
-    files_new: 9  # 3 components + 6 test files
-    files_modified: 1  # src/components/build-log/index.ts (barrel)
+      react-markdown v9 + remark-gfm + rehype-{slug,autolink-headings,highlight}
+
+      + highlight.js (github-dark.css theme). Component overrides: h1→h2 demote
+
+      (preserves page outline since parent pages mount their own h1), table→
+
+      wrapped in div.overflow-x-auto for mobile-safe GFM table rendering.
+
+      CSS styling via .build-log-prose @layer components block in globals.css
+
+      (~82 lines) using existing wf 1.3 brand tokens.
+
+      Defense-in-depth: rehype-raw explicitly omitted — raw HTML in markdown
+
+      is escaped as text, not executed. Verified by sec_* tests.
+
+      Complexity S — all 24 tests green on first green-phase run.
+
+      Single refactor improvement: added src/components/build-log/index.ts
+
+      barrel export matching src/components/site/ convention.
+
+      Inherited P1 loader_build_incompat — npm run build skipped again
+
+      (consistent with bpd 1.1/1.2 and pre-existing wf issue).
+
+      Blocker cleared: bpd 2.2 and bpd 2.3 can now parallelize; both consume
+
+      MarkdownDocument via `import { MarkdownDocument } from ''@/components/build-log''`.
+
+      '
+  - id: build-in-public-docs-2.2
+    name: /build-log Index + Job + Phase Pages
+    completed_at: '2026-04-12'
+    commit_hash: 24d2647
+    commit_message: Add build-log index + job + phase pages with 51 tests (build-in-public-docs-2.2)
+    tests: 51
+    files_new: 9
+    files_modified: 1
     pushed: true
-    notes: |
-      Fourth section of bpd job. Three Next.js App Router pages
+    notes: 'Fourth section of bpd job. Three Next.js App Router pages
+
       (/build-log, /build-log/jobs/[slug], /build-log/jobs/[slug]/[phase])
+
       mounting four components (StatusBadge, JobCard, PhaseNav, plus the
-      MarkdownDocument from 2.1). Pure RSC throughout — no 'use client'.
+
+      MarkdownDocument from 2.1). Pure RSC throughout — no ''use client''.
+
       Followed canonical content_page_pattern (wf 3.2/3.3): Container,
+
       dynamicParams=false, generateStaticParams, generateMetadata with
+
       Promise<{params}> async params, notfound_return_guard, Promise.all
+
       on loader pairs (cache makes second call O(1)).
+
       firstParagraph helper kept private to index page; tested via mocked
+
       JobCard data-excerpt capture.
+
       Inherited loader_build_incompat P1 — npm run build skipped consistent
+
       with bpd 1.1/1.2/2.1.
+
       Concurrent storefront-auth-1.1 work modified session.yaml + added
+
       Product schema imports to validators.test.ts during the run; commit
-      explicitly stages only this section's files.
+
+      explicitly stages only this section''s files.
+
       Blocker cleared: bpd 2.3 (status board) is now the next bpd section;
+
       bpd 3.1 (SEO + sitemap + nav) widens these metadata exports and
+
       adds the /build-log Header nav link.
 
-  - id: "build-in-public-docs-1.2"
-    name: "Pipeline State Loader + Rollup"
-    completed_at: "2026-04-12"
-    commit_hash: "b1ff02c"
-    commit_message: "Add pipeline state loader with 27 tests (build-in-public-docs-1.2)"
-    tests: 27  # 13 unit + 3 integration + 6 edge + 3 err + 3 data + 2 infra (vitest splits 27 spec tests into 30 rendered entries); total suite 408 (was 378)
-    files_new: 2  # pipeline-state.ts + pipeline-state.test.ts
-    files_modified: 3  # package.json, package-lock.json (yaml dep), jobs.test.ts (de-brittle inherited assertion)
+      '
+  - id: build-in-public-docs-1.2
+    name: Pipeline State Loader + Rollup
+    completed_at: '2026-04-12'
+    commit_hash: b1ff02c
+    commit_message: Add pipeline state loader with 27 tests (build-in-public-docs-1.2)
+    tests: 27
+    files_new: 2
+    files_modified: 3
     pushed: true
-    notes: |
-      Second section of bpd. Single-file loader (src/lib/build-log/pipeline-state.ts)
-      with 3 exports (getSessionStatus / getKnowledgeFile / getJobsRollup) and 5
-      internal helpers (mapCompletedEntry, mapSession, mapKnowledge, extractSectionId,
-      rollupForJob, computeStatus). Surface discoveries:
-        (1) Real session.yaml completed_sections uses `- id:`/`completed_at:` keys
-            but bpd-1.1 CompletedSectionEntrySchema expects `section:`/`completedAt:`
-            — added mapCompletedEntry at loader boundary with ...rest for metadata.
-        (2) KnowledgeFileSchema.passthrough() requires mapKnowledge to preserve
-            unknown top-level keys via destructure + ...rest spread; otherwise
-            section-id rollup entries get stripped before Zod parse.
-        (3) Four-branch rollup status derivation extracted to computeStatus helper
-            returning Pick<JobRollupEntry, 'percentComplete' | 'status'> pair —
-            caller spreads into the full entry literal.
-      Drive-by: de-brittled jobs.test.ts integration_get_job_community_showcase
-      from `features.length >= 6` to `>= 1` (inherited failure after community-showcase
-      was condensed to 5 features; test intent preserved).
-      Inherited loader P1 — npm run build skipped (loader_build_incompat).
-      Cross-section cleanup for episodes.ts/cases.ts Object.freeze carried forward.
+    notes: "Second section of bpd. Single-file loader (src/lib/build-log/pipeline-state.ts)\n\
+      with 3 exports (getSessionStatus / getKnowledgeFile / getJobsRollup) and 5\n\
+      internal helpers (mapCompletedEntry, mapSession, mapKnowledge, extractSectionId,\n\
+      rollupForJob, computeStatus). Surface discoveries:\n  (1) Real session.yaml\
+      \ completed_sections uses `- id:`/`completed_at:` keys\n      but bpd-1.1 CompletedSectionEntrySchema\
+      \ expects `section:`/`completedAt:`\n      — added mapCompletedEntry at loader\
+      \ boundary with ...rest for metadata.\n  (2) KnowledgeFileSchema.passthrough()\
+      \ requires mapKnowledge to preserve\n      unknown top-level keys via destructure\
+      \ + ...rest spread; otherwise\n      section-id rollup entries get stripped\
+      \ before Zod parse.\n  (3) Four-branch rollup status derivation extracted to\
+      \ computeStatus helper\n      returning Pick<JobRollupEntry, 'percentComplete'\
+      \ | 'status'> pair —\n      caller spreads into the full entry literal.\nDrive-by:\
+      \ de-brittled jobs.test.ts integration_get_job_community_showcase\nfrom `features.length\
+      \ >= 6` to `>= 1` (inherited failure after community-showcase\nwas condensed\
+      \ to 5 features; test intent preserved).\nInherited loader P1 — npm run build\
+      \ skipped (loader_build_incompat).\nCross-section cleanup for episodes.ts/cases.ts\
+      \ Object.freeze carried forward.\n"
+  - id: storefront-auth-1.1
+    name: Product Content Pipeline (Schema + Validator + Loader + Seed MDX)
+    completed_at: '2026-04-13'
+    commit_hash: 70e7f99
+    commit_message: Add product content pipeline with 39 tests (storefront-auth-1.1)
+    tests: 39
+    files_new: 6
+    files_modified: 3
+    pushed: true
+    notes: 'First section of storefront-auth (sa) job — kicks off the /products
 
-  - id: "storefront-auth-1.1"
-    name: "Product Content Pipeline (Schema + Validator + Loader + Seed MDX)"
-    completed_at: "2026-04-13"
-    commit_hash: "70e7f99"
-    commit_message: "Add product content pipeline with 39 tests (storefront-auth-1.1)"
-    tests: 39  # 11 unit + 3 integration + 7 security + 2 infra + 2 contract + 6 edge + 4 err + 4 data; full suite 522 (was 432 baseline; +90 incl. recovered file-load test counts)
-    files_new: 6  # product.ts, products.ts, products.test.ts, manifest.ts, 2 seed MDX
-    files_modified: 3  # validators.ts, validators.test.ts, schemas/index.ts (barrel)
-    pushed: true
-    notes: |
-      First section of storefront-auth (sa) job — kicks off the /products
       monetization layer. Pure schema/validator/loader work mirroring the
-      wf 1.1/1.2/2.2 Case → CaseSchema → cases.ts pattern exactly:
-      Product interface + PRODUCT_CATEGORIES/PRODUCT_LICENSE_TYPES tuples +
-      label maps; ProductSchema appended to validators.ts with 7 hardened
-      attack vectors (enum tampering x2, slug regex, stripePriceId regex,
-      assetFilename traversal regex, currency length, required-field
-      enforcement); products.ts loader using manifest pattern
-      (loader_build_incompat workaround) + module-level cache + Object.freeze
-      (paid-forward cleanup from bpd-1.2); 2 seed MDX files with stub copy
-      + price_REPLACEMEBEFORESHIPPING placeholder (intentional friction:
-      validator accepts, Stripe rejects at Checkout).
-      Diverged from planning doc sketch in 3 ways (documented in
-      discovery.yaml.divergences_from_planning_doc): (1) loader returns
-      ReadonlyArray<LoadedEntry<Product>> not Product[]; (2) module-level
-      cache (planning said "no cache"); (3) manifest pattern (planning
-      sketched dynamic import).
-      Section is infrastructure-only — no UI, no API, no DB, no auth, no
-      forms, no nav. Most wiring beats N/A.
-      Concurrent build-in-public-docs-2.2 work shared this run; commit
-      explicitly stages only this section's source files (validators.ts/
-      validators.test.ts/schemas/index.ts/product.ts/products.ts/products.test.ts/
-      manifest.ts/2 seed MDX) plus shared state (session.yaml, knowledge.yaml).
-      Inherited loader_build_incompat P1 — npm run build skipped (consistent
-      with all wf and bpd loader-touching sections).
-      Blocker cleared: storefront-auth-1.2 (catalog routes /products + /products/[slug])
-      can start; 1.2 consumes getAllProducts/getProductBySlug + Product type
-      from this section's exports.
 
-  - id: "build-in-public-docs-2.3"
-    name: "/build-log/status Status Board"
-    completed_at: "2026-04-13"
+      wf 1.1/1.2/2.2 Case → CaseSchema → cases.ts pattern exactly:
+
+      Product interface + PRODUCT_CATEGORIES/PRODUCT_LICENSE_TYPES tuples +
+
+      label maps; ProductSchema appended to validators.ts with 7 hardened
+
+      attack vectors (enum tampering x2, slug regex, stripePriceId regex,
+
+      assetFilename traversal regex, currency length, required-field
+
+      enforcement); products.ts loader using manifest pattern
+
+      (loader_build_incompat workaround) + module-level cache + Object.freeze
+
+      (paid-forward cleanup from bpd-1.2); 2 seed MDX files with stub copy
+
+      + price_REPLACEMEBEFORESHIPPING placeholder (intentional friction:
+
+      validator accepts, Stripe rejects at Checkout).
+
+      Diverged from planning doc sketch in 3 ways (documented in
+
+      discovery.yaml.divergences_from_planning_doc): (1) loader returns
+
+      ReadonlyArray<LoadedEntry<Product>> not Product[]; (2) module-level
+
+      cache (planning said "no cache"); (3) manifest pattern (planning
+
+      sketched dynamic import).
+
+      Section is infrastructure-only — no UI, no API, no DB, no auth, no
+
+      forms, no nav. Most wiring beats N/A.
+
+      Concurrent build-in-public-docs-2.2 work shared this run; commit
+
+      explicitly stages only this section''s source files (validators.ts/
+
+      validators.test.ts/schemas/index.ts/product.ts/products.ts/products.test.ts/
+
+      manifest.ts/2 seed MDX) plus shared state (session.yaml, knowledge.yaml).
+
+      Inherited loader_build_incompat P1 — npm run build skipped (consistent
+
+      with all wf and bpd loader-touching sections).
+
+      Blocker cleared: storefront-auth-1.2 (catalog routes /products + /products/[slug])
+
+      can start; 1.2 consumes getAllProducts/getProductBySlug + Product type
+
+      from this section''s exports.
+
+      '
+  - id: build-in-public-docs-2.3
+    name: /build-log/status Status Board
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 30  # 10 unit + 3 integration + 4 a11y + 3 infra + 7 edge + 3 data; full suite 552 (was 522 baseline)
-    files_new: 4  # JobsRollupTable.tsx, JobsRollupTable.test.tsx, status/page.tsx, status/page.test.tsx
-    files_modified: 1  # src/components/build-log/index.ts (barrel)
-    pushed: false  # set true after push
-    notes: |
-      Final feature of bpd Phase 2 (Pages). One server-rendered page
+    tests: 30
+    files_new: 4
+    files_modified: 1
+    pushed: false
+    notes: 'Final feature of bpd Phase 2 (Pages). One server-rendered page
+
       (/build-log/status) plus one composable RSC (JobsRollupTable). Pure
+
       UI assembly over already-shipped loaders (getSessionStatus +
+
       getKnowledgeFile + getJobsRollup from bpd 1.2) and components
+
       (StatusBadge from bpd 2.2, MarkdownDocument from bpd 2.1, Container
+
       from wf 1.4). All 30 tests green on first /green run; zero refactor
+
       changes needed (planning code was already idiomatic).
+
       Section is purely public — no API, no auth, no forms, no schema work.
+
       Most wiring/serializer/permission/contract beats N/A. Markdown XSS
+
       defense inherited from bpd 2.1 (rehype-raw omitted).
+
       Concurrent storefront-auth-1.2 discovery shared this run; commit
-      explicitly stages only this section's source files (JobsRollupTable.tsx
+
+      explicitly stages only this section''s source files (JobsRollupTable.tsx
+
       + test, status/page.tsx + test, components/build-log/index.ts barrel)
+
       plus shared state (session.yaml, knowledge.yaml, currentwork/build-in-public-docs/README.md).
+
       Inherited loader_build_incompat P1 — npm run build skipped (consistent
+
       with all bpd sections + sa-1.1).
+
       Blocker cleared: bpd Phase 2 (Pages) is COMPLETE. bpd 3.1 (SEO + sitemap
+
       + nav + a11y polish) is the next bpd section; widens the metadata
+
       exports of all four bpd 2.x routes and adds the Header nav link.
 
-  - id: "storefront-auth-1.2"
-    name: "Products Catalog Routes (Index + Detail)"
-    completed_at: "2026-04-13"
+      '
+  - id: storefront-auth-1.2
+    name: Products Catalog Routes (Index + Detail)
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 42  # 18 unit + 5 integration + 5 a11y + 5 infra + 4 edge + 2 err + 3 data; full suite 594 (was 552 pre-green)
-    files_new: 9  # 2 pages + 2 components + 1 barrel + 4 test files
+    tests: 42
+    files_new: 9
     files_modified: 0
     pushed: false
-    notes: |
-      Second section of storefront-auth (sa) job. Pure UI layer consuming
+    notes: 'Second section of storefront-auth (sa) job. Pure UI layer consuming
+
       the 1.1 product loader. Both public routes (/products index +
+
       /products/[slug] detail) render statically via generateStaticParams +
+
       dynamicParams=false. ProductCard + BuyButton components; ProductCard
+
       is router-agnostic (Link wraps it at the list level, keeping card
-      testable in isolation). BuyButton is 'use client' with isLive=false
+
+      testable in isolation). BuyButton is ''use client'' with isLive=false
+
       stub — Phase 3.1 flips this single constant to activate the enabled
-      branch (currently syntactically reachable dead code; ESLint doesn't
-      flag it because const booleans don't narrow for unreachable analysis).
+
+      branch (currently syntactically reachable dead code; ESLint doesn''t
+
+      flag it because const booleans don''t narrow for unreachable analysis).
+
       Scope decisions: no NAV_ITEMS update (deferred to 4.2 per planning
+
       doc), no JSON-LD (deferred to 4.2), no sitemap append (deferred to
+
       4.2). Canonical UI-only N/A set documented in
+
       knowledge.yaml#ui_section_pipeline_scope covers 3 discovery + 6 red +
+
       8 green + 2 refactor + 2 finish beats.
+
       Concurrent build-in-public-docs-2.3 work shared this run; commit
-      explicitly stages only this section's source files (ProductCard +
+
+      explicitly stages only this section''s source files (ProductCard +
+
       BuyButton + barrel + 2 pages + 4 test files) plus shared state
+
       (session.yaml, knowledge.yaml, currentwork/storefront-auth/README.md).
-      Key gotcha captured: planning doc's pseudocode for the index page
+
+      Key gotcha captured: planning doc''s pseudocode for the index page
+
       used `product.id` / `product.slug` directly, but getAllProducts
+
       returns ReadonlyArray<LoadedEntry<Product>> — green implemented the
+
       LoadedEntry shape matching wf 3.2/3.3, diverging from the template.
+
       Inherited loader_build_incompat P1 — npm run build skipped (9th
+
       consecutive section skipping build verification).
+
       Blocker cleared: storefront-auth Phase 1 (Catalog) is COMPLETE and
+
       shippable standalone. Phase 2.1 (Postgres + Drizzle) is the next
+
       sa section — first persistence layer in fabled10x.
 
-  - id: "build-in-public-docs-3.1"
-    name: "SEO + Sitemap + Nav + a11y Polish"
-    completed_at: "2026-04-13"
-    commit_hash: "pending"
-    commit_message: "Add SEO + sitemap + nav polish with 57 tests (build-in-public-docs-3.1)"
+      '
+  - id: build-in-public-docs-3.1
+    name: SEO + Sitemap + Nav + a11y Polish
+    completed_at: '2026-04-13'
+    commit_hash: pending
+    commit_message: Add SEO + sitemap + nav polish with 57 tests (build-in-public-docs-3.1)
     tests: 57
-    files_new: 1  # src/components/site/NavLink.tsx
-    files_modified: 8  # 4 build-log pages + sitemap.ts + Header.tsx + page.tsx + llms.txt
-    test_files_modified: 8  # corresponding test files
+    files_new: 1
+    files_modified: 8
+    test_files_modified: 8
     pushed: false
-    notes: |
-      Final bpd section — job COMPLETE (6/6 features shipped). Pure polish
+    notes: 'Final bpd section — job COMPLETE (6/6 features shipped). Pure polish
+
       mods (no new schemas/routes/APIs/forms/DB). 4 build-log pages now ship
+
       CollectionPage (index, status) / TechArticle (job, phase) JSON-LD +
+
       OG + Twitter + canonical metadata. Sitemap extended with build-log
-      routes. Header gains 'Build log' link with pathname-based active state
+
+      routes. Header gains ''Build log'' link with pathname-based active state
+
       via new NavLink client subcomponent (kept Header as Server Component).
-      Homepage gets 'Inside the build' CTA. llms.txt mentions /build-log.
+
+      Homepage gets ''Inside the build'' CTA. llms.txt mentions /build-log.
+
       First bpd section to complete npm run build cleanly (loader_build_incompat
+
       P1 does not affect this section). User isolation rule observed:
+
       session.current_phase/current_section remain pinned to storefront-auth,
+
       git staging used explicit filenames only. Manual Lighthouse + keyboard
+
       walkthrough deferred (tracked in knowledge.yaml as open task for next
+
       visit to build-log routes). Two test-infra edits captured in knowledge:
+
       (1) Header.test.tsx next/link mock needed ...rest spread to forward
+
       aria-current, (2) phase page sec_information_disclosure test selector
+
       narrowed to exclude application/ld+json. Both preserve test intent.
 
-  - id: "cohort-enrollment-1.1"
-    name: "Cohort Schema + CohortSchema Zod Validator"
-    completed_at: "2026-04-13"
+      '
+  - id: cohort-enrollment-1.1
+    name: Cohort Schema + CohortSchema Zod Validator
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 19  # 13 unit (CohortSchema + barrel) + 3 edge + 1 err + 2 data; full suite 670 + 19 = 689 pre-concurrent-sa-2.1
-    files_new: 1  # src/content/schemas/cohort.ts
-    files_modified: 3  # schemas/index.ts (barrel +1 line), validators.ts (CohortSchema + CohortInput +38 lines), __tests__/validators.test.ts (imports + 19 tests)
-    pushed: false  # will be set true after push
-    notes: |
-      First section of cohort-enrollment (ce) job — schema/validator for the
-      Cohort content type. Pure declarative work mirroring the established
-      content_type_module (wf-1.1) + validator_module (wf-1.2) patterns
-      exactly, with two cohort-specific divergences:
-        (1) currency uses regex /^[a-z]+$/ (rejects uppercase) rather than
-            Product's .toLowerCase() coercion — explicit error surface.
-        (2) stripePriceId regex allows placeholder 'price_REPLACE_ME_*'
-            in addition to real 'price_xxx' — operator can pre-provision
-            MDX before filling in the Stripe Price ID; checkout helper
-            (Phase 4.3) rejects placeholder at call time.
-      Section is schema-only — no UI, no API, no DB. Most wiring/audit/
-      security/permission/contract beats marked N/A per the
-      schema_only_pipeline_scope pattern.
-      Concurrent storefront-auth-2.1 work is active in the working tree
-      (src/__tests__/gitignore.test.ts, readme-db.test.ts,
-      src/db/__tests__/migration.test.ts are sa-2.1 red-phase tests).
-      Commit explicitly stages only this section's source files + shared
-      state (session.yaml, knowledge.yaml) + this job's currentwork/ dir.
-      Inherited loader_build_incompat P1 — does NOT affect ce-1.1
-      (no loaders touched). npm run build skipped per VPS OOM pattern
-      regardless.
-      Blocker cleared: ce-1.2 (Cohort Loader + Seed MDX) can start.
-
-  - id: "storefront-auth-2.1"
-    name: "Postgres + Drizzle Setup"
-    completed_at: "2026-04-13"
-    commit_hash: "c8f5aae"
-    commit_message: "Add Postgres + Drizzle setup with 42 tests (storefront-auth-2.1)"
-    tests: 42  # 8 unit + 6 integration (DATABASE_URL skipIf-gated) + 3 security + 14 infra + 5 edge + 1 err + 5 data; full suite 712 with DATABASE_URL set
-    files_new: 8  # schema.ts, client.ts, migrations/0000_init.sql + 2 meta/, drizzle.config.ts, docker-compose.yml, .env.example + 6 new test files (client, migration, schema, docker-compose, drizzle-config, env-example, gitignore, readme-db)
-    files_modified: 4  # package.json (+3 deps, +5 scripts), package-lock.json, .gitignore (+docker-volume rule + .env.example whitelist), README.md (+ Local database setup section)
+    tests: 19
+    files_new: 1
+    files_modified: 3
+    pushed: false
+    notes: "First section of cohort-enrollment (ce) job — schema/validator for the\n\
+      Cohort content type. Pure declarative work mirroring the established\ncontent_type_module\
+      \ (wf-1.1) + validator_module (wf-1.2) patterns\nexactly, with two cohort-specific\
+      \ divergences:\n  (1) currency uses regex /^[a-z]+$/ (rejects uppercase) rather\
+      \ than\n      Product's .toLowerCase() coercion — explicit error surface.\n\
+      \  (2) stripePriceId regex allows placeholder 'price_REPLACE_ME_*'\n      in\
+      \ addition to real 'price_xxx' — operator can pre-provision\n      MDX before\
+      \ filling in the Stripe Price ID; checkout helper\n      (Phase 4.3) rejects\
+      \ placeholder at call time.\nSection is schema-only — no UI, no API, no DB.\
+      \ Most wiring/audit/\nsecurity/permission/contract beats marked N/A per the\n\
+      schema_only_pipeline_scope pattern.\nConcurrent storefront-auth-2.1 work is\
+      \ active in the working tree\n(src/__tests__/gitignore.test.ts, readme-db.test.ts,\n\
+      src/db/__tests__/migration.test.ts are sa-2.1 red-phase tests).\nCommit explicitly\
+      \ stages only this section's source files + shared\nstate (session.yaml, knowledge.yaml)\
+      \ + this job's currentwork/ dir.\nInherited loader_build_incompat P1 — does\
+      \ NOT affect ce-1.1\n(no loaders touched). npm run build skipped per VPS OOM\
+      \ pattern\nregardless.\nBlocker cleared: ce-1.2 (Cohort Loader + Seed MDX) can\
+      \ start.\n"
+  - id: storefront-auth-2.1
+    name: Postgres + Drizzle Setup
+    completed_at: '2026-04-13'
+    commit_hash: c8f5aae
+    commit_message: Add Postgres + Drizzle setup with 42 tests (storefront-auth-2.1)
+    tests: 42
+    files_new: 8
+    files_modified: 4
     pushed: true
-    notes: |
-      First persistence layer in fabled10x. Establishes 4 Drizzle tables
+    notes: 'First persistence layer in fabled10x. Establishes 4 Drizzle tables
+
       (users/sessions/verification_tokens/purchases) with UNIQUE + FK cascade +
+
       composite PK + user_id index + 8 inferred types. Uses globalThis singleton
+
       pattern for the postgres.js client (survives Next.js dev HMR reloads;
+
       module-scope `let cache` from the loader pattern would exhaust the
+
       connection pool). DATABASE_URL guard at module load — fail-loud, not
+
       lazy-error at first query.
 
+
       Integration tests gated behind `describe.skipIf(!process.env.DATABASE_URL)`:
+
       7 unit tests (schema shape via getTableConfig) always run; 17 integration/
+
       edge/data/security tests run only when DATABASE_URL is set. Without env,
+
       tests cleanly skip — NOT a regression of the zero-skipped rule. Pattern
+
       documented in patterns.yaml; 2.2/3.2/3.3/4.1 will inherit.
 
+
       pgcrypto CREATE EXTENSION clause manually prepended to the generated
+
       migration (drizzle-kit does not auto-emit it for gen_random_uuid defaults).
+
       --name init flag required to get stable 0000_init.sql filename.
 
+
       loader_build_incompat P1 did NOT surface — npm run build succeeded
+
       cleanly for the first time with content-detail routes present
+
       (52 static pages prerendered). Recommendation: close or downgrade
+
       after 2.2 also passes. knowledge.yaml updated accordingly.
 
+
       .env.example required a .gitignore whitelist `!.env.example` after the
-      catch-all `.env*` rule; silent failure mode (file won't show in git status)
+
+      catch-all `.env*` rule; silent failure mode (file won''t show in git status)
+
       captured as gotcha in knowledge.yaml.
 
+
       Concurrent cohort-enrollment-1.1 work shared this run; ce-1.1 shipped
+
       2026-04-13 as commit 1d5f9a5 before this push. sa-2.1 commit explicitly
-      stages only this section's source files (src/db/*, drizzle.config.ts,
+
+      stages only this section''s source files (src/db/*, drizzle.config.ts,
+
       docker-compose.yml, .env.example, 6 new test files + dependencies.test.ts
+
       modification + currentwork/storefront-auth/phase-2-auth-persistence.md
+
       checklist update) plus shared state (knowledge.yaml).
 
+
       Blocker cleared: storefront-auth Phase 2.2 (Auth.js v5 + Resend magic-link
+
       + Drizzle adapter) is the next sa section. Consumes `users`, `sessions`,
+
       `verificationTokens` tables from this migration.
 
-  - id: "cohort-enrollment-1.2"
-    name: "Cohort Loader + Seed MDX"
-    completed_at: "2026-04-13"
+      '
+  - id: cohort-enrollment-1.2
+    name: Cohort Loader + Seed MDX
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 28  # 7 unit + 4 integration + 3 contract + 3 infra + 4 edge + 4 err + 3 data_integrity; full suite 723 (was 695 pre-ce-1.2)
-    files_new: 4  # src/lib/content/cohorts.ts, src/lib/content/__tests__/cohorts.test.ts, src/content/cohorts/manifest.ts, src/content/cohorts/ai-delivery-2026-q3.mdx, src/content/cohorts/workflow-mastery-2026-q4.mdx (5 files)
-    files_modified: 1  # src/lib/content/index.ts (barrel +1 line)
-    pushed: false  # set true after push
-    notes: |
-      Second section of cohort-enrollment (ce) job. Cohort loader + 2 seed
-      MDX files, mirroring the sa-1.1 products.ts loader pattern exactly
-      (ReadonlyArray<LoadedEntry<Cohort>> + Object.freeze + module cache +
-      manifest workaround) with 2 intentional divergences:
-        (1) Sort by meta.startDate ASCENDING (not publishedAt DESCENDING) —
-            UX signal for the /cohorts catalog is "when is the next cohort
-            I can join", per planning-doc design decision line 506-508.
-        (2) Adds getCohortBuckets() partition helper splitting status into
-            { upcoming: [announced|open|closed], archived: [enrolled|shipped] }.
-            status='closed' is classified as UPCOMING (applications closed but
-            cohort has not yet run).
-      Seed pair exercises BOTH announced + open statuses (planning-doc
-      line 517-520) so downstream ce-1.3 detail-page CTA state machine has
-      real data for both render branches.
-      Section is infrastructure/loader+seeds — no UI, no API, no DB, no
-      forms, no nav. 13 pipeline beats N/A (most wiring + security/permission/
-      contract categories) per canonical schema_only_pipeline_scope-adjacent
-      pattern from sa-1.1.
-      Refactor produced ZERO code changes — implementation was already
-      idiomatic. 4-loader createContentLoader factory extraction flagged
-      (sa-1.1 trigger met) but deferred to a dedicated refactor-sweep job
-      because (a) sort-key divergence needs sortFn generic, (b) sibling
-      loader files are out of ce-1.2 scope.
-      One green-phase bug caught + fixed: seed MDX initially used 'as const;'
-      (TypeScript syntax from planning-doc sketch) which acorn rejects in
-      MDX — 28/28 tests failed with 'Could not parse import/exports'. Fix:
-      removed 'as const' (products/cases/episodes MDX precedent omits it).
-      Captured as knowledge.yaml gotcha.
-      **loader_build_incompat P1 CONFIRMED RESOLVED** — npm run build
-      passed cleanly for the SECOND consecutive section (sa-2.1 first
-      observation; ce-1.2 confirmation). All 52 static pages prerender.
-      Cohort routes not present yet (ce-1.3) but loader is build-compatible.
-      Concurrent storefront-auth-2.2 work is active in the working tree
-      (pipeline/active/storefront-auth-2.2/ exists from a concurrent run);
-      commit explicitly stages only this section's source files + shared
-      state (session.yaml, knowledge.yaml).
-      Blocker cleared: ce-1.3 (/cohorts index + detail pages) can start —
-      consumes all three exported functions (getAllCohorts, getCohortBySlug,
-      getCohortBuckets).
-
-  - id: "cohort-enrollment-1.3"
-    name: "/cohorts Index + /cohorts/[slug] Detail Pages"
-    completed_at: "2026-04-14"
+    tests: 28
+    files_new: 4
+    files_modified: 1
+    pushed: false
+    notes: "Second section of cohort-enrollment (ce) job. Cohort loader + 2 seed\n\
+      MDX files, mirroring the sa-1.1 products.ts loader pattern exactly\n(ReadonlyArray<LoadedEntry<Cohort>>\
+      \ + Object.freeze + module cache +\nmanifest workaround) with 2 intentional\
+      \ divergences:\n  (1) Sort by meta.startDate ASCENDING (not publishedAt DESCENDING)\
+      \ —\n      UX signal for the /cohorts catalog is \"when is the next cohort\n\
+      \      I can join\", per planning-doc design decision line 506-508.\n  (2) Adds\
+      \ getCohortBuckets() partition helper splitting status into\n      { upcoming:\
+      \ [announced|open|closed], archived: [enrolled|shipped] }.\n      status='closed'\
+      \ is classified as UPCOMING (applications closed but\n      cohort has not yet\
+      \ run).\nSeed pair exercises BOTH announced + open statuses (planning-doc\n\
+      line 517-520) so downstream ce-1.3 detail-page CTA state machine has\nreal data\
+      \ for both render branches.\nSection is infrastructure/loader+seeds — no UI,\
+      \ no API, no DB, no\nforms, no nav. 13 pipeline beats N/A (most wiring + security/permission/\n\
+      contract categories) per canonical schema_only_pipeline_scope-adjacent\npattern\
+      \ from sa-1.1.\nRefactor produced ZERO code changes — implementation was already\n\
+      idiomatic. 4-loader createContentLoader factory extraction flagged\n(sa-1.1\
+      \ trigger met) but deferred to a dedicated refactor-sweep job\nbecause (a) sort-key\
+      \ divergence needs sortFn generic, (b) sibling\nloader files are out of ce-1.2\
+      \ scope.\nOne green-phase bug caught + fixed: seed MDX initially used 'as const;'\n\
+      (TypeScript syntax from planning-doc sketch) which acorn rejects in\nMDX — 28/28\
+      \ tests failed with 'Could not parse import/exports'. Fix:\nremoved 'as const'\
+      \ (products/cases/episodes MDX precedent omits it).\nCaptured as knowledge.yaml\
+      \ gotcha.\n**loader_build_incompat P1 CONFIRMED RESOLVED** — npm run build\n\
+      passed cleanly for the SECOND consecutive section (sa-2.1 first\nobservation;\
+      \ ce-1.2 confirmation). All 52 static pages prerender.\nCohort routes not present\
+      \ yet (ce-1.3) but loader is build-compatible.\nConcurrent storefront-auth-2.2\
+      \ work is active in the working tree\n(pipeline/active/storefront-auth-2.2/\
+      \ exists from a concurrent run);\ncommit explicitly stages only this section's\
+      \ source files + shared\nstate (session.yaml, knowledge.yaml).\nBlocker cleared:\
+      \ ce-1.3 (/cohorts index + detail pages) can start —\nconsumes all three exported\
+      \ functions (getAllCohorts, getCohortBySlug,\ngetCohortBuckets).\n"
+  - id: cohort-enrollment-1.3
+    name: /cohorts Index + /cohorts/[slug] Detail Pages
+    completed_at: '2026-04-14'
     commit_hash: pending
     commit_message: pending
     tests: 37
     files_new: 7
     files_modified: 0
     pushed: false
-    notes: |
-      Third section of ce job. Public cohort catalog: /cohorts index page
+    notes: 'Third section of ce job. Public cohort catalog: /cohorts index page
+
       with upcoming/archived sections via getCohortBuckets(), and /cohorts/[slug]
+
       detail pages with CohortDetailHero, MDX body, and status-driven CTA
+
       placeholder (5-branch conditional for announced/open/closed/enrolled/shipped).
+
       Components: CohortStatusBadge (color-coded badge with brand tokens),
+
       CohortCard (series/title/tagline/dates/price), CohortDetailHero (full
+
       hero with start/end/duration/tuition). Mirrors wf-3.2/wf-3.3 content
+
       page pattern exactly (async server components, generateStaticParams,
+
       dynamicParams=false, notFound guard). Empty-upcoming fallback links to
+
       homepage email capture. formatDate uses UTC anchor to avoid timezone bugs.
+
       formatPrice duplicated in CohortCard + CohortDetailHero (intentionally
+
       kept inline — 6 lines, per CLAUDE.md 3-line rule). ESLint caught 1
+
       unescaped apostrophe in CTA text — fixed in refactor phase.
+
       Pure static content section: no API, no DB, no hooks, no auth, no forms.
+
       35+ pipeline beats N/A across all phases.
 
-  - id: "storefront-auth-2.2"
-    name: "Auth.js v5 + Resend Magic-Link"
-    completed_at: "2026-04-13"
+      '
+  - id: storefront-auth-2.2
+    name: Auth.js v5 + Resend Magic-Link
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 29  # 12 unit/infra/edge-state passing + 13 DB-gated integration/sec/err/data via skipIf + 2 route re-export + 2 deps assertions; full suite 769 (was 712 pre-green; +27 new entries + +2 route + +2 dep = +31 new test counts; +14 new passing) + 28 from concurrent ce-1.2 landed
-    files_new: 8  # auth.ts, next-auth.d.ts, route.ts, msw-server.ts, auth.test.ts, route.test.ts, migration 0001.sql, 0001_snapshot.json
-    files_modified: 6  # schema.ts (users extension + accounts table), schema.test.ts (User literal), dependencies.test.ts (+2 assertions), setup.ts (MSW lifecycle), vitest.config.mts (deps.inline), package.json+lock (+2 deps)
-    pushed: false  # set true after push
-    notes: |
-      Second feature of storefront-auth Phase 2. Wires Auth.js v5 to
-      sa-2.1's Postgres/Drizzle schema via @auth/drizzle-adapter, with
+    tests: 29
+    files_new: 8
+    files_modified: 6
+    pushed: false
+    notes: 'Second feature of storefront-auth Phase 2. Wires Auth.js v5 to
+
+      sa-2.1''s Postgres/Drizzle schema via @auth/drizzle-adapter, with
+
       Resend magic-link as the sole provider. DB-session strategy,
+
       30-day maxAge, trustHost: true for proxy deploys, pages.signIn=/login
+
       (2.3 builds it), sessionCallback mirrors user.id into session.user.id.
+
       Module augmentation in src/types/next-auth.d.ts extends Session.user
+
       with typed id + email fields.
 
-      Drive-by schema extension: sa-2.1's users table lacked
+
+      Drive-by schema extension: sa-2.1''s users table lacked
+
       (emailVerified, name, image) columns + accounts table that
+
       @auth/drizzle-adapter v1.11 REQUIRES at TS type level and would
+
       fail at INSERT runtime. Extended schema + generated migration 0001
-      via drizzle-kit. sa-2.1's schema.test.ts User literal updated to
+
+      via drizzle-kit. sa-2.1''s schema.test.ts User literal updated to
+
       include the 3 new nullable fields (test intent preserved).
 
+
       Drive-by test-infra wiring: MSW v2.7 (installed but unwired since
+
       wf 4.1) now fully operational. src/__tests__/mocks/msw-server.ts
+
       created with default Resend /emails handler; setup.ts MSW lifecycle
+
       block uncommented (beforeAll listen + afterEach resetHandlers +
+
       afterAll close). Reusable for sa-3.1 Stripe, 3.2 webhook, etc.
 
-      vitest.config.mts gained test.server.deps.inline = ['next-auth',
-      '@auth/core', '@auth/drizzle-adapter'] to resolve next-auth's
-      bare `next/server` import under vitest's Node ESM resolver. Auth.js
-      v5 beta's internal env.js triggers this resolution path.
+
+      vitest.config.mts gained test.server.deps.inline = [''next-auth'',
+
+      ''@auth/core'', ''@auth/drizzle-adapter''] to resolve next-auth''s
+
+      bare `next/server` import under vitest''s Node ESM resolver. Auth.js
+
+      v5 beta''s internal env.js triggers this resolution path.
+
 
       Test harness refinement: vi.hoisted() per-file block stubs
+
       DATABASE_URL/AUTH_SECRET/RESEND_API_KEY so @/auth module load
+
       succeeds without a real DB; hasDb gate tightened with stubhost
+
       exclusion to keep integration tests db-gated. Pattern documented
+
       in knowledge.yaml as db_client_eager_guard workaround.
 
+
       Concurrent cohort-enrollment-1.2 landed in tree during this run;
+
       commit explicitly stages only sa-2.2 files + shared state
+
       (session.yaml, knowledge.yaml). sa-2.2 stats reported here;
+
       ce-1.2 stats reported in its own completed_sections entry.
 
+
       loader_build_incompat P1 remains resolved (not re-tested in 2.2
+
       per VPS OOM policy; observationally confirmed by sa-2.1 + ce-1.2).
 
+
       Blocker cleared: sa-2.3 (middleware + /login + /login/verify
+
       pages + SignInForm) is the next sa section. Consumes signIn from
-      @/auth via 'use client' SignInForm. Middleware tests will be
+
+      @/auth via ''use client'' SignInForm. Middleware tests will be
+
       pure-fn (no DB); login pages will be server components.
 
-  - id: "storefront-auth-2.3"
-    name: "Edge proxy + Login pages + SignInForm"
-    completed_at: "2026-04-13"
+      '
+  - id: storefront-auth-2.3
+    name: Edge proxy + Login pages + SignInForm
+    completed_at: '2026-04-13'
     commit_hash: pending
     commit_message: pending
-    tests: 39  # 17 unit, 3 integration, 3 security, 4 a11y, 2 infra, 6 edge, 2 err, 2 data
-    files_new: 9  # proxy.ts + 4 UI files (3 pages + SignInForm) + 5 test files (but SignInForm/verify tests are colocated per __tests__ convention so counted as new test files)
-    files_modified: 0  # no source modifications, only additions
-    pushed: false  # set true after push
-    notes: |
-      Final feature of storefront-auth Phase 2. Wires sa-2.1 DB + sa-2.2
-      Auth.js into a user-facing flow: anonymous request to gated path →
-      307 redirect to /login?callbackUrl=... → SignInForm posts email →
-      Auth.js signIn('resend') delivers magic-link → /login/verify shown
-      → user clicks link → Auth.js sets session cookie → subsequent
-      request passes the edge proxy gate.
-
-      KEY DECISION: Next.js 16 deprecated `middleware.ts` in favor of
-      `proxy.ts` (function name `proxy`, same matcher config). The
-      planning doc references middleware.ts — outdated per
-      node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md.
-      Implementation, tests, and planning-doc Files table updated to
-      reflect proxy convention. AGENTS.md directs: "heed deprecation
-      notices". Documented in knowledge.yaml:storefront-auth-2.3.patterns_established.next16_proxy_convention
-      for all future edge-gating work.
-
-      Test-harness discoveries documented in
-      knowledge.yaml:storefront-auth-2.3.gotchas:
-      - import.meta.url is NOT file:// in jsdom → use path.resolve(process.cwd(), ...)
-      - React 19 + jsdom blocks form submit when type=email value is
-        non-empty invalid → use fireEvent.submit instead of user.click
-      - UI tests rendering components that transitively import @/auth
-        must vi.mock('@/auth') to avoid tripping the DATABASE_URL guard
-
-      Test edits made during Green phase (all mechanism-only, preserving
-      test intent — see green-progress.yaml test_edits_made for full
-      rationale): vi.mock at top of login page.test.tsx; process.cwd()
-      swap in proxy.test.ts infra test; fireEvent.submit in 4 SignInForm
-      validation tests.
-
-      No cross-section refactor extractions this section. Flagged the
-      13-file Eyebrow pattern as a candidate for a future cross-section
-      refactor job (see refactor-progress.yaml:improvements[0].deferred).
-
-      Manual browser smoke (proxy redirect → Resend magic-link →
-      session cookie → /products/account access) is DEFERRED until a
-      live DB + RESEND_API_KEY environment is available. Automated
-      coverage via integration_middleware_callbackurl_roundtrip test
-      covers the proxy→login→signIn chain with signIn mocked.
-
-      Phase 2 (auth persistence) COMPLETE. Next: Phase 3 sa-3.1
-      (Stripe Client + Checkout Action + BuyButton Live) — depends on
-      sa-2.1 purchases table + sa-2.3 session enforcement.
-
-  - id: "storefront-auth-3.1"
-    name: "Stripe Client + Checkout Action + BuyButton Live"
-    completed_at: "2026-04-14"
-    commit_hash: "7725fec"
-    commit_message: "Add Stripe checkout + live BuyButton with 23 tests (storefront-auth-3.1)"
+    tests: 39
+    files_new: 9
+    files_modified: 0
+    pushed: false
+    notes: "Final feature of storefront-auth Phase 2. Wires sa-2.1 DB + sa-2.2\nAuth.js\
+      \ into a user-facing flow: anonymous request to gated path →\n307 redirect to\
+      \ /login?callbackUrl=... → SignInForm posts email →\nAuth.js signIn('resend')\
+      \ delivers magic-link → /login/verify shown\n→ user clicks link → Auth.js sets\
+      \ session cookie → subsequent\nrequest passes the edge proxy gate.\n\nKEY DECISION:\
+      \ Next.js 16 deprecated `middleware.ts` in favor of\n`proxy.ts` (function name\
+      \ `proxy`, same matcher config). The\nplanning doc references middleware.ts\
+      \ — outdated per\nnode_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md.\n\
+      Implementation, tests, and planning-doc Files table updated to\nreflect proxy\
+      \ convention. AGENTS.md directs: \"heed deprecation\nnotices\". Documented in\
+      \ knowledge.yaml:storefront-auth-2.3.patterns_established.next16_proxy_convention\n\
+      for all future edge-gating work.\n\nTest-harness discoveries documented in\n\
+      knowledge.yaml:storefront-auth-2.3.gotchas:\n- import.meta.url is NOT file://\
+      \ in jsdom → use path.resolve(process.cwd(), ...)\n- React 19 + jsdom blocks\
+      \ form submit when type=email value is\n  non-empty invalid → use fireEvent.submit\
+      \ instead of user.click\n- UI tests rendering components that transitively import\
+      \ @/auth\n  must vi.mock('@/auth') to avoid tripping the DATABASE_URL guard\n\
+      \nTest edits made during Green phase (all mechanism-only, preserving\ntest intent\
+      \ — see green-progress.yaml test_edits_made for full\nrationale): vi.mock at\
+      \ top of login page.test.tsx; process.cwd()\nswap in proxy.test.ts infra test;\
+      \ fireEvent.submit in 4 SignInForm\nvalidation tests.\n\nNo cross-section refactor\
+      \ extractions this section. Flagged the\n13-file Eyebrow pattern as a candidate\
+      \ for a future cross-section\nrefactor job (see refactor-progress.yaml:improvements[0].deferred).\n\
+      \nManual browser smoke (proxy redirect → Resend magic-link →\nsession cookie\
+      \ → /products/account access) is DEFERRED until a\nlive DB + RESEND_API_KEY\
+      \ environment is available. Automated\ncoverage via integration_middleware_callbackurl_roundtrip\
+      \ test\ncovers the proxy→login→signIn chain with signIn mocked.\n\nPhase 2 (auth\
+      \ persistence) COMPLETE. Next: Phase 3 sa-3.1\n(Stripe Client + Checkout Action\
+      \ + BuyButton Live) — depends on\nsa-2.1 purchases table + sa-2.3 session enforcement.\n"
+  - id: storefront-auth-3.1
+    name: Stripe Client + Checkout Action + BuyButton Live
+    completed_at: '2026-04-14'
+    commit_hash: 7725fec
+    commit_message: Add Stripe checkout + live BuyButton with 23 tests (storefront-auth-3.1)
     tests: 23
     files_new: 5
     files_modified: 2
     pushed: true
-
-  - id: "storefront-auth-3.2"
-    name: "Stripe Webhook Handler + Purchase Confirmation Email"
-    completed_at: "2026-04-14"
-    commit_hash: "fbd893a"
-    commit_message: "Add Stripe webhook + purchase confirmation email with 12 tests (storefront-auth-3.2)"
+  - id: storefront-auth-3.2
+    name: Stripe Webhook Handler + Purchase Confirmation Email
+    completed_at: '2026-04-14'
+    commit_hash: fbd893a
+    commit_message: Add Stripe webhook + purchase confirmation email with 12 tests
+      (storefront-auth-3.2)
     tests: 12
     files_new: 4
     files_modified: 3
     pushed: true
-
-  - id: "storefront-auth-3.3"
-    name: "Download Route Handler"
-    completed_at: "2026-04-14"
-    commit_hash: "3c9824d"
-    commit_message: "Add download route handler with 10 tests (storefront-auth-3.3)"
+  - id: storefront-auth-3.3
+    name: Download Route Handler
+    completed_at: '2026-04-14'
+    commit_hash: 3c9824d
+    commit_message: Add download route handler with 10 tests (storefront-auth-3.3)
     tests: 10
     files_new: 6
     files_modified: 2
     pushed: true
-
-  - id: "storefront-auth-4.1"
-    name: "Account UI (Overview + Purchase Detail + Sign-Out)"
-    completed_at: "2026-04-14"
-    commit_hash: "b75ecd0"
-    commit_message: "Add account UI with 27 tests (storefront-auth-4.1)"
+  - id: storefront-auth-4.1
+    name: Account UI (Overview + Purchase Detail + Sign-Out)
+    completed_at: '2026-04-14'
+    commit_hash: b75ecd0
+    commit_message: Add account UI with 27 tests (storefront-auth-4.1)
     tests: 27
     files_new: 8
     files_modified: 3
     pushed: true
-  - id: "storefront-auth-4.2"
-    name: "SEO + Error Boundaries + Lighthouse Sweep"
-    completed_at: "2026-04-14"
-    commit_hash: "68914e0"
-    commit_message: "Add SEO + error boundaries with 25 tests (storefront-auth-4.2)"
+  - id: storefront-auth-4.2
+    name: SEO + Error Boundaries + Lighthouse Sweep
+    completed_at: '2026-04-14'
+    commit_hash: 68914e0
+    commit_message: Add SEO + error boundaries with 25 tests (storefront-auth-4.2)
     tests: 25
     files_new: 5
     files_modified: 12
     pushed: true
-
-  - id: "styling-overhaul-1.2"
-    name: "Spacing + radius scale (8px grid, restrained corners)"
-    completed_at: "2026-06-06"
-    commit_hash: "1f2523c"
-    commit_message: "Add brand spacing + radius scale with 32 tests (styling-overhaul-1.2)"
-    tests: 32  # 20 unit + 5 integration + 2 infra + 5 edge; security/perm/contract/a11y/err/data N/A; full suite 968 passed | 30 skipped (was 940 passed pre-section)
-    files_new: 1   # src/__tests__/brand/spacing.test.ts
-    files_modified: 1  # src/app/globals.css
+  - id: styling-overhaul-1.2
+    name: Spacing + radius scale (8px grid, restrained corners)
+    completed_at: '2026-06-06'
+    commit_hash: 1f2523c
+    commit_message: Add brand spacing + radius scale with 32 tests (styling-overhaul-1.2)
+    tests: 32
+    files_new: 1
+    files_modified: 1
     pushed: true
-    notes: |
-      Second section of styling-overhaul (so) job — Phase 1 spacing /
+    notes: 'Second section of styling-overhaul (so) job — Phase 1 spacing /
+
       radius / edge token append. Pure additive CSS edit to
+
       src/app/globals.css: appends 12 spacing tokens (--space-0..--space-10
+
       + --space-px) on the 8px grid (half-step at 4px only), 3 vertical-
+
       rhythm tokens (--section-y-sm/md/lg referencing --space-7/8/9),
+
       3 radius tokens (--radius-sharp:0 / --radius-soft:2px / --radius-card:4px),
+
       and 2 edge tokens (--edge-color, --edge-color-subtle) for 1px depth
-      borders instead of UI shadows. Preserves so-1.1's palette + aliases
+
+      borders instead of UI shadows. Preserves so-1.1''s palette + aliases
+
       + contrast pairs intact (verified by integration_so_1_1_palette_preserved
+
       regression guard).
 
+
       Test file: src/__tests__/brand/spacing.test.ts (NEW) — sibling of
-      so-1.1's tokens.test.ts. 32 tests using the canonical
+
+      so-1.1''s tokens.test.ts. 32 tests using the canonical
+
       readFileSync(globals.css) + theme-block regex pattern. Categories:
+
       20 unit (per-token value) + 5 integration (block coverage +
+
       regression) + 2 infra (count assertions) + 5 edge (forbidden patterns:
+
       radius > 4px, half-step spacing above 8px, box-shadow tokens, sharp != none,
+
       section-y must ref --space-N). Security / permission / contract /
+
       accessibility / error_recovery / data_integrity N/A per discovery
+
       (CSS tokens have no API / user input / auth / runtime / persistence).
 
+
       Refactor produced ZERO code changes — matches so-1.1 precedent for
+
       pure CSS-tokens sections. One cross-section DRY opportunity flagged
+
       + deferred: readFileSync + theme-block extractor duplicated between
+
       tokens.test.ts and spacing.test.ts (2 call sites). Per 3-call-site
+
       threshold (precedent: bpd-2.2 PhaseNav label format, so-1.1 4-loader
+
       factory), defer until so-2.2 type-scale tokens add the third call
+
       site and trigger extraction to src/__tests__/brand/_helpers.ts.
 
+
       Concurrent runs: working tree has prior modifications from earlier
+
       session work (CLAUDE.md, currentwork/website-foundation/*,
+
       src/lib/content/*, storefront-auth-3.3 dir deletions, vitest.config.ts
-      deletion). Commit explicitly stages ONLY this section's files
+
+      deletion). Commit explicitly stages ONLY this section''s files
+
       (globals.css append, spacing.test.ts new, README status flip,
+
       session.yaml + knowledge.yaml shared state).
 
+
       Inherited loader_build_incompat P1 fully resolved — npm run build
+
       clean (52 static pages prerendered). 6th consecutive section with
+
       clean build (sa-2.1 → ce-1.2 → bpd-3.1 → sa-3.x → so-1.1 → so-1.2).
 
-      Blocker cleared: styling-overhaul-1.3 (brand doc rewrite +
-      design-system doc) is the next so section, parallelizable with
-      any of Phase 2 once Phase 1 is fully landed. Phase 2 typography
-      depends on 1.2's vertical-rhythm tokens — now available.
 
-  - id: "styling-overhaul-1.1"
-    name: "Palette swap + contrast pairs + dark-mode removal"
-    completed_at: "2026-06-06"
-    commit_hash: "c20ad8a"
-    commit_message: "Add brand palette tokens with 38 tests (styling-overhaul-1.1)"
-    tests: 38  # 23 unit + 5 integration + 3 a11y + 2 infra + 5 edge; security/perm/contract/err/data N/A; full suite 936 passed | 30 skipped (was 908 passed pre-section)
-    files_new: 1   # src/__tests__/brand/tokens.test.ts
-    files_modified: 2  # src/app/globals.css + currentwork/styling-overhaul/README.md (status flip)
-    files_deleted: 1   # src/app/__tests__/globals-css.test.ts (obsolete wf-1.3 leftover, superseded)
+      Blocker cleared: styling-overhaul-1.3 (brand doc rewrite +
+
+      design-system doc) is the next so section, parallelizable with
+
+      any of Phase 2 once Phase 1 is fully landed. Phase 2 typography
+
+      depends on 1.2''s vertical-rhythm tokens — now available.
+
+      '
+  - id: styling-overhaul-1.1
+    name: Palette swap + contrast pairs + dark-mode removal
+    completed_at: '2026-06-06'
+    commit_hash: c20ad8a
+    commit_message: Add brand palette tokens with 38 tests (styling-overhaul-1.1)
+    tests: 38
+    files_new: 1
+    files_modified: 2
+    files_deleted: 1
     pushed: true
-    notes: |
-      First section of styling-overhaul (so) job — kicks off the brand reset.
+    notes: 'First section of styling-overhaul (so) job — kicks off the brand reset.
+
       Pure CSS-tokens-only edit to src/app/globals.css: replaces the wf-1.3
+
       placeholder @theme block (ink/parchment/ember/steel/mist/signal +
+
       prefers-color-scheme: dark + Geist font-feature-settings) with the
+
       editorial brand palette (Marble #F7F4EC, Parchment #F0E6D2, Ink
+
       #1C1814, Oxblood #6B2020, Verdigris #2F5D50, Bone #E8DCC4, Shadow
+
       #2A2520) + 6 semantic surface aliases + 10 explicit contrast pair
+
       tokens (4 text + 3 accent + 3 dark CTA). Drops the dark-mode @media
+
       override block entirely (one-mode brand). Drops font-feature-settings
+
       ss01/cv11 from body (Geist-specific; Phase 2.1 swaps the font stack).
+
       Preserves --font-display/--font-body/--font-mono aliases pointing at
+
       Geist temporarily (Phase 2.1 reassigns).
 
+
       Test file: src/__tests__/brand/tokens.test.ts (NEW). 38 tests using
-      the canonical readFileSync(join(process.cwd(), 'src/app/globals.css'))
+
+      the canonical readFileSync(join(process.cwd(), ''src/app/globals.css''))
+
       + regex pattern from llmstxt.test.ts. Covers every palette hex (7),
+
       every semantic alias (6), every contrast pair token (10), the body
+
       block (background+foreground+font-body), forbidden patterns (no
+
       #000/#fff in @theme block, no @media prefers-color-scheme: dark
+
       anywhere, no font-feature-settings in body, no --color-ember/steel/
+
       mist/signal residue), and the @theme block coverage assertions.
+
       Categories: 23 unit + 5 integration + 3 a11y + 2 infra + 5 edge;
+
       security + permission + contract + error_recovery + data_integrity
+
       N/A per Discovery (CSS tokens have no API/user input/auth/runtime).
 
+
       Cross-section cleanup: src/app/__tests__/globals-css.test.ts deleted.
+
       Pre-existing wf-1.3 leftover; encoded the OLD palette + dark-mode +
-      font-feature assertions verbatim — fully inverse of this section's
+
+      font-feature assertions verbatim — fully inverse of this section''s
+
       mandate. Planning doc README is explicit: "leftovers from wf-1.3
+
       when no real brand spec existed... to be wholesale replaced".
+
       Replacement test file covers the same scope with the new palette.
+
       Net suite delta: -10 obsolete + 38 new = +28 (908 → 936 passing).
 
+
       Transitional patch: .build-log-prose @layer block had 5 var(--color-mist)
+
       / color-mix(--color-mist ...) references that would (a) silently break
+
       at runtime and (b) trip the edge_no_old_palette_tokens_remain test.
+
       Substituted to var(--color-bone) / color-mix(--color-ink 15%, transparent) /
+
       color-mix(--color-bone 50%, transparent) in 5 declarations
+
       (h2 border-bottom, code:not(pre code) bg, table th/td border, table th bg,
+
       blockquote bg). Phase 2.4 (.build-log-prose retrofit) is the dedicated
+
       section that rewrites the entire block with Cinzel headings + Oxblood
+
       drop cap + Shadow code surfaces — current patch is the minimum to
+
       keep build-log routes rendering until 2.4 lands.
 
+
       Refactor produced ZERO code changes — implementation already idiomatic
+
       (precedent: ce-1.3, bpd-2.3). Audits: clean DRY, type-safe, no hardcoded
+
       smell (hex values ARE the brand spec, not fake-value smell). One cross-
+
       section DRY finding deferred (4-call-site threshold for static-file-
+
       content helper extraction; so-3.3 + so-9.2 will trigger).
 
+
       Concurrent runs: working tree has prior modifications from earlier
+
       session work (CLAUDE.md, currentwork/website-foundation/*,
+
       src/lib/content/*, storefront-auth-3.3 dir deletions). Commit explicitly
-      stages ONLY this section's files (globals.css, tokens.test.ts deletion
+
+      stages ONLY this section''s files (globals.css, tokens.test.ts deletion
+
       of globals-css.test.ts, README status flip, session.yaml, knowledge.yaml).
 
+
       Blocker cleared: styling-overhaul-1.2 (spacing + radius scale, 8px grid,
+
       restrained corners) can start in parallel with 1.3 (brand doc rewrite +
+
       design-system doc). Phase 2 (typography) gates on 1.2 landing the
+
       vertical-rhythm tokens.
 
+      '
 resume_point:
-  last_action: "section_cohort_enrollment_2.2_completed"
-  next_action: "cohort-enrollment-3.1 (CohortApplicationInputSchema Zod validator) — unblocks ce-3.2 application flow. styling-overhaul-1.3 also complete; next so section is 2.1 (typography font loading)."
-  notes: "cohort-enrollment Phase 2 (Waitlist + Persistence) COMPLETE — 2.1 (tables) + 2.2 (form + action + email) shipped. styling-overhaul Phase 1 also complete (1.1/1.2/1.3 all shipped). Two parallel job tracks both ready for their next Phase."
+  last_action: section_cohort_enrollment_2.2_completed
+  next_action: cohort-enrollment-3.1 (CohortApplicationInputSchema Zod validator)
+    — unblocks ce-3.2 application flow. styling-overhaul-1.3 also complete; next so
+    section is 2.1 (typography font loading).
+  notes: cohort-enrollment Phase 2 (Waitlist + Persistence) COMPLETE — 2.1 (tables)
+    + 2.2 (form + action + email) shipped. styling-overhaul Phase 1 also complete
+    (1.1/1.2/1.3 all shipped). Two parallel job tracks both ready for their next Phase.
+notes: 'fabled10x project initialized on 2026-04-11.
 
-notes: |
-  fabled10x project initialized on 2026-04-11.
   Skills ported from partymasters (see pipeline/TECH-DECISIONS.md).
+
   Next step: run `/jobbuild` against docs/fabled10x-website-implementation-plan.md
+
   to seed the first job under currentwork/.
+
+  '

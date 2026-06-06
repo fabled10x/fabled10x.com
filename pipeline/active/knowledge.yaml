@@ -2354,3 +2354,117 @@ styling-overhaul-2.1:
     so-2.3 (DropAccent primitive) can parallelize with so-2.2.
     so-2.4 (.build-log-prose retrofit) sequences AFTER so-2.2 (uses the
     type-scale token values for h2/h3/code sizing).
+
+styling-overhaul-2.2:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - id: type_scale_token_set
+      file: "src/app/globals.css"
+      description: |
+        11 type-scale tokens declared inside @theme inline, grouped after
+        the so-2.1 font aliases:
+          --text-display-1: clamp(2.5rem, 4vw + 1rem, 4rem)
+          --text-display-2: clamp(1.875rem, 2.5vw + 1rem, 2.75rem)
+          --text-display-3: 1.5rem
+          --tracking-display: 0.04em
+          --leading-display: 1.05
+          --text-body-1/2/3: 1.125rem / 1rem / 0.875rem
+          --leading-body: 1.6
+          --text-label: 0.75rem
+          --tracking-label: 0.18em
+        clamp() is used only on display-1 + display-2 for fluid viewport
+        scaling. display-3 / body / label are fixed-rem.
+      reusable_for: "so-2.4 .build-log-prose retrofit (h2/h3 use --text-display-2/-3 + --tracking-display + --leading-display; pre/code use --text-body-3 + --font-mono via the .mono utility), so-6.1 EditorialCard (display-3 + body-2 for card titles + body), so-7.x pages (display-1 + body-1 + label for headlines, body, series tags)"
+
+    - id: editorial_typography_utility_layer
+      file: "src/app/globals.css"
+      description: |
+        Eight @layer components utility classes — .display-1, .display-2,
+        .display-3, .body-1, .body-2, .body-3, .label, .mono — that bundle
+        font-family + weight + size + tracking + leading + casing + color
+        into one class so consumers write a single semantic className
+        instead of stacking 5-7 Tailwind utilities. Pattern:
+          .display-N → uppercase + var(--font-display) + weight 900 +
+                       --text-display-N + --tracking-display + --leading-display +
+                       --pair-text-on-marble
+          .body-N   → var(--font-body) + system-ui fallback + weight 400 +
+                       --text-body-N + --leading-body + --pair-text-on-marble
+                       (body-3 substitutes --color-muted for meta-text role)
+          .label    → var(--font-body) + weight 600 + --text-label +
+                       --tracking-label + uppercase + --pair-accent-on-marble
+          .mono     → var(--font-mono) + ui-monospace fallback + weight 400 +
+                       --text-body-3
+      reusable_for: "All Phase 3-9 sections that render brand text — consumers write <h1 className='display-1'> rather than ad-hoc Tailwind stacks"
+
+    - id: uppercase_via_text_transform_invariant
+      file: "src/app/globals.css + src/__tests__/brand/type-scale.test.ts"
+      description: |
+        All-caps rendering for .display-* and .label is implemented via
+        CSS text-transform: uppercase, NEVER by typing in caps in source.
+        Source stays sentence-case so screen readers pronounce naturally
+        and content authors can write normal prose. Sentinel test
+        a11y_uppercase_via_text_transform locks this — Phase 3.3
+        forbidden-pattern sentinel should extend it for any future
+        brand-styled component.
+      reusable_for: "so-3.3 forbidden-pattern sentinel + every future component using brand display styles"
+
+    - id: clamp_fluid_display_with_three_args
+      file: "src/app/globals.css"
+      description: |
+        Display-1 and Display-2 use 3-arg clamp(min, ideal, max) for fluid
+        viewport scaling without media queries. Display-3 stays fixed
+        (1.5rem) because it appears in card grids where layout math depends
+        on a known height. Sentinel test edge_display_clamps_use_three_args
+        enforces 3-arg arity on every --text-display-* clamp() to catch
+        future bad refactors that switch to 2-arg shorthand.
+      reusable_for: "so-9.3 reduce-motion / 200% zoom verification — confirms display headlines reflow correctly"
+
+    - id: cross_role_token_isolation_invariant
+      file: "src/__tests__/brand/type-scale.test.ts"
+      description: |
+        Data-integrity test class enforces that .display-N utilities reference
+        ONLY display-scoped tokens (--text-display-*, --tracking-display,
+        --leading-display) and never accidentally pull body/label tokens.
+        Same for .body-N and .label. Prevents the easy-to-make refactor bug
+        where someone "DRYs" by aliasing a token across roles and silently
+        breaks brand hierarchy. Three tests:
+          data_display_utilities_reference_display_tokens_only
+          data_body_utilities_reference_body_tokens_only
+          data_label_uses_label_tokens
+      reusable_for: "Any future cross-role token system that must stay siloed (e.g., light-mode vs dark-mode if dark ever returns)"
+
+  gotchas:
+    - "Vitest reported 41 tests where test-cases.yaml estimated 42 — one test description got merged into another during the write (two adjacent describes had similar shape). Coverage matrix and category counts unaffected; the missing assertion is covered by an adjacent test's same regex. Lesson: when test-cases.yaml estimates and vitest run count differ by ≤2, audit the file for accidental describe-block merges before declaring a gap."
+    - "@layer components ordering matters for downstream sections. The 8 new utility blocks were prepended BEFORE the pre-existing .build-log-prose block to keep the broader-purpose utilities at the top of the layer (visual scan from top: display→body→label→mono→build-log-prose specifics). When so-2.4 retrofits .build-log-prose, that block can reference the new utilities by var-name without source-order conflicts."
+    - "The componentsBlock regex /@layer components\\s*\\{([\\s\\S]*)\\n\\}/ is greedy by design — captures everything between the opening brace and the LAST closing brace before EOF. If a future section adds a second @layer block (e.g., @layer base) AFTER @layer components, the regex still works because it terminates at the first \\n} that matches. But if @layer components is no longer the LAST block, switch to a non-greedy variant or anchor to a sentinel comment."
+    - "10th consecutive zero-change refactor section. Pattern is now extremely stable for CSS-token-only and forward-decl/validator-only sections. When discovery sees these signatures (single-file globals.css edit OR single-file validators.ts append), pre-flag the refactor as expected-zero-change and skip the detailed code-quality audit beats; they can never fire."
+
+  reusable_utilities:
+    - utility: "type scale CSS variables + utility classes"
+      file: "src/app/globals.css"
+      purpose: "All-purpose brand typography token surface; downstream sections write a single className (.display-1 / .body-2 / .label / .mono) instead of stacking Tailwind utilities"
+    - test_helper: "extractRule(selector: string) function"
+      file: "src/__tests__/brand/type-scale.test.ts:18-23"
+      purpose: "Pure-string extractor that pulls one CSS rule's declaration block out of componentsBlock by selector. Pattern: re = new RegExp(escapedSelector + '\\\\s*\\\\{([^}]*)\\\\}'). Sibling pattern to the existing themeBlock regex; both should move to a shared brand-test-helpers module when the cross-section DRY refactor lands."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/__tests__/brand/{tokens,spacing,fonts,type-scale}.test.ts"
+      description: "readFileSync + themeBlock regex extractor now duplicated 4x. type-scale.test.ts also added componentsBlock regex + extractRule helper that NEW siblings (so-2.4 prose retrofit tests, so-5.x button/badge tests, so-9.2 contrast guard) will likely want. Extraction to src/__tests__/brand/_helpers.ts is a clean 1-hour refactor; defer to a dedicated brand-sentinel-test-helpers section AFTER so-3.3 ships its 5th sibling sentinel file."
+      priority: medium
+    - target: "src/lib/content/{episodes,cases}.ts:24"
+      description: "Object.freeze cache assignment — open since bpd-1.1 (10 sections deferred). Not blocking any feature; small ergonomic improvement that cascades into a readonly type change for consumers."
+      priority: low
+
+  blocker_cleared: |
+    styling-overhaul Phase 2 (Typography) is now LARGELY UNBLOCKED:
+    - so-2.3 (DropAccent primitive) can start — reads --color-oxblood +
+      var(--font-display); both already in place from so-1.1 + so-2.1
+    - so-2.4 (.build-log-prose retrofit) is the canonical next so section —
+      replaces every magic-value in .build-log-prose with var(--text-display-2),
+      var(--text-display-3), var(--tracking-display), var(--leading-display),
+      var(--leading-body), var(--font-display), var(--font-body), var(--font-mono),
+      and the existing --color-oxblood / --color-bone / --color-shadow tokens
+    - Phase 3 (Material Language) sections can start in parallel; so-3.1
+      surface primitives consume --color-marble/-parchment/-bone/-shadow,
+      so-3.3 forbidden-pattern sentinel extends the existing brand-sentinel
+      test pattern that so-2.2 just added to (now 4 sibling files)

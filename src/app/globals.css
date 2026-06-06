@@ -65,6 +65,23 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
+
+  /* Display scale — Cinzel, all-caps, generously tracked */
+  --text-display-1: clamp(2.5rem, 4vw + 1rem, 4rem);
+  --text-display-2: clamp(1.875rem, 2.5vw + 1rem, 2.75rem);
+  --text-display-3: 1.5rem;
+  --tracking-display: 0.04em;
+  --leading-display: 1.05;
+
+  /* Body scale — Inter, sentence case */
+  --text-body-1: 1.125rem;
+  --text-body-2: 1rem;
+  --text-body-3: 0.875rem;
+  --leading-body: 1.6;
+
+  /* Label — Inter, uppercase, very tracked, very small */
+  --text-label: 0.75rem;
+  --tracking-label: 0.18em;
 }
 
 body {
@@ -74,6 +91,68 @@ body {
 }
 
 @layer components {
+  .display-1 {
+    font-family: var(--font-display), serif;
+    font-weight: 900;
+    font-size: var(--text-display-1);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
+    text-transform: uppercase;
+    color: var(--pair-text-on-marble);
+  }
+  .display-2 {
+    font-family: var(--font-display), serif;
+    font-weight: 900;
+    font-size: var(--text-display-2);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
+    text-transform: uppercase;
+    color: var(--pair-text-on-marble);
+  }
+  .display-3 {
+    font-family: var(--font-display), serif;
+    font-weight: 900;
+    font-size: var(--text-display-3);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
+    text-transform: uppercase;
+    color: var(--pair-text-on-marble);
+  }
+  .body-1 {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-weight: 400;
+    font-size: var(--text-body-1);
+    line-height: var(--leading-body);
+    color: var(--pair-text-on-marble);
+  }
+  .body-2 {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-weight: 400;
+    font-size: var(--text-body-2);
+    line-height: var(--leading-body);
+    color: var(--pair-text-on-marble);
+  }
+  .body-3 {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-weight: 400;
+    font-size: var(--text-body-3);
+    line-height: var(--leading-body);
+    color: var(--color-muted);
+  }
+  .label {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-weight: 600;
+    font-size: var(--text-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--pair-accent-on-marble);
+  }
+  .mono {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-weight: 400;
+    font-size: var(--text-body-3);
+    letter-spacing: 0;
+  }
   .build-log-prose {
     color: var(--color-foreground);
     line-height: 1.7;

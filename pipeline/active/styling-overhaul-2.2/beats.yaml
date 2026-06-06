@@ -1,0 +1,268 @@
+version: 1
+section_id: "styling-overhaul-2.2"
+section_name: "Type scale + display-rule utilities"
+started_at: "2026-06-06T00:00:00Z"
+current_phase: finish
+
+preflight:
+  npm_test: { status: pass, at: "2026-06-06T11:14:54Z", notes: "1140 passing | 60 skipped after session.yaml dedupe fix (pre-existing styling-overhaul-2.1 orphaned fields removed)" }
+  npm_lint: { status: pass, at: "2026-06-06T11:13:00Z" }
+  tsc_noEmit: { status: skipped, at: "2026-06-06T11:13:00Z", notes: "Per VPS OOM policy" }
+  git_clean: { status: pass, at: "2026-06-06T11:13:00Z", notes: "Working tree has known concurrent-job modifications (CLAUDE.md, currentwork/*, src/lib/content/*, pipeline/active/storefront-auth-3.3 deletions, vitest.config.ts deletion) — all carried-forward from prior sessions; new section dir styling-overhaul-2.2/ added by this run." }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done }
+    - { id: deep_codebase_research, status: done }
+    - { id: cross_section_pattern_lookup, status: done }
+    - { id: parse_checklist_items, status: done }
+    - { id: analyze_dependencies, status: done }
+    - { id: define_interfaces, status: done }
+    - { id: find_existing_patterns, status: done }
+    - { id: stride_threat_modeling, status: na, reason: "Pure CSS-only section — no endpoints, input, or auth surface; all 6 STRIDE categories n/a per interfaces.yaml#stride_global" }
+    - { id: edge_case_enumeration, status: done }
+    - { id: serializer_inventory, status: na, reason: "No models or API responses — no data crosses a serializer boundary" }
+    - { id: response_contract_spec, status: na, reason: "No API endpoints in this section" }
+    - { id: permission_matrix, status: na, reason: "No endpoints, no auth surface, no rows — public static CSS asset" }
+    - { id: specify_test_cases, status: done }
+    - { id: dependency_graph, status: done }
+    - { id: write_discovery_yaml, status: done }
+    - { id: write_interfaces_yaml, status: done }
+    - { id: write_test_cases_yaml, status: done }
+    - { id: verify_zero_coverage_gaps, status: done }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 42
+  coverage_gaps: 0
+
+red:
+  status: done
+  beats:
+    - { id: read_discovery_yamls, status: done }
+    - { id: study_test_patterns, status: done }
+    - { id: batch_1_functional, status: done, tests_written: 26 }
+    - { id: batch_1_verify, status: done }
+    - { id: batch_2_security, status: na, reason: "No endpoints/input/auth — STRIDE n/a per interfaces.yaml#stride_global" }
+    - { id: batch_2_verify, status: na, reason: "No security batch to verify" }
+    - { id: batch_3_permission_matrix, status: na, reason: "No endpoints/rows/auth — public static CSS" }
+    - { id: batch_3_verify, status: na, reason: "No permission batch to verify" }
+    - { id: batch_4_contract, status: na, reason: "No API endpoints; class membership verified via unit + integration" }
+    - { id: batch_4_verify, status: na, reason: "No contract batch to verify" }
+    - { id: batch_5_edge_error_data, status: done, tests_written: 9 }
+    - { id: batch_5_verify, status: done }
+    - { id: batch_6_a11y_infra, status: done, tests_written: 7 }
+    - { id: batch_6_verify, status: done }
+    - { id: full_suite_verification, status: done }
+    - { id: coverage_matrix_check, status: done }
+    - { id: update_red_progress, status: done }
+  total_tests: 41
+  coverage_gaps: 0
+
+green:
+  status: done
+  beats:
+    - { id: analyze_failing_tests, status: done }
+    - { id: plan_implementation_order, status: done }
+    - { id: group_1_schema_types, status: na, reason: "No TypeScript types or content schema changes — pure CSS" }
+    - { id: group_1_verify, status: na, reason: "No schema/type batch" }
+    - { id: group_2_logic_hooks_serializers, status: na, reason: "No JS/TS logic / hooks / serializers" }
+    - { id: group_2_verify, status: na, reason: "No logic batch" }
+    - { id: group_3_ui_components, status: done }
+    - { id: group_3_verify, status: done }
+    - { id: group_4_api_routes_wiring, status: na, reason: "No API routes or front-end wiring" }
+    - { id: group_4_full_suite, status: done }
+    - { id: wiring_components, status: na, reason: "No new React components — CSS utility-class surface adopted by downstream sections" }
+    - { id: wiring_navigation, status: na, reason: "No new pages or routes" }
+    - { id: wiring_form_api, status: na, reason: "No forms or APIs" }
+    - { id: wiring_data_flow, status: na, reason: "No hooks or React Query usage" }
+    - { id: wiring_database, status: na, reason: "No content schema, migrations, or serializers" }
+    - { id: wiring_feature_reconciliation, status: done }
+    - { id: wiring_interactive_behaviors, status: na, reason: "No interactive elements" }
+    - { id: wiring_cross_component_flows, status: na, reason: "No multi-component flows" }
+    - { id: serializer_enforcement, status: na, reason: "No API responses or models" }
+    - { id: error_response_consistency, status: na, reason: "No API routes — no error responses" }
+    - { id: zero_skipped_verification, status: done }
+    - { id: npm_build_passes, status: done }
+    - { id: update_green_progress, status: done }
+  tests_passing: 41
+  tests_total: 41
+
+refactor:
+  status: done
+  beats:
+    - { id: baseline_all_tests_pass, status: done }
+    - { id: dry_analysis_within_section, status: done, notes: "intentional repetition kept for sentinel-greppability" }
+    - { id: cross_section_dry_analysis, status: done, notes: "trigger met, deferred per documented pattern" }
+    - { id: type_safety_audit, status: done }
+    - { id: error_consistency_audit, status: na, reason: "No API routes — no error responses" }
+    - { id: serializer_completeness_audit, status: na, reason: "No content types returned by APIs" }
+    - { id: performance_review, status: done }
+    - { id: code_quality_naming_structure, status: done }
+    - { id: eslint_clean, status: done }
+    - { id: barrel_exports_check, status: na, reason: "No new modules to re-export" }
+    - { id: hardcoded_values_check, status: done }
+    - { id: loading_error_empty_states, status: na, reason: "No React components" }
+    - { id: final_npm_test, status: done }
+    - { id: final_npm_lint, status: done }
+    - { id: final_npm_build, status: done, notes: "carried from green; refactor made zero code changes" }
+    - { id: update_refactor_progress, status: done }
+  improvements_identified: 2
+  improvements_completed: 0
+  improvements_deferred: 2
+  zero_change_refactor: true
+  consecutive_zero_change_count: 10
+
+finish:
+  status: in_progress
+  beats:
+    - { id: cleanup_dead_code, status: done, notes: "No dead code, comments, console.logs, or TODOs in section files (src/app/globals.css + src/__tests__/brand/type-scale.test.ts). Cleanup scan returned only legitimate brand-spec comments and describe/it text." }
+    - { id: cleanup_verify_tests, status: done, notes: "1181 passing, 60 skipped, 0 failing after cleanup (no-op)" }
+    - { id: nav_sync_verification, status: na, reason: "No new pages or routes in this section — utility-class CSS surface only" }
+    - { id: audit_file_inventory, status: done, notes: "Scope: infrastructure (CSS tokens + utility classes in src/app/globals.css + brand sentinel test). Zero files in src/app/api/, src/hooks/, src/components/, or app pages." }
+    - { id: audit_api_routes, status: na, pass: 0, fail: 0, na: 1, reason: "Infrastructure-only scope — no API routes" }
+    - { id: audit_hook_consumers, status: na, pass: 0, fail: 0, na: 1, reason: "Infrastructure-only scope — no hooks" }
+    - { id: audit_component_mounts, status: na, pass: 0, fail: 0, na: 1, reason: "Infrastructure-only scope — no React components" }
+    - { id: audit_feature_reconciliation, status: done, pass: 9, fail: 0, na: 0, notes: "All 9 checklist items implemented as CSS tokens (1-3) + utility classes (4-7) + regression guards (8-9). Infrastructure surface — consumers (so-2.4, so-6.1, so-7.x) will adopt downstream." }
+    - { id: update_session_yaml, status: done }
+    - { id: update_planning_checklist, status: done, notes: "Feature 2.2 status flipped to Complete in currentwork/styling-overhaul/README.md Feature Overview table" }
+    - { id: knowledge_capture, status: done, notes: "5 patterns + 4 gotchas + 2 reusable utilities + 2 cross-section followups appended to knowledge.yaml#styling-overhaul-2.2" }
+    - { id: security_checklist, status: done, notes: "Section files contain zero secrets/credentials/api-keys/passwords. STRIDE n/a per interfaces.yaml. No debug code, no bypass logic." }
+    - { id: git_stage_files, status: done, notes: "Explicit per-file staging: src/app/globals.css, src/__tests__/brand/type-scale.test.ts, currentwork/styling-overhaul/README.md, pipeline/active/session.yaml, pipeline/active/knowledge.yaml. All other working-tree changes (CLAUDE.md M, currentwork/* others, src/lib/content/* M, pipeline/active/storefront-auth-3.3 D, vitest.config.ts D, untracked dirs) remain unstaged — carry-forwards from concurrent sections." }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: pending }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+stats:
+  total_tests_specified: 42
+  total_tests_written: 41
+  total_tests_passing: 41
+  total_files_created: 0
+  total_files_modified: 1   # src/app/globals.css (plus the red-phase new test file src/__tests__/brand/type-scale.test.ts which is counted as a tests addition, not a code change)
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0   # zero-change refactor; both identified opportunities deferred
+  commit_hash: null
+  commit_message: null
+
+task_id_map:
+  preflight:
+    npm_test: 1
+    npm_lint: 2
+    tsc_noEmit: 3
+    git_clean: 4
+  discovery:
+    read_session: 5
+    read_planning_docs: 6
+    deep_codebase_research: 7
+    cross_section_pattern_lookup: 8
+    parse_checklist_items: 9
+    analyze_dependencies: 10
+    define_interfaces: 11
+    find_existing_patterns: 12
+    stride_threat_modeling: 13
+    edge_case_enumeration: 14
+    serializer_inventory: 15
+    response_contract_spec: 16
+    permission_matrix: 17
+    specify_test_cases: 18
+    dependency_graph: 19
+    write_discovery_yaml: 20
+    write_interfaces_yaml: 21
+    write_test_cases_yaml: 22
+    verify_zero_coverage_gaps: 23
+    update_session_yaml: 24
+  red:
+    read_discovery_yamls: 25
+    study_test_patterns: 26
+    batch_1_functional: 27
+    batch_1_verify: 28
+    batch_2_security: 29
+    batch_2_verify: 30
+    batch_3_permission_matrix: 31
+    batch_3_verify: 32
+    batch_4_contract: 33
+    batch_4_verify: 34
+    batch_5_edge_error_data: 35
+    batch_5_verify: 36
+    batch_6_a11y_infra: 37
+    batch_6_verify: 38
+    full_suite_verification: 39
+    coverage_matrix_check: 40
+    update_red_progress: 41
+  green:
+    analyze_failing_tests: 42
+    plan_implementation_order: 43
+    group_1_schema_types: 44
+    group_1_verify: 45
+    group_2_logic_hooks_serializers: 46
+    group_2_verify: 47
+    group_3_ui_components: 48
+    group_3_verify: 49
+    group_4_api_routes_wiring: 50
+    group_4_full_suite: 51
+    wiring_components: 52
+    wiring_navigation: 53
+    wiring_form_api: 54
+    wiring_data_flow: 55
+    wiring_database: 56
+    wiring_feature_reconciliation: 57
+    wiring_interactive_behaviors: 58
+    wiring_cross_component_flows: 59
+    serializer_enforcement: 60
+    error_response_consistency: 61
+    zero_skipped_verification: 62
+    npm_build_passes: 63
+    update_green_progress: 64
+  refactor:
+    baseline_all_tests_pass: 65
+    dry_analysis_within_section: 66
+    cross_section_dry_analysis: 67
+    type_safety_audit: 68
+    error_consistency_audit: 69
+    serializer_completeness_audit: 70
+    performance_review: 71
+    code_quality_naming_structure: 72
+    eslint_clean: 73
+    barrel_exports_check: 74
+    hardcoded_values_check: 75
+    loading_error_empty_states: 76
+    final_npm_test: 77
+    final_npm_lint: 78
+    final_npm_build: 79
+    update_refactor_progress: 80
+  finish:
+    cleanup_dead_code: 81
+    cleanup_verify_tests: 82
+    nav_sync_verification: 83
+    audit_file_inventory: 84
+    audit_api_routes: 85
+    audit_hook_consumers: 86
+    audit_component_mounts: 87
+    audit_feature_reconciliation: 88
+    update_session_yaml: 89
+    update_planning_checklist: 90
+    knowledge_capture: 91
+    security_checklist: 92
+    git_stage_files: 93
+    git_commit: 94
+    git_push: 95
+    delete_section_directory: 96
+    update_session_next_section: 97
+  postflight:
+    npm_test: 98
+    npm_build: 99
+    npm_lint: 100
+    tsc_noEmit: 101
+    git_log: 102
+    git_diff_stat: 103
