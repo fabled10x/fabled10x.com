@@ -1936,3 +1936,76 @@ styling-overhaul-1.2:
     lint clean; tsc clean; npm run build clean (52 static pages prerendered).
     Refactor produced ZERO code changes (matches so-1.1 precedent).
 
+
+cohort-enrollment-2.1:
+  completed_at: "2026-06-06"
+  scope_recap: |
+    Drizzle migration adding four cohort tables (cohort_waitlist,
+    cohort_applications, cohort_admissions, cohort_enrollments) with
+    UNIQUE/FK/CHECK constraints + indexes. Forward-decl
+    src/content/schemas/cohort-application.ts with the
+    APPLICATION_COMMITMENT_LEVELS tuple (ce-3.1 will extend with full Zod
+    + interface). 58 tests across unit (24), integration (10), edge (12),
+    data (8), infra (6). No API, no UI, no auth surface — pure schema
+    migration.
+  patterns_established:
+    - description: |
+        sql.raw inlines CHECK constraint values into Drizzle DDL.
+        sql`${v}` inside sql.join produces $1/$2/$3 placeholders that
+        Postgres rejects in DDL. sql.raw is safe ONLY when values come
+        from compile-time `as const` TS tuples — never pass user input.
+      file: "src/db/schema.ts"
+      reusable_for: "Any future Drizzle table that needs a CHECK constraint mirroring a TS tuple"
+    - description: |
+        Drizzle table builder array form `(table) => [...]` — matches the
+        sa-2.1 convention. The Drizzle docs and many examples show the
+        object form `(table) => ({...})` which works equivalently but is
+        inconsistent with this codebase's existing pattern.
+      file: "src/db/schema.ts"
+      reusable_for: "All future Drizzle tables in this project"
+    - description: |
+        Migration infra test pattern using a heuristic search instead of
+        a hardcoded filename. The cohort-migration.test.ts uses
+        findCohortMigration() to scan src/db/migrations/*.sql for the
+        cohort table names — survives drizzle-kit's auto-numbering when
+        concurrent jobs ship migrations.
+      file: "src/db/__tests__/cohort-migration.test.ts"
+      reusable_for: "Any migration test that should be resilient to migration number drift"
+  gotchas:
+    - |
+      drizzle-kit treats sql`${v}` parameter interpolation inside sql.join
+      as runtime parameters → generated DDL has $1/$2/$3 placeholders →
+      Postgres rejects on apply. Use sql.raw with explicit string-quoted
+      values when the tuple is compile-time safe.
+    - |
+      Vitest file-parallel execution breaks shared-DB integration tests
+      when multiple test files mutate the same root table (here: users).
+      sa-2.1's schema.test.ts and ce-2.1's cohort-tables.test.ts both
+      truncate users + cohort tables have ON DELETE CASCADE back to it →
+      cross-file collisions mid-flight. Set fileParallelism: false in
+      vitest.config.mts (~10x slower full-suite, ~4s → ~30s; acceptable
+      cost for the project's current scale).
+    - |
+      drizzle-kit names migrations with random adjective+noun pairs
+      ("0002_unusual_bedlam"). Rename to descriptive
+      ("0002_cohort_enrollment.sql") + update meta/_journal.json tag
+      after generation if you want readable migration filenames.
+      Snapshot filenames are by numeric prefix only (0002_snapshot.json),
+      not full tag.
+    - |
+      sa-2.2 auth.test.ts (4 tests calling signIn()) fails when
+      DATABASE_URL is set because next-auth's signIn() requires
+      work_unit_async_storage request store mocking. Pre-existing latent
+      issue — see follow-up.
+  reusable_utilities:
+    - tuple: "APPLICATION_COMMITMENT_LEVELS = ['light','standard','intense']"
+      file: "src/content/schemas/cohort-application.ts"
+      purpose: "Categorical commitment ladder for cohort applications. ce-3.1 will extend this module with the full Zod input schema + CohortApplication interface."
+  follow_ups:
+    - |
+      sa-2.2 auth.test.ts signIn() failures: needs request-context mock.
+      Surface this in a sa-2.2 cleanup/refactor.
+    - |
+      Cross-section DRY: truncateAll + seedUser helpers duplicated between
+      sa-2.1 schema.test.ts and ce-2.1 cohort-tables.test.ts. Extract to
+      src/db/__tests__/_fixtures.ts when a 3rd DB test file appears.

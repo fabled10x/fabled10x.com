@@ -15,6 +15,13 @@
       "when": 1776125934049,
       "tag": "0001_add_auth_user_columns_and_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780736425427,
+      "tag": "0002_cohort_enrollment",
+      "breakpoints": true
     }
   ]
 }

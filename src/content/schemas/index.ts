@@ -5,5 +5,6 @@ export * from './source-material';
 export * from './case';
 export * from './product';
 export * from './cohort';
+export * from './cohort-application';
 export * from './build-log';
 export * from './validators';

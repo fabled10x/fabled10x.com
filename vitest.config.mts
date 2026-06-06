@@ -11,6 +11,11 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'dist'],
+    // Serialize file execution: integration tests in src/db/__tests__/* share a
+    // real Postgres database and cross-truncate the `users` table (cohort
+    // tables have FK cascades back to it). Running test files in parallel
+    // causes FK violations mid-flight. Single fork keeps DB state coherent.
+    fileParallelism: false,
     server: {
       deps: {
         inline: ['next-auth', '@auth/core', '@auth/drizzle-adapter'],
