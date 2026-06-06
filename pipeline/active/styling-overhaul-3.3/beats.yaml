@@ -1,0 +1,223 @@
+version: 1
+section_id: "styling-overhaul-3.3"
+section_name: "Forbidden-pattern sentinel"
+started_at: "2026-06-06T00:00:00Z"
+current_phase: finish-commit
+
+claim:
+  status: done
+  phase_entered_at: "2026-06-06T00:00:00Z"
+  phase_exited_at: "2026-06-06T00:00:00Z"
+  slot_path: "/home/travis/Projects/fabled10x-worktrees/section-styling-overhaul-3.3"
+  branch: "section/styling-overhaul-3.3"
+  pid: 444298
+  test_db:
+    container: null
+    port: null
+    healthcheck_status: null
+  beats:
+    - { id: resolve_paths, status: done, evidence: "SLOT=/home/travis/Projects/fabled10x-worktrees/section-styling-overhaul-3.3, BRANCH=section/styling-overhaul-3.3, PIDFILE=$SLOT/.pipeline.pid" }
+    - { id: detect_state, status: done, classification: FRESH }
+    - { id: teardown_if_stale, status: na, reason: "state was FRESH" }
+    - { id: create_slot, status: done, evidence: "git worktree add succeeded; node_modules bind-mount live; no env files in main to symlink" }
+    - { id: provision_test_db, status: na, reason: "static Next.js site — no Postgres test DB infra (no scripts/backup directory, vitest not jest)" }
+    - { id: write_pidfile, status: done, evidence: "pid 444298 written to $SLOT/.pipeline.pid" }
+    - { id: verify_branch, status: done, evidence: "branch=section/styling-overhaul-3.3, HEAD == origin/main == 0a8152e" }
+    - { id: enter_worktree, status: done, evidence: "cd into slot; EnterWorktree harness tool rejected out-of-tree slots, cd substitute used" }
+
+preflight:
+  npm_test: { status: pass, at: "2026-06-06T00:00:00Z", evidence: "1500 passed, 0 failed, 60 skipped after worktree-infra fix: added vi.mock('../repo-root', () => ({ getRepoRoot: async () => process.cwd() })) to src/lib/build-log/__tests__/pipeline-state.test.ts so test mocks align with production path resolution." }
+  npm_lint: { status: pass, at: "2026-06-06T00:00:00Z" }
+  tsc_noEmit: { status: pass, at: "2026-06-06T00:00:00Z" }
+  git_clean: { status: pass, at: "2026-06-06T00:00:00Z", evidence: "Only untracked: .pipeline.pid, pipeline/active/styling-overhaul-3.3/" }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done, evidence: "Read currentwork/styling-overhaul/phase-3-material-language.md §3.3 lines 261-423" }
+    - { id: deep_codebase_research, status: done, evidence: "Surveyed src/__tests__/brand/*, src/components/brand/__tests__/*, package.json, vitest.config.mts; inventoried 14 pre-existing forbidden-pattern hits in src/ — see discovery.yaml#patterns.preexisting_violations_inventory" }
+    - { id: cross_section_pattern_lookup, status: done, evidence: "Test pattern from tokens.test.ts (cwd-resilient readFileSync + describe+it granular assertions); brand sentinel idiom from BrushstrokeSeam.test.tsx lines 285-300" }
+    - { id: parse_checklist_items, status: done, evidence: "12 items derived from planning doc — see discovery.yaml#checklist_items" }
+    - { id: analyze_dependencies, status: done, evidence: "Zero new NPM dependencies; uses node:fs + node:fs/promises (stable on Node 22+, project on Node 26.2.0)" }
+    - { id: define_interfaces, status: done, evidence: "Two inline test-local types: ForbiddenPattern, Hit — see interfaces.yaml#typescript_types" }
+    - { id: find_existing_patterns, status: done, evidence: "tokens.test.ts and BrushstrokeSeam.test.tsx#FORBIDDEN_CLASSES — see discovery.yaml#patterns" }
+    - { id: stride_threat_modeling, status: na, reason: "No HTTP endpoints — sentinel is a vitest assertion with no runtime surface" }
+    - { id: edge_case_enumeration, status: done, evidence: "5 edge_case_tests covering SKIP_PATHS suffix-matching, multi-violation files, directory entries from glob, empty files, zero-hit success path — see test-cases.yaml#edge_case_tests" }
+    - { id: serializer_inventory, status: na, reason: "No API responses, no content types serialized — see interfaces.yaml#serializers.not_applicable" }
+    - { id: response_contract_spec, status: na, reason: "No API endpoints — see interfaces.yaml#response_contracts.not_applicable" }
+    - { id: permission_matrix, status: na, reason: "No HTTP surface — see interfaces.yaml#permission_matrix.not_applicable" }
+    - { id: specify_test_cases, status: done, evidence: "28 active tests across 6 categories (unit 15, integration 2, infra 3, edge 5, err 1, data 2); 4 categories N/A (security, a11y, contract, permission) with documented reasons" }
+    - { id: dependency_graph, status: done, evidence: "discovery.yaml#implementation_order has 4 groups — Schema (N/A), Logic, UI (N/A), Integration — only Logic + Integration carry items" }
+    - { id: write_discovery_yaml, status: done }
+    - { id: write_interfaces_yaml, status: done }
+    - { id: write_test_cases_yaml, status: done }
+    - { id: verify_zero_coverage_gaps, status: done, evidence: "test-cases.yaml#coverage_matrix maps all 12 checklist items to ≥1 test" }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 28
+  coverage_gaps: 0
+  notes: |
+    KEY SCOPE FINDING: HEAD (0a8152e) src/ contains 14 pre-existing
+    forbidden-pattern hits — BrushstrokeSeam.tsx mask-gradient (intentional)
+    + 12 sites of red-* error-message styling across cohort/auth/products/
+    admin. Green Phase must adopt a SKIP_PATHS allow-list to keep current
+    tests green; full migration of red-* sites is OUT OF SCOPE for 3.3
+    and belongs to phase-5/6/7. See discovery.yaml#analysis.notes for the
+    full decision space.
+
+red:
+  status: done
+  beats:
+    - { id: read_discovery_yamls, status: done }
+    - { id: study_test_patterns, status: done, evidence: "Studied tokens.test.ts (cwd-resilient grep-style assertions) and BrushstrokeSeam.test.tsx (granular it() blocks with describe sections per concern); FORBIDDEN-array idiom from BrushstrokeSeam.test.tsx:285-300" }
+    - { id: batch_1_functional, status: done, tests_written: 17, evidence: "15 unit + 2 integration tests in src/__tests__/brand/forbidden-patterns.test.ts" }
+    - { id: batch_1_verify, status: done, evidence: "17/17 failing as expected (16 throw NOT_IMPLEMENTED from stubs; 1 fails because SKIP_PATHS array is empty)" }
+    - { id: batch_2_security, status: na, reason: "No HTTP surface — see test-cases.yaml#security_tests.not_applicable" }
+    - { id: batch_2_verify, status: na, reason: "no tests in batch 2" }
+    - { id: batch_3_permission_matrix, status: na, reason: "No HTTP surface — see test-cases.yaml#permission_tests.not_applicable" }
+    - { id: batch_3_verify, status: na, reason: "no tests in batch 3" }
+    - { id: batch_4_contract, status: na, reason: "No API endpoints — see test-cases.yaml#contract_tests.not_applicable" }
+    - { id: batch_4_verify, status: na, reason: "no tests in batch 4" }
+    - { id: batch_5_edge_error_data, status: done, tests_written: 8, evidence: "5 edge + 1 err + 2 data tests added" }
+    - { id: batch_5_verify, status: done, evidence: "8/8 failing as expected" }
+    - { id: batch_6_a11y_infra, status: done, tests_written: 3, evidence: "0 a11y (N/A) + 3 infra; accessibility_tests.not_applicable per Discovery" }
+    - { id: batch_6_verify, status: done, evidence: "2/3 failing as expected; 1 (infra_sentinel_runs_in_vitest_pipeline) passes by scaffolding — see red-progress.yaml notes" }
+    - { id: full_suite_verification, status: done, evidence: "npm test: 1502 passed, 26 failed, 60 skipped (1588 total). Baseline 1500 preserved; +2 swing accounts for the two scaffolding-only infra tests; all 26 failures are in the new file." }
+    - { id: coverage_matrix_check, status: done, evidence: "All 12 checklist items mapped to ≥1 test — see red-progress.yaml#coverage_matrix" }
+    - { id: update_red_progress, status: done }
+  total_tests: 28
+  coverage_gaps: 0
+  notes: |
+    28 tests written into a single new file. 26 fail at call time via
+    NOT_IMPLEMENTED stubs (scanContent/scanRepo/formatReport) or via
+    empty SKIP_PATHS array. 2 infrastructure tests
+    (infra_sentinel_runs_in_vitest_pipeline plus one half-passing
+    scaffolding test) pass immediately — they verify file location
+    and module structure, which is implicit scaffolding rather than
+    behavior. Acceptable per the Red→Green transition.
+
+    Green Phase task per scope note in discovery.yaml: implement
+    FORBIDDEN, SKIP_PATHS, scanContent, scanRepo, formatReport;
+    populate SKIP_PATHS with BrushstrokeSeam.tsx and 12 legacy
+    red-* sites (out-of-scope migrations queued for phase-5/6/7).
+
+green:
+  status: done
+  beats:
+    - { id: analyze_failing_tests, status: done, evidence: "26 failing tests grouped: all blocked on FORBIDDEN/SKIP_PATHS/scanContent/scanRepo/formatReport stubs in the sentinel file itself" }
+    - { id: plan_implementation_order, status: done, evidence: "Single group: implement helpers inline at top of forbidden-patterns.test.ts (no separate module per planning doc)" }
+    - { id: group_1_schema_types, status: na, reason: "No content schema changes, no Zod schemas — see discovery.yaml#implementation_order group 1" }
+    - { id: group_1_verify, status: na, reason: "no items in group 1" }
+    - { id: group_2_logic_hooks_serializers, status: done, evidence: "Implemented FORBIDDEN array (8 patterns), SKIP_PATHS allow-list (13 entries), scanContent, scanRepo (node:fs/promises glob), formatReport, ROOT constant via import.meta.url" }
+    - { id: group_2_verify, status: done, evidence: "28/28 sentinel tests pass" }
+    - { id: group_3_ui_components, status: na, reason: "No React components — sentinel is a vitest test" }
+    - { id: group_3_verify, status: na, reason: "no items in group 3" }
+    - { id: group_4_api_routes_wiring, status: na, reason: "No API routes — no HTTP surface" }
+    - { id: group_4_full_suite, status: done, evidence: "npm test: 1528 pass / 0 fail / 60 skipped (baseline preserved)" }
+    - { id: wiring_components, status: na, reason: "No components", items: "N/A" }
+    - { id: wiring_navigation, status: na, reason: "No pages", items: "N/A" }
+    - { id: wiring_form_api, status: na, reason: "No forms or API", items: "N/A" }
+    - { id: wiring_data_flow, status: na, reason: "No hooks", items: "N/A" }
+    - { id: wiring_database, status: na, reason: "No schema changes", items: "N/A" }
+    - { id: wiring_feature_reconciliation, status: done, evidence: "All 12 checklist items pass via 28 tests — coverage_matrix" }
+    - { id: wiring_interactive_behaviors, status: na, reason: "No UI behaviors" }
+    - { id: wiring_cross_component_flows, status: na, reason: "No multi-component flows" }
+    - { id: serializer_enforcement, status: na, reason: "No API responses" }
+    - { id: error_response_consistency, status: na, reason: "No HTTP errors — vitest test failure mechanism only" }
+    - { id: zero_skipped_verification, status: done, evidence: "0 new skipped; 60 pre-existing skipped (baseline unchanged)" }
+    - { id: npm_build_passes, status: done, evidence: "Build passes after cherry-picking manifest infra from in-flight MAIN work — see green-progress.yaml#cherry_picked_manifest_infra" }
+    - { id: update_green_progress, status: done }
+  tests_passing: 1528
+  tests_total: 1588
+  notes: |
+    SCOPE: This section's intended scope is a single new file
+    (forbidden-patterns.test.ts). Two out-of-scope change sets were
+    explicitly approved by the user during this phase and will be
+    called out in the FIN-14 commit message:
+      1. Preflight infra fix to pipeline-state.test.ts.
+      2. Cherry-picked manifest infra (loader.ts refactor + cases.ts +
+         episodes.ts + 2 new manifest.ts files) from user's in-flight
+         MAIN work — required to unblock the npm_build gate because
+         origin/main itself does not build.
+
+refactor:
+  status: done
+  beats:
+    - { id: baseline_all_tests_pass, status: done, evidence: "npm test baseline: 1528 pass / 0 fail / 60 skipped before any refactor changes" }
+    - { id: dry_analysis_within_section, status: done, evidence: "Single new file; no internal duplication. Test boilerplate kept tight via parametrized loops over color/prefix arrays." }
+    - { id: cross_section_dry_analysis, status: done, evidence: "Considered centralizing FORBIDDEN with sibling brand tests (BrushstrokeSeam, Surfaces) — deferred with reason (out of section scope, sibling regexes are tighter to their components). See refactor-progress.yaml#improvements_identified" }
+    - { id: type_safety_audit, status: done, evidence: "Removed redundant `as string` cast on glob iterator. The remaining `as unknown as { glob: ... }` cast bridges @types/node@^20 → Node 22+ runtime; documented inline as drop-when-bumped. Zero `any`, zero `@ts-ignore`." }
+    - { id: error_consistency_audit, status: na, reason: "No API responses — sentinel raises a vitest test failure" }
+    - { id: serializer_completeness_audit, status: na, reason: "No content models in API responses" }
+    - { id: performance_review, status: done, evidence: "28 sentinel tests run in <100ms over the full src/ tree. Single-pass scan, no double-reads, async glob with backpressure. No memoization needed." }
+    - { id: code_quality_naming_structure, status: done, evidence: "Names match codebase pattern (FORBIDDEN, SKIP_PATHS, scanContent, scanRepo, formatReport). Functions short and single-purpose; describe blocks read as a spec." }
+    - { id: eslint_clean, status: done, evidence: "Zero warnings" }
+    - { id: barrel_exports_check, status: na, reason: "Sentinel is a vitest test, not a public module" }
+    - { id: hardcoded_values_check, status: done, evidence: "FORBIDDEN regexes encode the brand spec from the planning doc; SKIP_PATHS are real file paths with documented reasons. No values cherry-picked to match test expectations." }
+    - { id: loading_error_empty_states, status: na, reason: "No UI components" }
+    - { id: final_npm_test, status: done, evidence: "1528 pass / 0 fail / 60 skipped" }
+    - { id: final_npm_lint, status: done, evidence: "Zero warnings" }
+    - { id: final_npm_build, status: done, evidence: "Production build succeeded" }
+    - { id: update_refactor_progress, status: done }
+  improvements_identified: 4
+  improvements_completed: 1
+  improvements_deferred: 2
+  improvements_documented: 1
+  notes: |
+    Tiny refactor surface — sentinel is one cohesive ~280-line file
+    with a clear shape (constants → helpers → tests). Only one
+    concrete fix landed: dropped a redundant `as string` cast on the
+    glob iterator. Two deferrals documented with reasons (glob type
+    bridge for @types/node bump; cross-section FORBIDDEN centralization
+    out of scope). One documentation item carried forward (legacy
+    red-* migrations queued for phase-5/6/7).
+
+finish:
+  status: in_progress
+  beats:
+    - { id: cleanup_dead_code, status: done, evidence: "Sentinel file scanned; no console.log/TODO/FIXME/dead code. Diff is minimal." }
+    - { id: cleanup_verify_tests, status: done, evidence: "1528 pass / 0 fail / 60 skipped after cleanup" }
+    - { id: nav_sync_verification, status: na, reason: "No new pages — sentinel is a vitest test" }
+    - { id: audit_file_inventory, status: done, evidence: "1 new file: src/__tests__/brand/forbidden-patterns.test.ts. Scope: infrastructure (test-only, no API/hook/component/page artifacts). Cherry-picked content-loader infra reverted — already on origin/main as commit 3c21ac4 (cohort-enrollment-4.2)." }
+    - { id: audit_api_routes, status: na, pass: 0, fail: 0, na: 0, reason: "Infrastructure-only section (no API routes)" }
+    - { id: audit_hook_consumers, status: na, pass: 0, fail: 0, na: 0, reason: "Infrastructure-only section (no hooks)" }
+    - { id: audit_component_mounts, status: na, pass: 0, fail: 0, na: 0, reason: "Infrastructure-only section (no components)" }
+    - { id: audit_feature_reconciliation, status: na, pass: 0, fail: 0, na: 0, reason: "Infrastructure-only section — all 12 checklist items are sentinel-internal and verified by the 28 tests in red/green phases" }
+    - { id: update_session_yaml, status: done, evidence: "styling-overhaul-3.3 added to completed_sections with full notes" }
+    - { id: update_planning_checklist, status: done, evidence: "currentwork/styling-overhaul/README.md row for 3.3 set from Planned → Complete" }
+    - { id: knowledge_capture, status: done, evidence: "Appended styling-overhaul-3.3 entry to pipeline/active/knowledge.yaml with patterns_established (3), gotchas (4), reusable_utilities (3), deferred_followups (3), blocker_cleared, and out_of_scope_changes_landed" }
+    - { id: security_checklist, status: done, evidence: "No secrets in staged files; no debug/bypass code; no TODOs; .pipeline.pid NOT staged; sentinel tests + content tests all green" }
+    - { id: git_stage_files, status: pending }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: na, reason: "worktree mode — push handled by /worktree-release at FIN-22" }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: pending }
+
+release:
+  status: pending
+  beats:
+    - { id: push_section_branch, status: pending }
+    - { id: rebase_with_additive_resolution, status: pending }
+    - { id: rerun_gates_after_rebase, status: pending }
+    - { id: force_push_rebased, status: pending }
+    - { id: ff_merge_main, status: pending }
+    - { id: push_main, status: pending }
+    - { id: teardown, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+stats:
+  total_tests_specified: 0
+  total_tests_written: 0
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0
+  commit_hash: null
+  commit_message: null

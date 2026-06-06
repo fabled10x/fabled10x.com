@@ -83,7 +83,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 2.4 | `.build-log-prose` retrofit (Cinzel headings, Oxblood drop cap, Shadow code surfaces)    | 2 - Typography                 | M    | Complete |
 | 3.1 | Surface primitives (`<Marble>`, `<Parchment>`, `<Bone>`, `<Shadow>`)                     | 3 - Material Language          | M    | Complete |
 | 3.2 | `<BrushstrokeSeam>` SVG mask + texture overlay                                           | 3 - Material Language          | L    | Complete |
-| 3.3 | Forbidden-pattern sentinel (no gradients / UI shadows / pure primaries)                  | 3 - Material Language          | M    | Planned |
+| 3.3 | Forbidden-pattern sentinel (no gradients / UI shadows / pure primaries)                  | 3 - Material Language          | M    | Complete |
 | 4.1 | `<Logo>` lockup with `{10x}` curly-brace mark + `public/logo.svg`                        | 4 - Logo + Chrome              | M    | Planned |
 | 4.2 | Header restyle (Marble surface, Oxblood active state, all-caps Inter nav)                | 4 - Logo + Chrome              | M    | Planned |
 | 4.3 | Footer restyle (Parchment surface, Verdigris LLL link)                                   | 4 - Logo + Chrome              | S    | Planned |
