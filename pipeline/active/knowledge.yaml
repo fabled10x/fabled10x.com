@@ -2877,3 +2877,67 @@ cohort-enrollment-3.2:
     emails + signed payment-link tokens), ce-4.4 (Stripe Checkout +
     webhook + enrollment row), ce-4.5 (/products/account/cohorts overview).
     ce-4.1 unblocks the rest.
+
+styling-overhaul-3.1:
+  completed_at: "2026-06-06"
+  commit_message: "Add surface primitives with 37 tests (styling-overhaul-3.1)"
+  patterns_established:
+    - description: "Polymorphic surface primitive with ElementType + open `as` prop"
+      file: "src/components/brand/Marble.tsx (and 3 siblings)"
+      reusable_for: |
+        Any future brand surface that needs the (bg + paired-text + optional edge)
+        triple over an open polymorphic tag. Pattern: <E extends ElementType = 'div'>,
+        type = { as?, edge?, className? } & Omit<ComponentPropsWithoutRef<E>, 'as' | 'className'>,
+        body destructures the 3 named props + ...rest, defaults `as` to 'div' with explicit
+        `const Tag: ElementType = as ?? 'div';` (no `as ElementType` runtime assertion needed).
+        ClassName composed via `[base, edgeClass[edge], className].filter(Boolean).join(' ')`
+        to avoid doubled spaces when edge='none' or className=''.
+      example_tokens:
+        Marble:    "bg-(--color-marble) + text-(--pair-text-on-marble)"
+        Parchment: "bg-(--color-parchment) + text-(--pair-text-on-parchment)"
+        Bone:      "bg-(--color-bone) + text-(--pair-text-on-bone)"
+        Shadow:    "bg-(--color-shadow) + text-(--pair-text-on-shadow)"
+    - description: "SurfaceEdge variant pattern (none|subtle|strong) → border-(--edge-color[-subtle])"
+      file: "src/components/brand/Marble.tsx#edgeClass"
+      reusable_for: |
+        Any brand component that wants to opt into the brand-edge discipline.
+        Three-variant Record<SurfaceEdge, string> maps to 0 / subtle / strong border.
+        Anchors the no-shadow-utility brand discipline that so-3.3 sentinel will enforce.
+    - description: "Explicit-type annotation eliminates `as ElementType` runtime assertion"
+      file: "src/components/brand/Marble.tsx:23"
+      reusable_for: |
+        Other polymorphic components that need a runtime tag from an ElementType union.
+        Pattern: `const Tag: ElementType = as ?? defaultTag;` — TS accepts because
+        `E extends ElementType` already proves the result is ElementType. Cleaner than
+        the more common `as ElementType` assertion + zero `as` cost in audit checks.
+  gotchas:
+    - "Source-grep tests (data_consistency_token_pairing_invariant) read each surface .tsx for its bg/text class literals. Any extraction of the render function to a shared helper would move these literals out of the surface files and break the test. Brand discipline is verified by source-text inspection, not by composition mechanism."
+    - "When composing className from a sparse array (filter(Boolean).join(' ')), edge='none' (empty string) and undefined className are both filtered as falsy, so no whitespace artifacts appear in the rendered element. The test edge_input_undefined_className asserts this explicitly."
+    - "Polymorphic `as` prop spread via {...rest} on a runtime <Tag> requires `Omit<ComponentPropsWithoutRef<E>, 'as' | 'className'>` so the destructured `as` doesn't get re-passed to the DOM as an attribute named 'as'."
+  reusable_utilities: []
+  deferred_followups:
+    - title: "SurfaceEdge + edgeClass shared internal module"
+      reason: |
+        4 surface files each declare an identical SurfaceEdge union (3 lines × 4) and
+        edgeClass Record (5 lines × 4) — 32 lines of duplication. Extracting to
+        src/components/brand/_surface-edge.ts would save those lines and not break
+        source-grep tests (which check bg/text tokens, not edge variants). Deferred
+        per planning-doc design intent (zero coupling, 4-mirror pattern) + so-2.3
+        DropAccent precedent (internal AccentSize union also kept co-located, not
+        exported). Trigger to revisit: 5th surface primitive added, OR another
+        brand component independently adopts the same SurfaceEdge pattern.
+    - title: "4-mirror surface DRY — full createSurface() factory extraction"
+      reason: |
+        Bigger version of the above: 4 surface files share ~25 lines of structurally
+        identical code. A createSurface(bgToken, textToken) factory would compress
+        the 4 files to ~4 one-liners. Blocked by data_consistency_token_pairing_invariant
+        which regex-checks each surface .tsx source for the bg/text token literals —
+        extraction would move the literals out of the surface files. Defer to a
+        dedicated brand-primitive-factory section after Phase 5/6 ships a 2nd
+        sibling component that wants the same shape; rewriting the test pattern
+        to allow the abstraction is part of that section's scope.
+  blocker_cleared: |
+    styling-overhaul Phase 3 (Material Language): so-3.1 (surface primitives)
+    COMPLETE. so-3.2 (BrushstrokeSeam) and so-3.3 (forbidden-pattern sentinel)
+    can both start in parallel — no dependency on surface primitives.
+    Material Language phase is at 1/3 complete after this section ships.

@@ -1,0 +1,179 @@
+version: 1
+section_id: "styling-overhaul-3.1"
+section_name: "Surface primitives (<Marble>, <Parchment>, <Bone>, <Shadow>)"
+started_at: "2026-06-06T00:00:00Z"
+current_phase: finish
+
+claim:
+  status: done
+  beats:
+    - { id: resolve_paths, status: done }
+    - { id: detect_state, status: done, classification: FRESH }
+    - { id: teardown_if_stale, status: na, reason: "state was FRESH" }
+    - { id: create_slot, status: done }
+    - { id: provision_test_db, status: na, reason: "fabled10x has no Postgres-backed test infrastructure (static site)" }
+    - { id: write_pidfile, status: done }
+    - { id: verify_branch, status: done }
+    - { id: enter_worktree, status: done }
+  slot: /home/travis/Projects/fabled10x-worktrees/section-styling-overhaul-3.1
+  branch: section/styling-overhaul-3.1
+  pidfile: /home/travis/Projects/fabled10x-worktrees/section-styling-overhaul-3.1/.pipeline.pid
+
+preflight:
+  npm_test: { status: pass, at: "2026-06-06T14:23:00Z", baseline: "2 failed | 1322 passed | 60 skipped (1384 total)", notes: "2 pre-existing failures in src/lib/build-log/__tests__/jobs.test.ts: integration_get_phase_real_file: community-showcase phase-1-foundation parses. Both fail because community-showcase tree exists in main's uncommitted state but not on origin/main HEAD (fee758a). Worktree branched from origin/main, so currentwork/community-showcase/ is absent. Unrelated to so-3.1 (surface primitives — pure component work)." }
+  npm_lint: { status: pass, at: "2026-06-06T14:23:00Z", baseline: "0 warnings" }
+  tsc_noEmit: { status: pass, at: "2026-06-06T14:23:00Z", baseline: "5 pre-existing errors in src/lib/email/__tests__/cohort-waitlist-confirmation.test.ts — Cohort fixture missing 'id' field after schema added it. Test-fixture drift on origin/main HEAD; unrelated to so-3.1. Will be cleaned up in a dedicated test-fixture-sync section." }
+  git_clean: { status: pass, at: "2026-06-06T14:23:00Z", notes: "clean — only worktree-internal files (.pipeline.pid + pipeline/active/styling-overhaul-3.1/)" }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done }
+    - { id: deep_codebase_research, status: done }
+    - { id: cross_section_pattern_lookup, status: done }
+    - { id: parse_checklist_items, status: done }
+    - { id: analyze_dependencies, status: done }
+    - { id: define_interfaces, status: done }
+    - { id: find_existing_patterns, status: done }
+    - { id: stride_threat_modeling, status: na, reason: "No endpoints — STRIDE applies globally to section, documented in interfaces.yaml#stride_global. Per so-2.3/so-2.4/bpd-2.1 pure-presentational-primitive precedent." }
+    - { id: edge_case_enumeration, status: done }
+    - { id: serializer_inventory, status: na, reason: "No API responses, no models — surface primitives are pure render functions" }
+    - { id: response_contract_spec, status: na, reason: "No API endpoints — props are React-internal" }
+    - { id: permission_matrix, status: na, reason: "No API endpoints — no role × endpoint matrix" }
+    - { id: specify_test_cases, status: done }
+    - { id: dependency_graph, status: done }
+    - { id: write_discovery_yaml, status: done }
+    - { id: write_interfaces_yaml, status: done }
+    - { id: write_test_cases_yaml, status: done }
+    - { id: verify_zero_coverage_gaps, status: done, note: "coverage_matrix in test-cases.yaml maps all 12 checklist items to ≥1 test each" }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 37
+  coverage_gaps: 0
+
+red:
+  status: done
+  beats:
+    - { id: read_discovery_yamls, status: done }
+    - { id: study_test_patterns, status: done }
+    - { id: batch_1_functional, status: done, tests_written: 20, note: "unit:16 + integration:4" }
+    - { id: batch_1_verify, status: done }
+    - { id: batch_2_security, status: na, reason: "test-cases.yaml#security_tests.not_applicable — no user input/API/auth" }
+    - { id: batch_2_verify, status: na, reason: "no tests to verify" }
+    - { id: batch_3_permission_matrix, status: na, reason: "test-cases.yaml#permission_tests.not_applicable — no API endpoints" }
+    - { id: batch_3_verify, status: na, reason: "no tests to verify" }
+    - { id: batch_4_contract, status: na, reason: "test-cases.yaml#contract_tests.not_applicable — no API endpoints" }
+    - { id: batch_4_verify, status: na, reason: "no tests to verify" }
+    - { id: batch_5_edge_error_data, status: done, tests_written: 9, note: "edge:6 + err:1 + data:2" }
+    - { id: batch_5_verify, status: done }
+    - { id: batch_6_a11y_infra, status: done, tests_written: 8, note: "a11y:3 + infra:5" }
+    - { id: batch_6_verify, status: done }
+    - { id: full_suite_verification, status: done, note: "1326 passed | 35 failed (33 new red + 2 pre-existing) | 60 skipped | 1421 total" }
+    - { id: coverage_matrix_check, status: done, note: "all 12 checklist items mapped to ≥1 test" }
+    - { id: update_red_progress, status: done }
+  total_tests: 37
+  coverage_gaps: 0
+
+green:
+  status: done
+  beats:
+    - { id: analyze_failing_tests, status: done }
+    - { id: plan_implementation_order, status: done }
+    - { id: group_1_schema_types, status: na, reason: "No content schema / Zod / domain types — discovery.yaml#implementation_order group 1 was N/A" }
+    - { id: group_1_verify, status: na, reason: "no group 1 work" }
+    - { id: group_2_logic_hooks_serializers, status: na, reason: "No utilities / hooks / serializers — discovery.yaml#implementation_order group 2 was N/A" }
+    - { id: group_2_verify, status: na, reason: "no group 2 work" }
+    - { id: group_3_ui_components, status: done, note: "4 NEW surface .tsx files + 1 barrel update" }
+    - { id: group_3_verify, status: done, note: "37/37 surface tests pass" }
+    - { id: group_4_api_routes_wiring, status: na, reason: "No API routes, no form wiring, no nav update — discovery.yaml#implementation_order group 4 was N/A" }
+    - { id: group_4_full_suite, status: done, note: "1359 passed | 2 pre-existing failed | 60 skipped (delta from baseline = +37 passing, no new failures)" }
+    - { id: wiring_components, status: na, reason: "Surfaces ship standalone for Phase 4/6/7 mounting per planning doc — same pattern as so-2.3 DropAccent + bpd-2.1 MarkdownDocument" }
+    - { id: wiring_navigation, status: na, reason: "No new pages" }
+    - { id: wiring_form_api, status: na, reason: "No forms" }
+    - { id: wiring_data_flow, status: na, reason: "No hooks, no API routes" }
+    - { id: wiring_database, status: na, reason: "No content schema changes" }
+    - { id: wiring_feature_reconciliation, status: done, note: "12/12 checklist items implemented and covered by tests" }
+    - { id: wiring_interactive_behaviors, status: na, reason: "Pure presentational, no event handlers in the primitive" }
+    - { id: wiring_cross_component_flows, status: na, reason: "Single-component primitives, no multi-step flows" }
+    - { id: serializer_enforcement, status: na, reason: "No API responses, no models" }
+    - { id: error_response_consistency, status: na, reason: "No API routes" }
+    - { id: zero_skipped_verification, status: done, note: "60 skipped are pre-existing DATABASE_URL-gated; zero new skipped tests" }
+    - { id: npm_build_passes, status: done, note: "compilation + TS stages clean; page-data collection hits pre-existing loader_build_incompat at /episodes/[slug] (unchanged from origin/main HEAD, unrelated to so-3.1)" }
+    - { id: update_green_progress, status: done }
+  tests_passing: 37
+  tests_total: 37
+
+refactor:
+  status: done
+  beats:
+    - { id: baseline_all_tests_pass, status: done, note: "37/37 surface tests + 1322 pre-existing pass" }
+    - { id: dry_analysis_within_section, status: done, note: "4-surface duplication identified; extraction deferred per planning-doc design (4-mirror pattern, zero coupling)" }
+    - { id: cross_section_dry_analysis, status: done, note: "no extractable duplication — DropAccent and Container have structurally different polymorphic shapes" }
+    - { id: type_safety_audit, status: done, note: "eliminated 4× `as ElementType` runtime assertions → `const Tag: ElementType = as ?? 'div';` — zero any/as/@ts-ignore now in section files" }
+    - { id: error_consistency_audit, status: na, reason: "no API routes" }
+    - { id: serializer_completeness_audit, status: na, reason: "no models / API responses" }
+    - { id: performance_review, status: done, note: "pure synchronous render; no memoization needed; no N+1 or large imports" }
+    - { id: code_quality_naming_structure, status: done, note: "clean — brand vocabulary names, flat nesting, 6-line function bodies" }
+    - { id: eslint_clean, status: done, note: "0 warnings before and after refactor" }
+    - { id: barrel_exports_check, status: done, note: "src/components/brand/index.ts re-exports all 4 surfaces + DropAccent" }
+    - { id: hardcoded_values_check, status: done, note: "all literals are spec-driven (brand tokens, edge variants); no test-fitting values" }
+    - { id: loading_error_empty_states, status: na, reason: "pure synchronous presentational primitives — no async/loading/empty/error dimension" }
+    - { id: final_npm_test, status: done, note: "1359 passed | 2 pre-existing failed | 60 skipped (no delta from green phase)" }
+    - { id: final_npm_lint, status: done, note: "clean" }
+    - { id: final_npm_build, status: done, note: "compilation clean; pre-existing loader_build_incompat at /episodes/[slug] unchanged from baseline" }
+    - { id: update_refactor_progress, status: done }
+  improvements_identified: 11
+  improvements_completed: 1
+  improvements_deferred: 1
+  improvements_not_applicable: 4
+  improvements_clean_no_change_needed: 5
+
+finish:
+  status: done
+  beats:
+    - { id: cleanup_dead_code, status: done, note: "Surface .tsx files have no dead code/comments/console.log; test file comments explain non-obvious assertions (kept per CLAUDE.md guidance)" }
+    - { id: cleanup_verify_tests, status: done, note: "no cleanup changes — 37/37 still passing" }
+    - { id: nav_sync_verification, status: na, reason: "No new pages — surface primitives ship standalone for Phase 4/6/7 mounting" }
+    - { id: audit_file_inventory, status: done, note: "scope=ui-only; 5 files: 4 components + 1 barrel update + 1 test (no API routes, no hooks, no pages)" }
+    - { id: audit_api_routes, status: na, reason: "no API routes", pass: 0, fail: 0, na: 4 }
+    - { id: audit_hook_consumers, status: na, reason: "no hooks", pass: 0, fail: 0, na: 4 }
+    - { id: audit_component_mounts, status: done, pass: 4, fail: 0, na: 0, note: "Marble/Parchment/Bone/Shadow are INFRASTRUCTURE primitives shipped standalone per planning doc (lines 248-251) — to be mounted in Phase 4 (Logo+Chrome), Phase 6 (Cards), Phase 7 (Pages), Phase 8.2 (og-image), Phase 8.3 (thumb-preview). Same shipping pattern as so-2.3 DropAccent + bpd-2.1 MarkdownDocument: ship → mount later, never both in the same section. Not orphaned." }
+    - { id: audit_feature_reconciliation, status: done, pass: 12, fail: 0, na: 0, note: "all 12 checklist items implemented and covered by tests (16 unit + 4 integration + 3 a11y + 5 infra + 6 edge + 1 err + 2 data = 37); items 1-4 are surface .tsx files, items 5-12 are properties verified by tests" }
+    - { id: update_session_yaml, status: done }
+    - { id: update_planning_checklist, status: done, note: "currentwork/styling-overhaul/README.md row 3.1 flipped Planned → Complete" }
+    - { id: knowledge_capture, status: done, note: "knowledge.yaml#styling-overhaul-3.1 appended: 3 patterns, 3 gotchas, 2 deferred_followups, blocker_cleared" }
+    - { id: security_checklist, status: done, note: "no secrets, no debug code, no security TODOs; surfaces have zero attack surface (no input, no API, no auth, TS-locked variants)" }
+    - { id: git_stage_files, status: pending }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: na, reason: "worktree mode — /finish commits on section branch; push is handled by /worktree-release FIN-22" }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: done, note: "session.current_section advanced to styling-overhaul-3.2, current_agent=pending" }
+
+release:
+  status: pending
+  beats:
+    - { id: push_section_branch, status: pending }
+    - { id: rebase_with_additive_resolution, status: pending }
+    - { id: rerun_gates_after_rebase, status: pending }
+    - { id: force_push_rebased, status: pending }
+    - { id: ff_merge_main, status: pending }
+    - { id: push_main, status: pending }
+    - { id: teardown, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+stats:
+  total_tests_specified: 0
+  total_tests_written: 0
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0
+  commit_hash: null
+  commit_message: null
