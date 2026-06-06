@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/site/Container';
 import { getAllCohorts, getCohortBySlug } from '@/lib/content/cohorts';
@@ -57,10 +58,20 @@ export default async function CohortDetailPage({ params }: RouteParams) {
           {meta.status === 'announced' ? (
             <WaitlistForm cohortSlug={meta.slug} sourceTag="cohort-detail" />
           ) : meta.status === 'open' ? (
-            <p>
-              Application form coming online in Phase 3. Signed-in applicants
-              will fill out background, goals, and commitment here.
-            </p>
+            <div>
+              <p>
+                Applications are open. Review the cohort details above, then
+                submit yours.
+              </p>
+              <p className="mt-4">
+                <Link
+                  href={`/cohorts/${meta.slug}/apply`}
+                  className="inline-flex items-center rounded-md bg-accent px-5 py-3 text-sm font-semibold text-parchment hover:bg-accent/90"
+                >
+                  Apply to this cohort
+                </Link>
+              </p>
+            </div>
           ) : meta.status === 'closed' ? (
             <p>Applications are closed. Decisions go out within two weeks.</p>
           ) : meta.status === 'enrolled' ? (

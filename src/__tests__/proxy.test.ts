@@ -157,7 +157,10 @@ describe('proxy (edge session gate)', () => {
         '/api/products/downloads/:path*',
       ]),
     );
-    expect(config.matcher).toHaveLength(2);
+    // Length is open-ended — future sections (e.g. ce-3.2 cohort apply
+    // matcher) extend this array. The arrayContaining assertion above
+    // guards the sa-2.3 baseline entries.
+    expect(config.matcher.length).toBeGreaterThanOrEqual(2);
   });
 
   it('infra_middleware_edge_runtime_safe', async () => {

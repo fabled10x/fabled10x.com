@@ -13,9 +13,12 @@ function hasSessionCookie(request: NextRequest): boolean {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const isCohortApply = /^\/cohorts\/[^/]+\/apply\/?$/.test(pathname);
+
   const isGated =
     pathname.startsWith('/products/account') ||
-    pathname.startsWith('/api/products/downloads');
+    pathname.startsWith('/api/products/downloads') ||
+    isCohortApply;
 
   if (!isGated) return NextResponse.next();
 
@@ -27,5 +30,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/products/account/:path*', '/api/products/downloads/:path*'],
+  matcher: [
+    '/products/account/:path*',
+    '/api/products/downloads/:path*',
+    '/cohorts/:slug/apply',
+  ],
 };

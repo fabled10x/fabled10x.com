@@ -150,7 +150,26 @@ describe('CohortDetailPage', () => {
   it('unit_detail_cta_open', async () => {
     mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_OPEN);
     await renderDetail('workflow-mastery-2026-q4');
-    expect(screen.getByText(/Application form coming online/i)).toBeInTheDocument();
+    // ce-3.2 replaces the placeholder with an Apply CTA Link.
+    const link = screen.getByRole('link', { name: /apply to this cohort/i });
+    expect(link).toBeInTheDocument();
+    expect(link.getAttribute('href')).toBe(
+      '/cohorts/workflow-mastery-2026-q4/apply',
+    );
+  });
+
+  it('integration_apply_cta_replaces_open_placeholder_on_cohort_detail', async () => {
+    mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_OPEN);
+    await renderDetail('workflow-mastery-2026-q4');
+    // The old placeholder copy must NOT appear anywhere on the page.
+    expect(
+      screen.queryByText(/Application form coming online/i),
+    ).not.toBeInTheDocument();
+    // The new Apply CTA Link must be present with the correct href.
+    const link = screen.getByRole('link', { name: /apply to this cohort/i });
+    expect(link.getAttribute('href')).toBe(
+      '/cohorts/workflow-mastery-2026-q4/apply',
+    );
   });
 
   it('unit_detail_cta_closed', async () => {
