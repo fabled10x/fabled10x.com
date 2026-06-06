@@ -2,12 +2,13 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "styling-overhaul"
-  current_section: "styling-overhaul-2.1"
-  current_agent: green
-  current_stage: "styling-overhaul-2.1-green-complete"
-  # Phase 1 (Foundation Tokens) COMPLETE: 1.1 palette, 1.2 spacing/radius/edge,
-  # 1.3 brand+design-system docs all shipped. Next: Phase 2 (Typography) starts
-  # with 2.1 font loading (Cinzel + Inter + JetBrains Mono).
+  current_section: "styling-overhaul-2.2"
+  current_agent: pending
+  current_stage: "styling-overhaul-2.1-complete"
+  # Phase 1 (Foundation Tokens) COMPLETE. Phase 2 (Typography) Feature 2.1
+  # (font loading swap Cinzel + Inter + JetBrains Mono) SHIPPED. Next: so-2.2
+  # (type scale + display-rule utilities) consumes --font-display/--font-body/
+  # --font-mono written onto <html> by so-2.1.
   concurrent_jobs:
     - id: "cohort-enrollment-3.2"
       phase: "cohort-enrollment"
@@ -23,11 +24,49 @@ context_window:
 # Reset for styling-overhaul-1.3 below
 
 completed_sections:
-  - id: "cohort-enrollment-3.1"
-    name: "CohortApplicationInput Schema + Validator"
+  - id: "styling-overhaul-2.1"
+    name: "Font loading swap (Cinzel + Inter + JetBrains Mono)"
     completed_at: "2026-06-06"
     commit_hash: pending
     commit_message: pending
+    tests: 25  # 12 unit + 4 integration + 2 a11y + 3 infra + 6 edge + 1 err + 1 data; security/permission/contract N/A; full suite 1140 passing | 60 skipped
+    files_new: 1
+    files_modified: 3
+    pushed: false
+    notes: |
+      First feature of styling-overhaul Phase 2 (Typography). Pure
+      module-config + CSS-tokens swap. layout.tsx now imports Cinzel
+      (display, weight 900), Inter (body, weights 400/600/700), and
+      JetBrains_Mono (mono, weights 400/500) from next/font/google —
+      each with display:'swap'. <html> className composes the three
+      .variable strings plus h-full antialiased; metadata block + shell
+      composition unchanged. globals.css @theme inline font aliases
+      (--font-display / --font-body / --font-mono) re-point to
+      var(--font-{role}) — self-referencing the variables next/font writes
+      onto <html>. All --font-geist-* references removed.
+
+      New brand sentinel test file src/__tests__/brand/fonts.test.ts
+      mirrors so-1.1 tokens.test.ts / so-1.2 spacing.test.ts pattern.
+      Layout test mock for 'next/font/google' swapped to mock the three
+      new families; four new tests in a layout-font-wiring describe block
+      cover className composition, three-font shell render, degraded-mock
+      error recovery, and className well-formedness.
+
+      Refactor produced ZERO code changes — same canonical-N/A pipeline
+      shape as so-1.1/1.2: serializers, response_contracts,
+      permission_matrix, all DB / API / auth / form wiring beats N/A;
+      STRIDE collapses to "static font-config only".
+
+      Phase 2 downstream sections so-2.2 (type scale utilities), so-2.3
+      (DropAccent primitive), so-2.4 (.build-log-prose retrofit) all
+      consume --font-display / --font-body / --font-mono — so-2.1 is a
+      hard prerequisite for the rest of Phase 2.
+
+  - id: "cohort-enrollment-3.1"
+    name: "CohortApplicationInput Schema + Validator"
+    completed_at: "2026-06-06"
+    commit_hash: "3c564af"
+    commit_message: "Add CohortApplicationInput schema + validator with 28 tests (cohort-enrollment-3.1)"
     tests: 28  # 11 unit + 6 security + 2 infra + 8 edge + 1 err + 2 data; permission/contract/a11y/integration N/A; full suite 1140 passing | 60 skipped (was 1085 passing pre-section in this branch — note: between-section delta includes concurrent so-2.1 work)
     files_new: 0
     files_modified: 3  # cohort-application.ts (extend), validators.ts (append schema + type), validators.test.ts (append tests)

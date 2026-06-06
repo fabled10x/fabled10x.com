@@ -77,7 +77,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 1.1 | Palette swap + contrast pairs + dark-mode removal                                        | 1 - Foundation Tokens          | M    | Complete |
 | 1.2 | Spacing + radius scale (8px grid, restrained corners)                                    | 1 - Foundation Tokens          | M    | Complete |
 | 1.3 | Brand doc rewrite + new `docs/fabled10x-design-system.md`                                | 1 - Foundation Tokens          | S    | Complete |
-| 2.1 | Font loading swap (Cinzel + Inter + JetBrains Mono)                                      | 2 - Typography                 | M    | Planned |
+| 2.1 | Font loading swap (Cinzel + Inter + JetBrains Mono)                                      | 2 - Typography                 | M    | Complete |
 | 2.2 | Type scale + display-rule utilities                                                      | 2 - Typography                 | S    | Planned |
 | 2.3 | `<DropAccent>` oversized-punctuation primitive                                           | 2 - Typography                 | S    | Planned |
 | 2.4 | `.build-log-prose` retrofit (Cinzel headings, Oxblood drop cap, Shadow code surfaces)    | 2 - Typography                 | M    | Planned |

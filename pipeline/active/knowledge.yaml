@@ -2255,3 +2255,102 @@ ce_3_1_outputs:
     - "submitApplication server action imports CohortApplicationInputSchema for FormData parsing"
     - "<ApplicationForm> imports APPLICATION_COMMITMENT_LEVEL_LABELS to render the radio/select option text"
     - "Applicant confirmation email imports CohortApplicationInput type for the props shape"
+
+styling-overhaul-2.1:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - id: next_font_handshake
+      description: |
+        Three-family next/font/google handshake: layout.tsx loader calls
+        WRITE --font-display / --font-body / --font-mono onto <html> via
+        font.variable; globals.css @theme inline RE-DECLARES the same alias
+        names so Tailwind utilities (font-display, font-body, font-mono)
+        resolve through them. The CSS reads `--font-display: var(--font-display)`
+        — self-referential because next/font writes the variable at runtime
+        and @theme re-declares it at build-time for the Tailwind class scanner.
+        Pattern: NEXT 2.0+ canonical font loading inside the App Router.
+      file: "src/app/layout.tsx + src/app/globals.css"
+      reusable_for:
+        - "Any future font family change (so-2.2/2.3/2.4 consume these CSS vars)"
+        - "Any next/font/google variable-binding work (e.g., adding a 5th family — though brand spec forbids)"
+    - id: brand_font_test_scan_pattern
+      description: |
+        src/__tests__/brand/fonts.test.ts uses the readFileSync + theme-block
+        regex pattern from so-1.1 + so-1.2, PLUS a third extraction technique:
+        per-loader call-shape scans via regex on layoutSrc to assert each
+        font's weight / subsets / display options. Pattern:
+          const cinzelCall = layoutSrc.match(/Cinzel\s*\(\s*\{([\s\S]*?)\}\s*\)/);
+          expect(cinzelCall?.[1]).toMatch(/weight:\s*\[\s*['"]900['"]\s*\]/);
+        Avoids importing layout.tsx (which requires mocking next/font/google).
+        File-content scan is the simplest way to assert source-file shape
+        invariants for next/font configuration.
+      file: "src/__tests__/brand/fonts.test.ts"
+      reusable_for:
+        - "Any future test asserting next/font loader argument shape"
+        - "so-2.2/2.3/2.4 typography sentinels that need to read globals.css"
+    - id: layout_test_mock_alignment
+      description: |
+        vi.mock('next/font/google', ...) in layout.test.tsx must EXACTLY
+        mirror the import surface of layout.tsx. If layout.tsx changes its
+        font family imports, the mock must be updated in the same edit or
+        the test file fails to evaluate (Cinzel is not a function).
+        During TDD red, this means temporarily either (a) keeping BOTH the
+        old + new mock entries so layout.tsx can load with stale imports,
+        OR (b) accepting that layout.test.tsx fails entirely until green
+        lands. Both approaches were used in so-2.1 (linter chose (a)).
+      file: "src/app/__tests__/layout.test.tsx"
+      reusable_for:
+        - "Any future layout.tsx font / module-config change"
+  gotchas:
+    - |
+      next/font's variable name and the @theme alias name share the same
+      string (`--font-display`). The self-referential `--font-display: var(--font-display)`
+      in @theme inline is INTENTIONAL — Tailwind 4's @theme block declares the
+      utility resolution name; next/font writes the runtime value onto <html>.
+      Stripping the @theme declaration breaks Tailwind utility classes
+      (font-display, font-body, font-mono); stripping the next/font call breaks
+      the CSS variable at runtime. Both halves are load-bearing.
+    - |
+      cohort-enrollment-3.1's `id` field absence on CohortApplicationInput
+      fixtures causes TSC type errors in OTHER sections' test files (the
+      content-loader generic expects `id: string` on every fixture record).
+      These errors are out of so-2.1 scope and predate this section. `npx tsc
+      --noEmit` is skipped per VPS OOM policy; ESLint is clean for so-2.1
+      files. Don't conflate the cross-section TSC errors with so-2.1 quality.
+  reusable_utilities:
+    - description: "Three font.variable strings composed into <html> className"
+      file: "src/app/layout.tsx"
+      pattern: |
+        className={`${cinzel.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      purpose: "Bind multiple next/font variables to the document root in a single render"
+  deferred_followups:
+    - id: brand_test_helpers_extraction
+      threshold_met: true  # 3-call-site rule satisfied at so-2.1
+      call_sites:
+        - "src/__tests__/brand/tokens.test.ts (so-1.1)"
+        - "src/__tests__/brand/spacing.test.ts (so-1.2)"
+        - "src/__tests__/brand/fonts.test.ts (so-2.1)"
+      proposed_target: "src/__tests__/brand/_helpers.ts"
+      proposed_shape: |
+        export const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+        export const themeBlock = extractThemeBlock(css);
+        export const bodyBlock = extractBodyBlock(css);
+      rationale_for_deferral: |
+        Three-call-site extraction trigger met but consistent with 7-section
+        cross-section-deferral pattern (ce-1.3, bpd-2.3, so-1.1, so-1.2,
+        ce-2.2, ce-2.1, so-1.3 all deferred similar). Extraction touches
+        out-of-section files (tokens.test.ts, spacing.test.ts). Better to
+        sweep in a dedicated cross-section refactor job OR allow so-2.2
+        (type-scale tokens, ~4th call site) to atomically include the
+        helper extraction in its own scope.
+      next_likely_call_site: "src/__tests__/brand/type-scale.test.ts (so-2.2 candidate)"
+  blocker_cleared: |
+    styling-overhaul Phase 2 (Typography) is UNBLOCKED at the foundation.
+    so-2.2 (type scale + display-rule utilities) is the next so section —
+    consumes the three CSS variables this section writes:
+      --font-display (Cinzel) → display-1, display-2, display-3 utilities
+      --font-body (Inter) → body-1, body-2, body-3, label utilities
+      --font-mono (JetBrains_Mono) → mono utility
+    so-2.3 (DropAccent primitive) can parallelize with so-2.2.
+    so-2.4 (.build-log-prose retrofit) sequences AFTER so-2.2 (uses the
+    type-scale token values for h2/h3/code sizing).

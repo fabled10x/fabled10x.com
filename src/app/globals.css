@@ -61,10 +61,10 @@
   --edge-color: var(--color-ink);
   --edge-color-subtle: color-mix(in oklab, var(--color-ink) 20%, transparent);
 
-  /* Font aliases — Phase 2.1 repoints these to Cinzel / Inter / JetBrains Mono */
-  --font-display: var(--font-geist-sans);
-  --font-body: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Font aliases — repointed in styling-overhaul-2.1 */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
 body {
