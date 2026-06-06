@@ -43,7 +43,8 @@ describe('Header', () => {
     render(<Header />);
     const nav = screen.getByRole('navigation');
     const items = nav.querySelectorAll('li');
-    expect(items).toHaveLength(5);
+    // ce-4.3 added Cohorts → 6
+    expect(items).toHaveLength(6);
   });
 
   it('unit_header_nav_hrefs', () => {
@@ -90,6 +91,7 @@ describe('Header', () => {
       { href: '/episodes', label: 'Episodes' },
       { href: '/cases', label: 'Cases' },
       { href: '/build-log', label: 'Build log' },
+      { href: '/cohorts', label: 'Cohorts' },
       { href: '/products', label: 'Products' },
       { href: '/about', label: 'About' },
     ]);
@@ -107,7 +109,8 @@ describe('Header', () => {
     render(<Header />);
     const nav = screen.getByRole('navigation');
     const items = nav.querySelectorAll('li');
-    expect(items).toHaveLength(5);
+    // ce-4.3 added Cohorts → 6
+    expect(items).toHaveLength(6);
   });
 
   it('int_header_active_on_build_log', () => {
@@ -165,5 +168,33 @@ describe('Header', () => {
     const { container } = render(<Header />);
     const inner = container.querySelector('.mx-auto.max-w-5xl');
     expect(inner).toBeInTheDocument();
+  });
+
+  // --- cohort-enrollment-4.3: Cohorts nav item ---
+
+  it('unit_header_nav_includes_cohorts', () => {
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Cohorts' });
+    expect(link).toHaveAttribute('href', '/cohorts');
+  });
+
+  it('unit_header_nav_cohorts_link_rendered', () => {
+    render(<Header />);
+    const link = screen.getByRole('link', { name: 'Cohorts' });
+    expect(link).toBeInTheDocument();
+    expect(link.textContent).toBe('Cohorts');
+  });
+
+  it('infra_header_nav_ordering', () => {
+    render(<Header />);
+    const links = screen
+      .getAllByRole('link')
+      .filter((el) => el.closest('nav'))
+      .map((el) => el.getAttribute('href'));
+    const buildLogIdx = links.indexOf('/build-log');
+    const cohortsIdx = links.indexOf('/cohorts');
+    const productsIdx = links.indexOf('/products');
+    expect(cohortsIdx).toBeGreaterThan(buildLogIdx);
+    expect(cohortsIdx).toBeLessThan(productsIdx);
   });
 });

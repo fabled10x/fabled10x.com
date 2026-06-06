@@ -12,4 +12,9 @@ describe('public/llms.txt', () => {
     const content = readFileSync(join(process.cwd(), 'public/llms.txt'), 'utf8');
     expect(content).toMatch(/\/build-log/);
   });
+
+  it('infra_llmstxt_mentions_cohorts', () => {
+    const content = readFileSync(join(process.cwd(), 'public/llms.txt'), 'utf8');
+    expect(content).toMatch(/\/cohorts/);
+  });
 });

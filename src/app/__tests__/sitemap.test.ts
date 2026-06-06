@@ -12,17 +12,22 @@ vi.mock('@/lib/build-log/jobs', () => ({
 vi.mock('@/lib/content/products', () => ({
   getAllProducts: vi.fn(),
 }));
+vi.mock('@/lib/content/cohorts', () => ({
+  getAllCohorts: vi.fn(),
+}));
 
 import { getAllEpisodes } from '@/lib/content/episodes';
 import { getAllCases } from '@/lib/content/cases';
 import { getAllJobs } from '@/lib/build-log/jobs';
 import { getAllProducts } from '@/lib/content/products';
+import { getAllCohorts } from '@/lib/content/cohorts';
 import sitemap from '../sitemap';
 
 const mockGetAllEpisodes = vi.mocked(getAllEpisodes);
 const mockGetAllCases = vi.mocked(getAllCases);
 const mockGetAllJobs = vi.mocked(getAllJobs);
 const mockGetAllProducts = vi.mocked(getAllProducts);
+const mockGetAllCohorts = vi.mocked(getAllCohorts);
 
 const MOCK_JOB = {
   slug: 'website-foundation',
@@ -121,6 +126,25 @@ describe('sitemap', () => {
     mockGetAllCases.mockResolvedValue([MOCK_CASE]);
     mockGetAllJobs.mockResolvedValue([MOCK_JOB] as unknown as Awaited<ReturnType<typeof getAllJobs>>);
     mockGetAllProducts.mockResolvedValue([MOCK_PRODUCT, MOCK_PRODUCT_2] as unknown as Awaited<ReturnType<typeof getAllProducts>>);
+    mockGetAllCohorts.mockReset();
+    mockGetAllCohorts.mockResolvedValue([
+      {
+        meta: {
+          slug: 'ai-delivery-2026-q3',
+          publishedAt: '2026-04-01T00:00:00Z',
+        },
+        slug: 'ai-delivery-2026-q3',
+        Component: () => null,
+      },
+      {
+        meta: {
+          slug: 'workflow-mastery-2026-q4',
+          publishedAt: '2026-03-15T00:00:00Z',
+        },
+        slug: 'workflow-mastery-2026-q4',
+        Component: () => null,
+      },
+    ] as unknown as Awaited<ReturnType<typeof getAllCohorts>>);
   });
 
   // --- Unit ---
@@ -178,9 +202,10 @@ describe('sitemap', () => {
     mockGetAllCases.mockResolvedValue([]);
     mockGetAllJobs.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllJobs>>);
     mockGetAllProducts.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllProducts>>);
+    mockGetAllCohorts.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllCohorts>>);
     const result = await sitemap();
-    // 4 pre-existing static routes + 2 build-log static routes + 1 products static route
-    expect(result).toHaveLength(7);
+    // 4 pre-existing static routes + 2 build-log static routes + 1 products + 1 cohorts static route
+    expect(result).toHaveLength(8);
     const urls = result.map((r) => r.url);
     expect(urls).toContain('https://fabled10x.com/');
     expect(urls).toContain('https://fabled10x.com/episodes');
@@ -188,6 +213,7 @@ describe('sitemap', () => {
     expect(urls).toContain('https://fabled10x.com/about');
     expect(urls).toContain('https://fabled10x.com/build-log');
     expect(urls).toContain('https://fabled10x.com/build-log/status');
+    expect(urls).toContain('https://fabled10x.com/cohorts');
   });
 
   // --- Phase 3.1: Build-log routes ---
@@ -305,5 +331,67 @@ describe('sitemap', () => {
     productUrls.forEach((url) => {
       expect(url).toMatch(/^https:\/\/fabled10x\.com\//);
     });
+  });
+
+  // --- cohort-enrollment-4.3: Cohort URLs + gated route exclusion ---
+
+  it('integration_sitemap_contains_cohorts_index', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/cohorts');
+  });
+
+  it('integration_sitemap_contains_per_cohort_urls', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/cohorts/ai-delivery-2026-q3');
+    expect(urls).toContain('https://fabled10x.com/cohorts/workflow-mastery-2026-q4');
+  });
+
+  it('infra_sitemap_excludes_gated_apply_routes', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    urls.forEach((url) => {
+      expect(url).not.toMatch(/\/cohorts\/[^/]+\/apply/);
+    });
+  });
+
+  it('infra_sitemap_excludes_gated_checkout_routes', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    urls.forEach((url) => {
+      expect(url).not.toMatch(/\/cohorts\/[^/]+\/checkout/);
+    });
+  });
+
+  it('infra_sitemap_excludes_admin_routes', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    urls.forEach((url) => {
+      expect(url).not.toMatch(/\/admin/);
+    });
+  });
+
+  it('infra_sitemap_excludes_account_cohorts', async () => {
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    urls.forEach((url) => {
+      expect(url).not.toMatch(/\/products\/account\/cohorts/);
+    });
+  });
+
+  it('edge_sitemap_no_cohorts', async () => {
+    mockGetAllCohorts.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getAllCohorts>>);
+    const result = await sitemap();
+    const urls = result.map((r) => r.url);
+    expect(urls).toContain('https://fabled10x.com/cohorts');
+    expect(urls.filter((u) => u.match(/\/cohorts\/[^/]+$/))).toEqual([]);
+  });
+
+  it('perm_anonymous_sitemap_allow', async () => {
+    // sitemap is a public Next metadata route — anonymous access returns a result
+    const result = await sitemap();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
   });
 });

@@ -10,6 +10,10 @@ vi.mock('../worktree-state', () => ({
   getLiveSectionIds: liveSectionIdsMock,
 }));
 
+vi.mock('../repo-root', () => ({
+  getRepoRoot: async () => process.cwd(),
+}));
+
 const PIPELINE_DIR = path.join(process.cwd(), 'pipeline', 'active');
 const SESSION_PATH = path.join(PIPELINE_DIR, 'session.yaml');
 const KNOWLEDGE_PATH = path.join(PIPELINE_DIR, 'knowledge.yaml');

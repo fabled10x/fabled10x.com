@@ -31,5 +31,12 @@ and authentication pages (/login) are intentionally excluded from crawling
 and sitemap. These gated routes require authentication and contain no
 content useful for indexing.
 
+The /cohorts section is the public catalog of application-required live
+cohort programs. Catalog and individual cohort pages are public and
+crawlable. Application and payment flows are gated behind magic-link auth
+at /cohorts/{slug}/apply and /cohorts/{slug}/checkout respectively, along
+with /admin and /products/account/cohorts — none of which appear in the
+sitemap.
+
 This site is open for crawling and indexing. No rate limits, no paywalls.
 See /robots.txt for disallowed paths. Attribution appreciated but not required.

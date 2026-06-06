@@ -42,8 +42,42 @@ export default async function CohortDetailPage({ params }: RouteParams) {
 
   const { meta, Component: MdxBody } = entry;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: meta.title,
+    description: meta.summary,
+    provider: {
+      '@type': 'Organization',
+      name: 'Fabled10X',
+      url: 'https://fabled10x.com',
+    },
+    hasCourseInstance: {
+      '@type': 'CourseInstance',
+      courseMode: 'Online',
+      startDate: meta.startDate,
+      endDate: meta.endDate,
+      courseWorkload: `PT${meta.commitmentHoursPerWeek}H`,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: (meta.priceCents / 100).toFixed(2),
+      priceCurrency: meta.currency.toUpperCase(),
+      availability:
+        meta.status === 'open'
+          ? 'https://schema.org/InStock'
+          : meta.status === 'announced'
+            ? 'https://schema.org/PreOrder'
+            : 'https://schema.org/SoldOut',
+    },
+  };
+
   return (
     <Container as="main" className="py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <CohortDetailHero cohort={meta} />
 
       <article className="prose mt-16 max-w-2xl">

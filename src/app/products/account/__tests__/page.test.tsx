@@ -40,28 +40,63 @@ vi.mock('next/link', () => ({
 }));
 
 // Mock the db chain: select → from → where → orderBy
+// After ce-4.3 added cohort queries, the page now does:
+//   .from(purchases).where(...).orderBy(...)
+//   .from(cohortApplications).where(...)
+//   .from(cohortEnrollments).where(...)
+// We dispatch by table marker so each chain resolves from its own mock.
 const mockOrderBy = vi.fn();
+const mockCohortAppWhere = vi.fn(async () => []);
+const mockCohortEnrWhere = vi.fn(async () => []);
+const purchasesMarker = {
+  __table: 'purchases',
+  userId: 'purchases.userId',
+  purchasedAt: 'purchases.purchasedAt',
+};
+const cohortApplicationsMarker = {
+  __table: 'cohortApplications',
+  userId: 'cohortApplications.userId',
+};
+const cohortEnrollmentsMarker = {
+  __table: 'cohortEnrollments',
+  userId: 'cohortEnrollments.userId',
+};
+
 vi.mock('@/db/client', () => ({
   db: {
     select: () => ({
-      from: () => ({
-        where: () => ({
-          orderBy: () => mockOrderBy(),
-        }),
-      }),
+      from: (table: unknown) => {
+        if (table === purchasesMarker) {
+          return { where: () => ({ orderBy: () => mockOrderBy() }) };
+        }
+        if (table === cohortApplicationsMarker) {
+          return { where: () => mockCohortAppWhere() };
+        }
+        if (table === cohortEnrollmentsMarker) {
+          return { where: () => mockCohortEnrWhere() };
+        }
+        throw new Error('Unexpected db.from() argument in account/page.test');
+      },
     }),
   },
   schema: {
-    purchases: {
-      userId: 'user_id',
-      purchasedAt: 'purchased_at',
-    },
+    purchases: purchasesMarker,
+    cohortApplications: cohortApplicationsMarker,
+    cohortEnrollments: cohortEnrollmentsMarker,
   },
 }));
 
 const mockGetAllProducts = vi.fn();
 vi.mock('@/lib/content/products', () => ({
   getAllProducts: () => mockGetAllProducts(),
+}));
+
+vi.mock('@/lib/content/cohorts', () => ({
+  getAllCohorts: vi.fn(async () => []),
+}));
+
+vi.mock('@/components/account/CohortList', () => ({
+  CohortList: () => null,
 }));
 
 vi.mock('@/components/account/PurchaseList', () => ({

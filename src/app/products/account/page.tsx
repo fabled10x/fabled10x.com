@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, schema } from '@/db/client';
 import { getAllProducts } from '@/lib/content/products';
+import { getAllCohorts } from '@/lib/content/cohorts';
 import { Container } from '@/components/site/Container';
 import { PurchaseList } from '@/components/account/PurchaseList';
+import { CohortList } from '@/components/account/CohortList';
 import { SignOutButton } from '@/components/account/SignOutButton';
 
 export const metadata: Metadata = {
@@ -25,16 +28,34 @@ export default async function AccountPage({ searchParams }: PageProps) {
 
   const { purchased, canceled } = await searchParams;
 
-  const [purchases, products] = await Promise.all([
+  const [
+    purchases,
+    products,
+    cohortApplications,
+    cohortEnrollments,
+    cohorts,
+  ] = await Promise.all([
     db
       .select()
       .from(schema.purchases)
       .where(eq(schema.purchases.userId, session.user.id))
       .orderBy(desc(schema.purchases.purchasedAt)),
     getAllProducts(),
+    db
+      .select()
+      .from(schema.cohortApplications)
+      .where(eq(schema.cohortApplications.userId, session.user.id)),
+    db
+      .select()
+      .from(schema.cohortEnrollments)
+      .where(eq(schema.cohortEnrollments.userId, session.user.id)),
+    getAllCohorts(),
   ]);
 
   const productsBySlug = new Map(products.map((p) => [p.slug, p.meta]));
+  const cohortsBySlug = new Map(cohorts.map((c) => [c.meta.slug, c.meta]));
+  const hasCohortActivity =
+    cohortApplications.length > 0 || cohortEnrollments.length > 0;
 
   return (
     <Container as="section" className="py-16">
@@ -68,6 +89,27 @@ export default async function AccountPage({ searchParams }: PageProps) {
           className="mt-8 rounded-md border border-mist bg-mist/30 px-4 py-3 text-sm text-muted"
         >
           Checkout canceled. Nothing was charged.
+        </div>
+      ) : null}
+
+      {hasCohortActivity ? (
+        <div className="mt-12">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-semibold">My cohorts</h2>
+            <Link
+              href="/products/account/cohorts"
+              className="text-sm text-link underline-offset-2 hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="mt-6">
+            <CohortList
+              applications={cohortApplications}
+              enrollments={cohortEnrollments}
+              cohortsBySlug={cohortsBySlug}
+            />
+          </div>
         </div>
       ) : null}
 

@@ -288,4 +288,166 @@ describe('CohortDetailPage', () => {
     expect(og?.description).toBe('An intensive cohort for solo consultants.');
     expect(og?.type).toBe('website');
   });
+
+  // --- cohort-enrollment-4.3: Course + Offer JSON-LD ---
+
+  function findJsonLd(container: HTMLElement): Record<string, unknown> | null {
+    const script = container.querySelector(
+      'script[type="application/ld+json"]',
+    );
+    if (!script || !script.textContent) return null;
+    return JSON.parse(script.textContent) as Record<string, unknown>;
+  }
+
+  it('unit_cohort_detail_jsonld_present', async () => {
+    const { container } = await renderDetail();
+    const script = container.querySelector(
+      'script[type="application/ld+json"]',
+    );
+    expect(script).toBeInTheDocument();
+  });
+
+  it('unit_cohort_detail_jsonld_type_course', async () => {
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    expect(ld['@context']).toBe('https://schema.org');
+    expect(ld['@type']).toBe('Course');
+  });
+
+  it('unit_cohort_detail_jsonld_provider_fabled10x', async () => {
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const provider = ld.provider as Record<string, unknown>;
+    expect(provider['@type']).toBe('Organization');
+    expect(provider.name).toBe('Fabled10X');
+    expect(provider.url).toBe('https://fabled10x.com');
+  });
+
+  it('unit_cohort_detail_jsonld_offer_price_currency', async () => {
+    // priceCents 249900 → '2499.00'; currency 'usd' → 'USD'
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers['@type']).toBe('Offer');
+    expect(offers.price).toBe('2499.00');
+    expect(offers.priceCurrency).toBe('USD');
+  });
+
+  it('unit_cohort_detail_jsonld_availability_open', async () => {
+    mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_OPEN);
+    const { container } = await renderDetail('workflow-mastery-2026-q4');
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.availability).toBe('https://schema.org/InStock');
+  });
+
+  it('unit_cohort_detail_jsonld_availability_announced', async () => {
+    mockGetCohortBySlug.mockResolvedValue(MOCK_COHORT_ANNOUNCED);
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.availability).toBe('https://schema.org/PreOrder');
+  });
+
+  it('unit_cohort_detail_jsonld_availability_soldout', async () => {
+    for (const status of ['closed', 'enrolled', 'shipped'] as const) {
+      mockGetCohortBySlug.mockResolvedValue({
+        ...MOCK_COHORT_ANNOUNCED,
+        meta: { ...MOCK_COHORT_ANNOUNCED.meta, status },
+      });
+      const { container, unmount } = await renderDetail();
+      const ld = findJsonLd(container)!;
+      const offers = ld.offers as Record<string, unknown>;
+      expect(offers.availability).toBe('https://schema.org/SoldOut');
+      unmount();
+    }
+  });
+
+  it('unit_cohort_detail_jsonld_course_instance_workload', async () => {
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const ci = ld.hasCourseInstance as Record<string, unknown>;
+    expect(ci['@type']).toBe('CourseInstance');
+    expect(ci.courseMode).toBe('Online');
+    expect(ci.courseWorkload).toBe('PT10H');
+    expect(ci.startDate).toBe('2026-07-06');
+    expect(ci.endDate).toBe('2026-08-14');
+  });
+
+  it('sec_tampering_jsonld_no_injection', async () => {
+    // Cohort with a </script> sequence in title — JSON.stringify must escape
+    // the forward slash so the surrounding <script> tag isn't broken out of.
+    const malicious = {
+      ...MOCK_COHORT_ANNOUNCED,
+      meta: {
+        ...MOCK_COHORT_ANNOUNCED.meta,
+        title: 'Title with </script><script>alert(1)</script>',
+        summary: 'Quote " in description',
+      },
+    };
+    mockGetCohortBySlug.mockResolvedValue(malicious);
+    const { container } = await renderDetail();
+    const script = container.querySelector('script[type="application/ld+json"]')!;
+    const ld = JSON.parse(script.textContent ?? '{}');
+    // The malicious title round-trips through JSON parse — no injection.
+    expect(ld.name).toBe('Title with </script><script>alert(1)</script>');
+    expect(ld.description).toBe('Quote " in description');
+  });
+
+  it('edge_jsonld_zero_price', async () => {
+    mockGetCohortBySlug.mockResolvedValue({
+      ...MOCK_COHORT_ANNOUNCED,
+      meta: { ...MOCK_COHORT_ANNOUNCED.meta, priceCents: 0 },
+    });
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.price).toBe('0.00');
+  });
+
+  it('edge_jsonld_status_unknown', async () => {
+    mockGetCohortBySlug.mockResolvedValue({
+      ...MOCK_COHORT_ANNOUNCED,
+      meta: {
+        ...MOCK_COHORT_ANNOUNCED.meta,
+        status: 'some-future-status' as unknown as 'announced',
+      },
+    });
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.availability).toBe('https://schema.org/SoldOut');
+  });
+
+  it('data_jsonld_price_precision', async () => {
+    mockGetCohortBySlug.mockResolvedValue({
+      ...MOCK_COHORT_ANNOUNCED,
+      meta: { ...MOCK_COHORT_ANNOUNCED.meta, priceCents: 12345 },
+    });
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.price).toBe('123.45');
+    // Exactly 2 decimals
+    expect(/^\d+\.\d{2}$/.test(offers.price as string)).toBe(true);
+  });
+
+  it('data_jsonld_currency_uppercased', async () => {
+    mockGetCohortBySlug.mockResolvedValue({
+      ...MOCK_COHORT_ANNOUNCED,
+      meta: { ...MOCK_COHORT_ANNOUNCED.meta, currency: 'usd' },
+    });
+    const { container } = await renderDetail();
+    const ld = findJsonLd(container)!;
+    const offers = ld.offers as Record<string, unknown>;
+    expect(offers.priceCurrency).toBe('USD');
+  });
+
+  it('perm_anonymous_cohort_detail_allow', async () => {
+    // anonymous access to public cohort detail page renders JSON-LD
+    const { container } = await renderDetail();
+    expect(
+      container.querySelector('script[type="application/ld+json"]'),
+    ).toBeInTheDocument();
+  });
 });

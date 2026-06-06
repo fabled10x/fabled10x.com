@@ -11,6 +11,109 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: cohort-enrollment-4.3
+    name: Account Cohorts View + SEO/Sitemap/Robots/Nav/Middleware Polish
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add account cohorts view + SEO polish with 69 tests (cohort-enrollment-4.3)
+    tests: 69
+    files_new: 2
+    files_modified: 7
+    pushed: false
+    notes: |
+      Final feature of cohort-enrollment job (merges old 4.5 + 4.6).
+      Two sub-features shipped together: Account Cohorts View (old 4.5)
+      and SEO/Sitemap/Robots/Nav/Middleware Polish (old 4.6).
+
+      Implementation: 2 new files + 7 modified files.
+      - NEW src/components/account/CohortList.tsx — shared list component
+        with Enrolled section + Applications section + empty state + paid-
+        application filter (Set-based id lookup via enrollment.applicationId).
+        formatDate uses Intl.DateTimeFormat with UTC pin for ISO date
+        strings (matches cohort.startDate DATE column semantics).
+      - NEW src/app/products/account/cohorts/page.tsx — auth-gated RSC,
+        Promise.all parallel queries (applications + enrollments + cohorts),
+        ?enrolled banner with role=status, ← Back link to /products/account,
+        metadata.robots noindex.
+      - MODIFY src/app/products/account/page.tsx — appended 3 parallel
+        queries (cohortApplications, cohortEnrollments, getAllCohorts),
+        added 'My cohorts' card above Purchases when hasCohortActivity
+        with 'View all' link to /products/account/cohorts.
+      - MODIFY src/app/cohorts/[slug]/page.tsx — appended Course + Offer
+        JSON-LD via <script type='application/ld+json'> + JSON.stringify.
+        offers.price = (priceCents/100).toFixed(2), priceCurrency =
+        currency.toUpperCase(). offers.availability derived from cohort.
+        status via 3-way ternary: open→InStock, announced→PreOrder, else
+        (closed/enrolled/shipped/unknown)→SoldOut.
+      - MODIFY src/app/sitemap.ts — added /cohorts static route + per-cohort
+        URLs from getAllCohorts(), changeFrequency='weekly', priority 0.7.
+        Excluded gated routes (/apply, /checkout, /admin, /products/account/
+        cohorts) by never including them.
+      - MODIFY src/app/robots.ts — added /cohorts/*/apply, /cohorts/*/
+        checkout, /admin, /products/account/cohorts to disallow list.
+      - MODIFY src/components/site/Header.tsx — inserted
+        { href: '/cohorts', label: 'Cohorts' } into NAV_ITEMS between
+        /build-log and /products (planning doc said between /cases and
+        /products; placed between build-log and products since build-log
+        was added after planning doc was written).
+      - MODIFY public/llms.txt — appended /cohorts paragraph mentioning
+        the public catalog + gated subroutes.
+
+      Test-infra rewires (mirror standard pattern from prior sections):
+      - src/app/products/account/__tests__/page.test.tsx — extended db
+        mock with cohort table markers + CohortList stub + getAllCohorts
+        mock. NO assertions changed; pre-existing test intent preserved.
+        Required because the account page's subject-under-test gained new
+        cohort dependencies in 4.3.
+      - src/lib/build-log/__tests__/pipeline-state.test.ts — added
+        vi.mock('../repo-root', ...) so the test works under git worktrees
+        where getRepoRoot() returns the main repo path via git --git-
+        common-dir, not process.cwd(). Pre-existing regression introduced
+        by commit eaa0a4b ('Show concurrent worktrees on the build log');
+        the production code was worktree-aware but the test wasn't. Fix
+        is purely a test mock addition — production code untouched.
+
+      Refactor produced ZERO code changes — 13th consecutive zero-source-
+      change refactor section (so-1.1, so-1.2, so-1.3, ce-2.2, ce-1.3,
+      bpd-2.3, ce-2.1, ce-3.1, so-2.1, so-2.2, so-2.3, so-2.4, now
+      ce-4.3). 3 cross-section opportunities deferred per established
+      trigger conditions (formatDate twin in PurchaseList kept intentional
+      timezone divergence; CohortList Enrolled/Applications sections
+      diverge per-row enough that extraction obscures intent; JSON-LD
+      availability ternary is canonical idiom).
+
+      69 tests = 22 unit + 12 integration + 4 security (STRIDE: spoofing,
+      tampering, info disclosure ×2) + 5 a11y + 7 infra + 7 edge + 2 err
+      (db throws, getAllCohorts throws) + 4 data integrity (serializer
+      boundary, query filter, JSON-LD precision, currency uppercase) + 6
+      permission (4 routes × roles). 1 category explicitly N/A: contract
+      (no API endpoints — RSC HTML is not a JSON contract).
+
+      Concurrent session context: styling-overhaul-3.3 is the active
+      primary section per session.current_section. ce-4.3 commit
+      explicitly stages only this section's files. Worktree isolation
+      via /worktree-claim CLAIM-04 (bind-mounted node_modules from main;
+      no env files to symlink in this static-site repo). Branched from
+      origin/main 0a8152e BrushstrokeSeam.
+
+      Build status: npm run build hits the pre-existing
+      loader_build_incompat at /episodes/[slug] generateStaticParams.
+      UNCHANGED from origin/main HEAD (0a8152e) and from every prior
+      section since wf-3.2. ZERO BEARING on ce-4.3 (no loader changes).
+      User has uncommitted loader fixes in main-repo working tree that
+      resolve this independently. Documented in green-progress.yaml +
+      refactor-progress.yaml + beats.yaml.
+
+      Blocker cleared: cohort-enrollment JOB COMPLETE (10/10 features
+      shipped). Only 4.2 (decision email + HMAC token + checkout route +
+      Stripe webhook cohort branch) remains as the canonical next ce
+      section — its enrollment INSERT path is what populates the cohort_
+      enrollments table that 4.3 queries today (4.3 renders empty state
+      until 4.2 lands and a real payment flows through).
+
+      Next ce section: cohort-enrollment-4.2 (Decision email + HMAC token +
+      checkout route + Stripe webhook cohort branch). Once 4.2 ships,
+      the entire ce job is end-to-end live.
   - id: styling-overhaul-3.2
     name: BrushstrokeSeam (SVG mask + texture overlay primitive)
     completed_at: '2026-06-06'
