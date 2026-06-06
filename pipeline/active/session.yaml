@@ -2,9 +2,9 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-2.2
-  current_agent: refactor
-  current_stage: styling-overhaul-2.2-refactor-complete
+  current_section: styling-overhaul-2.4
+  current_agent: pending
+  current_stage: styling-overhaul-2.3-complete
   concurrent_jobs:
     - id: cohort-enrollment-3.2
       phase: cohort-enrollment
@@ -19,6 +19,141 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-2.3
+    name: "DropAccent oversized-punctuation primitive"
+    completed_at: "2026-06-06"
+    commit_hash: "pending"
+    commit_message: "Add DropAccent oversized-punctuation primitive with 21 tests (styling-overhaul-2.3)"
+    tests: 21  # 11 unit + 2 integration + 2 a11y + 2 infra + 4 edge; security/permission/contract/err_recovery/data_integrity all N/A
+    files_new: 3   # src/components/brand/DropAccent.tsx + src/components/brand/index.ts + src/components/brand/__tests__/DropAccent.test.tsx (plus pipeline/active/styling-overhaul-2.3/beats.yaml committed as section state)
+    files_modified: 3   # currentwork/styling-overhaul/README.md (status flip), pipeline/active/session.yaml, pipeline/active/knowledge.yaml
+    pushed: false
+    notes: |
+      Third feature of styling-overhaul Phase 2 (Typography). Pure
+      presentational RSC primitive — first file in the NEW
+      src/components/brand/ component directory. No 'use client',
+      no I/O, no state, no async, no API surface, no DB.
+
+      Pattern: locked TS string-literal union (AccentGlyph = 7
+      brand-approved glyphs) + internal AccentSize union (NOT exported)
+      + Record<Size, classString> for size-driven class swap + Fragment
+      return (no wrapper element so the primitive embeds inline inside
+      headlines without disrupting parent layout) + children pass-through
+      preserves React JSX escaping for free + sibling
+      <span aria-hidden='true'> for the oversized Oxblood glyph.
+
+      Tailwind 4 arbitrary-value syntax: text-(--color-oxblood) +
+      font-display + align-baseline + size class. text-(--color-oxblood)
+      resolves to the so-1.1 brand palette; font-display resolves to
+      Cinzel-900 via the so-2.1 layout.tsx font.variable + so-2.2
+      @theme inline re-declaration.
+
+      21 tests in a single sibling-style file
+      (src/components/brand/__tests__/DropAccent.test.tsx): 11 unit
+      (per-glyph render, span aria-hidden, three size class swaps,
+      default size = 'large', fragment-not-wrapper, class assertions
+      for color/font/baseline) + 2 integration (headline context +
+      barrel export) + 2 a11y (aria-hidden + no-text-alternative) +
+      2 infra (barrel re-export + no 'use client' directive via
+      readFileSync grep) + 4 edge (no children, empty-string children,
+      complex JSX children, all glyphs share base classes). 5
+      categories N/A per discovery.yaml: security (TS-locked glyph +
+      React escaping; STRIDE n/a globally), permission (no API),
+      contract (no API), error_recovery (sync render, no failure surface),
+      data_integrity (no models). All justified inline.
+
+      Refactor produced ONE test-file edit (removed unused `screen`
+      import — ESLint warning fix) and ZERO source-code changes —
+      11th consecutive zero-source-change refactor section (so-1.1,
+      so-1.2, so-1.3, ce-2.2, ce-1.3, bpd-2.3, ce-2.1, ce-3.1, so-2.1,
+      so-2.2, now so-2.3). Audits clean: 0 any/as/@ts-ignore in
+      section files, 0 ESLint warnings, build clean (52 static pages
+      prerendered — 12th consecutive section).
+
+      Shipping pattern: DropAccent is shipped standalone for
+      downstream Phase 6/7/8 consumption (Phase 6.x cards, Phase
+      7.1 homepage hero, Phase 8.2 og:image, Phase 8.3 thumb-preview).
+      No parent page mounts it in 2.3 per discovery.yaml#
+      implementation_order group 4 not_applicable. This shipping
+      pattern matches bpd-2.1 MarkdownDocument exactly (shipped in
+      2.1, mounted by 2.2/2.3 build-log pages later).
+
+      Concurrent runs: working tree has prior modifications from other
+      sessions (CLAUDE.md M, currentwork/website-foundation/* M,
+      pipeline/active/storefront-auth-3.3 D, src/lib/content/* M,
+      vitest.config.ts D, src/__tests__/mocks/.gitkeep N, src/__tests__/
+      vitest.d.ts N, src/content/episodes/manifest.ts N, src/content/
+      cases/manifest.ts N, multiple untracked currentwork/ dirs,
+      pipeline/active/cohort-enrollment-3.2/ N, pipeline/CONTINUATION-
+      PROMPT.md / IMPLEMENTATION-LOG.md / README.md / TECH-DECISIONS.md
+      N). so-2.3 commit explicitly stages ONLY this section's files +
+      shared state (session.yaml, knowledge.yaml, currentwork/styling-
+      overhaul/README.md, pipeline/active/styling-overhaul-2.3/beats.yaml).
+
+      Blocker cleared: styling-overhaul Phase 2 (Typography) extends
+      further. Next sections:
+        - so-2.4 (.build-log-prose retrofit) is the canonical next so
+          section — replaces every magic-value in .build-log-prose
+          with var(--text-display-2/-3), var(--tracking-display),
+          var(--leading-display), var(--leading-body), var(--font-display),
+          var(--font-body), var(--font-mono), and existing brand color
+          tokens. Phase 2 will be COMPLETE after 2.4 ships.
+        - so-3.1, so-3.2, so-3.3 (Phase 3 Material Language) can also
+          start in parallel — independent of typography utility surface.
+
+  - id: styling-overhaul-2.2
+    name: Type scale + display-rule utilities
+    completed_at: '2026-06-06'
+    commit_hash: ec618ed
+    commit_message: Add type scale + display-rule utilities with 41 tests (styling-overhaul-2.2)
+    tests: 41
+    files_new: 1
+    files_modified: 4
+    pushed: true
+    notes: "Second feature of styling-overhaul Phase 2 (Typography). Pure CSS\ntokens\
+      \ + utility-class surface — single-file edit to\nsrc/app/globals.css adding\
+      \ 11 type-scale tokens to @theme inline +\n8 utility classes to @layer components.\
+      \ No TypeScript, no React,\nno API, no DB. Same canonical CSS-token-only pipeline\
+      \ shape as\nso-1.1 / so-1.2 / so-1.3 / so-2.1.\n\nImplementation pattern: @theme\
+      \ inline gains\n--text-display-1/-2/-3 (display-1 and -2 use 3-arg clamp() for\n\
+      fluid scaling, display-3 fixed at 1.5rem), --tracking-display,\n--leading-display,\
+      \ --text-body-1/-2/-3, --leading-body,\n--text-label, --tracking-label. @layer\
+      \ components prepends 8\nutilities (.display-1/-2/-3, .body-1/-2/-3, .label,\
+      \ .mono) BEFORE\nthe preserved .build-log-prose block so the broader-purpose\n\
+      utilities sit at the top of the layer; so-2.4 retrofit will\nreference these\
+      \ via var-name.\n\nTest pattern: src/__tests__/brand/type-scale.test.ts (NEW)\
+      \ — 4th\nsibling brand-sentinel file (after tokens.test.ts, spacing.test.ts,\n\
+      fonts.test.ts). Adds @layer components introspection via a\ncomponentsBlock\
+      \ regex + extractRule(selector) helper. 41 tests:\n20 unit + 6 integration +\
+      \ 4 infra + 5 edge + 3 a11y + 1 err + 3\ndata. Security / permission / contract\
+      \ N/A per\ninterfaces.yaml#stride_global (no input / auth / API surface).\n\n\
+      Refactor produced ZERO code changes — 10th consecutive zero-change\nrefactor\
+      \ section. Two cross-section opportunities captured +\ndeferred:\n  (1) readFileSync\
+      \ + themeBlock/componentsBlock regex extractors\n      now duplicated 4x across\
+      \ brand-sentinel siblings — defer to\n      dedicated brand-sentinel-test-helpers\
+      \ refactor section,\n      ideally after so-3.3 ships its 5th sibling\n  (2)\
+      \ Object.freeze on episodes.ts / cases.ts cache assignments\n      still open\
+      \ from bpd-1.1 (10 sections deferred)\n\nAll audits clean: zero any/as/@ts-ignore\
+      \ in section files, 0\nESLint warnings, build clean (52 static pages prerendered\
+      \ — 11th\nconsecutive section after sa-2.1, ce-1.2, etc.). 0 new skipped\ntests;\
+      \ the 60 skipped are pre-existing DATABASE_URL-gated.\n\nPre-existing fix landed\
+      \ inline during preflight: session.yaml had\norphaned duplicate fields from\
+      \ a concurrent so-2.1 finish that were\ncausing YAMLParseError in pipeline-state.test.ts\
+      \ integration tests.\nRemoved lines 95-127 (duplicate commit_message/tests/files_new/\n\
+      pushed/notes block under styling-overhaul-2.1 entry). Pipeline-\nstate tests\
+      \ now pass cleanly.\n\nConcurrent runs: working tree has prior modifications\
+      \ from other\nsessions (CLAUDE.md M, currentwork/website-foundation/* M,\npipeline/active/storefront-auth-3.3\
+      \ D, src/lib/content/* M,\nvitest.config.ts D, multiple untracked currentwork/\
+      \ dirs).\nso-2.2 commit explicitly stages only this section's files +\nshared\
+      \ state (session.yaml, knowledge.yaml, currentwork/styling-\noverhaul/README.md,\
+      \ pipeline/active/styling-overhaul-2.2/beats.yaml).\n\nBlocker cleared: styling-overhaul\
+      \ Phase 2 (Typography) extends\nfurther. Next sections:\n  - so-2.3 (DropAccent\
+      \ oversized-punctuation primitive) —\n    consumes --color-oxblood + var(--font-display);\
+      \ no upstream\n    dependencies, can start now\n  - so-2.4 (.build-log-prose\
+      \ retrofit) — replaces magic values in\n    .build-log-prose with the new type-scale\
+      \ vars + .mono utility\n    (sequences AFTER so-2.2 — now unblocked)\n  - so-3.1,\
+      \ so-3.2, so-3.3 (Phase 3 Material Language) can also\n    start in parallel\
+      \ — independent of typography utility surface\n"
   - id: styling-overhaul-2.1
     name: Font loading swap (Cinzel + Inter + JetBrains Mono)
     completed_at: '2026-06-06'
@@ -1167,7 +1302,7 @@ completed_sections:
   - id: storefront-auth-4.2
     name: SEO + Error Boundaries + Lighthouse Sweep
     completed_at: '2026-04-14'
-    commit_hash: 68914e0
+    commit_hash: 68914.0
     commit_message: Add SEO + error boundaries with 25 tests (storefront-auth-4.2)
     tests: 25
     files_new: 5
@@ -1392,13 +1527,17 @@ completed_sections:
 
       '
 resume_point:
-  last_action: section_cohort_enrollment_2.2_completed
-  next_action: cohort-enrollment-3.1 (CohortApplicationInputSchema Zod validator)
-    — unblocks ce-3.2 application flow. styling-overhaul-1.3 also complete; next so
-    section is 2.1 (typography font loading).
-  notes: cohort-enrollment Phase 2 (Waitlist + Persistence) COMPLETE — 2.1 (tables)
-    + 2.2 (form + action + email) shipped. styling-overhaul Phase 1 also complete
-    (1.1/1.2/1.3 all shipped). Two parallel job tracks both ready for their next Phase.
+  last_action: section_styling_overhaul_2.3_completed
+  next_action: styling-overhaul-2.4 (.build-log-prose retrofit) — canonical next so
+    section, will complete Phase 2 (Typography). cohort-enrollment-3.2 (apply page
+    + middleware + ApplicationForm + submitApplication + applicant email) remains
+    next ce section. Phase 3 (Material Language) sections 3.1/3.2/3.3 can also
+    parallelize independently.
+  notes: styling-overhaul Phase 2 (Typography) extends — 2.1 (font swap) + 2.2
+    (type scale utilities) + 2.3 (DropAccent primitive) all shipped. so-2.4
+    (.build-log-prose retrofit) is the last so Phase 2 feature. DropAccent
+    is shipped standalone per planning doc for downstream Phase 6/7/8 mounting
+    (same shipping pattern as bpd-2.1 MarkdownDocument).
 notes: 'fabled10x project initialized on 2026-04-11.
 
   Skills ported from partymasters (see pipeline/TECH-DECISIONS.md).

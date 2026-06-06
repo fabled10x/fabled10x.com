@@ -2468,3 +2468,105 @@ styling-overhaul-2.2:
       surface primitives consume --color-marble/-parchment/-bone/-shadow,
       so-3.3 forbidden-pattern sentinel extends the existing brand-sentinel
       test pattern that so-2.2 just added to (now 4 sibling files)
+
+styling-overhaul-2.3:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - id: brand_primitive_component
+      file: "src/components/brand/DropAccent.tsx"
+      description: |
+        First file in a NEW src/components/brand/ component directory. Pure
+        presentational RSC pattern for brand-visual primitives shipped
+        standalone for downstream Phase 6/7/8 consumption (same shipping
+        pattern as bpd-2.1 MarkdownDocument, which shipped in 2.1 then
+        was mounted in 2.2/2.3).
+
+        Component shape:
+          1. Locked TS string-literal union for the only constrained prop
+             (e.g. AccentGlyph = '?' | '.' | '!' | '→' | '✕' | '✓' | '—')
+          2. Internal AccentSize union NOT exported — kept off the public surface
+          3. Record<Size, classString> map for size-driven Tailwind class swap
+          4. Fragment return (no wrapper element) so the primitive can embed
+             inline inside headlines / spans without disrupting parent layout
+          5. {children}{<accent span aria-hidden='true'>{glyph}</span>}
+             — children pass-through preserves React JSX escaping for free
+          6. Tailwind arbitrary-value classes (text-(--color-oxblood),
+             font-display) reference brand vars declared in @theme inline
+             (so-1.1 + so-2.1 + so-2.2 deposit the variables)
+      reusable_for:
+        - "Future brand primitives in src/components/brand/ (so-3.1 surface primitives, so-4.1 Logo, so-5.1 Button)"
+        - "Any component where 1-3 categorical props map to a small string-class swap (size, intent, surface)"
+        - "Any visual decoration where aria-hidden='true' is the correct semantic"
+    - id: brand_component_barrel
+      file: "src/components/brand/index.ts"
+      description: |
+        Single-line `export { DropAccent, type AccentGlyph } from './DropAccent';`
+        kicks off the brand barrel. Type re-export keyword (`type AccentGlyph`)
+        ensures the union does not leak into runtime when consumers do
+        `import { type AccentGlyph } from '@/components/brand'`.
+      reusable_for: "Every future src/components/brand/ component — add a single export line per file"
+    - id: rsc_purity_sentinel
+      file: "src/components/brand/__tests__/DropAccent.test.tsx (infra_drop_accent_no_use_client_directive)"
+      description: |
+        readFileSync(component.tsx) + regex check for the literal 'use client'
+        directive at file-top. Lighter-weight than the brand-sentinel siblings'
+        @theme/@layer extractors — just a single grep. Useful for any future
+        primitive where 'pure RSC' is part of the contract.
+      reusable_for: "so-3.1 surface primitives, so-4.1 Logo, so-5.x where RSC-purity is desired"
+
+  gotchas:
+    - "Tailwind 4 arbitrary-value syntax for CSS vars is text-(--color-oxblood) — note the parentheses around the var name. Earlier Tailwind versions used text-[var(--color-oxblood)] which still works but is more verbose. Match the so-2.2 .display-1 utility's existing pattern."
+    - "AccentSize union deliberately NOT exported from index.ts. DropAccentProps.size accepts the union literal directly, and consumers pass string literals. Exporting AccentSize would create a second public type whose only purpose is to widen surface area."
+    - "JSX whitespace handling: `<h1>foo<DropAccent glyph='?' /></h1>` formatted across lines renders as exactly 2 childNodes (TextNode 'foo' + glyph span). React strips whitespace-only text nodes between sibling elements. The unit_drop_accent_returns_fragment_not_wrapper_element test relies on this."
+    - "edge_drop_accent_empty_string_children: React renders {''} as no DOM content (empty strings are filtered). The test asserts via host.textContent.trim() === '!' which works whether or not React emits an empty text node."
+
+  reusable_utilities:
+    - component: "DropAccent({ glyph, size?, children? })"
+      file: "src/components/brand/DropAccent.tsx"
+      purpose: "Oversized Oxblood end-of-headline punctuation accent. Three sizes (inline | large | thumbnail). Locked glyph set (?, ., !, →, ✕, ✓, —). aria-hidden so screen readers skip it. Wrap any headline as `<h1 className='display-1'>Build a 10x agency<DropAccent glyph='?' /></h1>`."
+      consumed_by:
+        - "Future so-6.x cards (`<EditorialCard>` titles)"
+        - "Future so-7.1 homepage hero composition (largest brand-mark consumer)"
+        - "Future so-8.2 dynamic og:image (`thumbnail` size)"
+        - "Future so-8.3 /thumb-preview YouTube thumb composition"
+    - type: "AccentGlyph"
+      file: "src/components/brand/index.ts"
+      purpose: "TS-union of the 7 brand-approved accent glyphs. Import as `type AccentGlyph` from '@/components/brand'."
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/__tests__/brand/{tokens,spacing,fonts,type-scale}.test.ts + new src/components/brand/__tests__/DropAccent.test.tsx infra_no_use_client_directive"
+      description: |
+        readFileSync helper now used in 5 sibling test files, but DropAccent's
+        use is NOT the @theme/@layer regex shape — it's a single literal-grep
+        for 'use client'. so-2.2's deferred brand-sentinel-test-helpers refactor
+        only covers the @theme/@layer extractors. The RSC-purity sentinel is a
+        different family. Keep the brand-test-helpers refactor deferred to
+        AFTER so-3.3 ships its 5th sentinel sibling; the RSC-purity sentinel
+        stays inline.
+      priority: low
+    - target: "src/lib/content/{episodes,cases}.ts:24"
+      description: "Object.freeze cache assignment — open since bpd-1.1 (11 sections deferred). Not blocking any feature."
+      priority: low
+
+  refactor_zero_change_streak: 11
+  refactor_streak_note: |
+    11th consecutive zero-source-code-change refactor section
+    (so-1.1, so-1.2, so-1.3, ce-2.2, ce-1.3, bpd-2.3, ce-2.1, ce-3.1, so-2.1, so-2.2, now so-2.3).
+    DropAccent had one test-file lint cleanup (unused `screen` import) — no
+    source changes. Pattern is now extremely stable for any single-component
+    brand primitive shipped via planning-doc-driven implementation.
+
+  blocker_cleared: |
+    styling-overhaul Phase 2 (Typography) continues. Status:
+      - 2.1 (font loading swap): COMPLETE
+      - 2.2 (type scale + utilities): COMPLETE
+      - 2.3 (DropAccent primitive): COMPLETE (this section)
+      - 2.4 (.build-log-prose retrofit): unblocked, depends on 2.2 vars
+        which are now in place
+    so-2.4 is the canonical next so section. Phase 3 (Material Language —
+    3.1/3.2/3.3) can also start in parallel; independent of typography
+    utility surface.
+    DropAccent itself is shipped standalone here per planning doc — its
+    real consumers (so-6.x cards, so-7.1 hero, so-8.2/8.3 og:image+thumb)
+    will mount it at their own section boundaries, same shipping pattern
+    as bpd-2.1 MarkdownDocument.
