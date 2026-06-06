@@ -432,7 +432,7 @@ Feature Overview table for which old IDs each new ID merges.
 | `cohort-enrollment-1.3`     | `/cohorts` index + `/cohorts/[slug]` detail pages             | 1.4 + 1.5         |
 | `cohort-enrollment-2.1`     | Drizzle migration + 4 new tables                               | 2.1               |
 | `cohort-enrollment-2.2`     | Waitlist form + `submitWaitlist` + confirmation email          | 2.2 + 2.3         |
-| `cohort-enrollment-3.1`     | Application input schema + validator                           | 3.1               |
+| `cohort-enrollment-3.1` ✅  | Application input schema + validator                           | 3.1               |
 | `cohort-enrollment-3.2`     | Apply page + middleware + `<ApplicationForm>` + `submitApplication` + applicant email | 3.2 + 3.3 + 3.4   |
 | `cohort-enrollment-4.1`     | Admin layout + allowlist + list + detail + `decideApplication` | 4.1 + 4.2         |
 | `cohort-enrollment-4.2`     | Decision email + HMAC token + checkout route + Stripe webhook branch | 4.3 + 4.4         |

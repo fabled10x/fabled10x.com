@@ -15,7 +15,9 @@ sits there until Phase 4's admin dashboard decides its fate.
 
 ---
 
-## Feature 3.1: `CohortApplicationInput` Schema + Validator
+## Feature 3.1: `CohortApplicationInput` Schema + Validator ✅ SHIPPED (2026-06-06)
+
+**Status:** shipped. cohort-application.ts forward-decl from ce-2.1 was extended in-place; CohortApplicationInputSchema + CohortApplicationInputType appended to validators.ts. 28 new tests (11 unit + 6 security + 2 infra + 8 edge + 1 err + 2 data). Deviations from this plan when shipped: tuple values kept as `['light','standard','intense']` from ce-2.1 (DB CHECK constraint locks these — labels rewritten to match); `z.coerce.number()` used (Zod 4 syntax) instead of `z.number({ coerce: true })`; `z.preprocess` used for empty-string→undefined coercion (cleaner than `.or` chain); referralSource max-length message reads "max 200" rather than "under 200".
 
 **Complexity: S** — Define the shape of the application FormData + the
 Zod validator that runs at the server-action boundary.

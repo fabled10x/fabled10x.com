@@ -1464,3 +1464,372 @@ describe('Cohort data integrity', () => {
     }
   });
 });
+
+// ════════════════════════════════════════════════════════════════════
+// cohort-enrollment-3.1: CohortApplicationInputSchema
+// ════════════════════════════════════════════════════════════════════
+
+// Imports for ce-3.1 (placed at bottom to avoid disturbing earlier ordering).
+import {
+  CohortApplicationInputSchema,
+  type CohortApplicationInputType,
+} from '@/content/schemas/validators';
+import {
+  CohortApplicationInputSchema as CohortApplicationInputSchemaBarrel,
+} from '@/content/schemas';
+import {
+  APPLICATION_COMMITMENT_LEVELS,
+  type CohortApplicationInput,
+} from '@/content/schemas/cohort-application';
+import { CONTENT_PILLARS } from '@/content/schemas/content-pillar';
+
+const VALID_APPLICATION_MINIMAL: CohortApplicationInput = {
+  cohortSlug: 'workflow-mastery-2026-q4',
+  background:
+    "I'm a senior engineer at a fintech startup with five years of full-stack " +
+    'experience. I have shipped multiple production systems including an internal ' +
+    'CRM and a data pipeline that processes a million records a day. I want to ' +
+    'understand how AI agent teams change the shape of that work in practice.',
+  goals:
+    'Ship one production-grade feature using an AI agent team during the cohort, ' +
+    'and measure delivery throughput against my baseline.',
+  commitmentLevel: 'standard',
+  commitmentHours: 8,
+  timezone: 'America/New_York',
+  pillarInterest: 'workflow',
+};
+
+const STR = (n: number) => 'x'.repeat(n);
+
+// ── Unit Tests ──────────────────────────────────────────────────────
+
+describe('CohortApplicationInputSchema (ce-3.1)', () => {
+  it('unit_schema_minimal_valid_input_passes: accepts a minimal valid input (all required fields, no referralSource)', () => {
+    const result = CohortApplicationInputSchema.parse(VALID_APPLICATION_MINIMAL);
+    expect(result.cohortSlug).toBe('workflow-mastery-2026-q4');
+    expect(result.commitmentLevel).toBe('standard');
+    expect(result.commitmentHours).toBe(8);
+    expect(result.pillarInterest).toBe('workflow');
+    expect(result.referralSource).toBeUndefined();
+  });
+
+  it('unit_schema_referral_source_optional_passes: accepts a valid 200-char referralSource', () => {
+    const result = CohortApplicationInputSchema.parse({
+      ...VALID_APPLICATION_MINIMAL,
+      referralSource: STR(200),
+    });
+    expect(result.referralSource).toBe(STR(200));
+  });
+
+  it("unit_schema_referral_source_empty_string_transforms_to_undefined: referralSource: '' parses and resolves to undefined", () => {
+    const result = CohortApplicationInputSchema.parse({
+      ...VALID_APPLICATION_MINIMAL,
+      referralSource: '',
+    });
+    expect(result.referralSource).toBeUndefined();
+  });
+
+  it("unit_schema_commitment_level_enum_accepts_light_standard_intense: each of 'light' / 'standard' / 'intense' is accepted as commitmentLevel", () => {
+    for (const level of APPLICATION_COMMITMENT_LEVELS) {
+      const result = CohortApplicationInputSchema.parse({
+        ...VALID_APPLICATION_MINIMAL,
+        commitmentLevel: level,
+      });
+      expect(result.commitmentLevel).toBe(level);
+    }
+  });
+
+  it('unit_schema_pillar_interest_enum_accepts_all_pillars: each of delivery / workflow / business / future is accepted as pillarInterest', () => {
+    for (const pillar of CONTENT_PILLARS) {
+      const result = CohortApplicationInputSchema.parse({
+        ...VALID_APPLICATION_MINIMAL,
+        pillarInterest: pillar,
+      });
+      expect(result.pillarInterest).toBe(pillar);
+    }
+  });
+
+  it("unit_schema_timezone_valid_iana_passes: accepts 'America/New_York' as timezone", () => {
+    const result = CohortApplicationInputSchema.parse({
+      ...VALID_APPLICATION_MINIMAL,
+      timezone: 'America/New_York',
+    });
+    expect(result.timezone).toBe('America/New_York');
+  });
+
+  it("unit_schema_timezone_gmt_offset_passes: accepts 'GMT+5' and 'UTC-08' as timezone", () => {
+    for (const tz of ['GMT+5', 'UTC-08']) {
+      const result = CohortApplicationInputSchema.parse({
+        ...VALID_APPLICATION_MINIMAL,
+        timezone: tz,
+      });
+      expect(result.timezone).toBe(tz);
+    }
+  });
+
+  it('unit_schema_input_type_inference: CohortApplicationInputType (z.input) is assignable from CohortApplicationInput', () => {
+    // Compile-time round-trip: if the inferred input type diverges from the
+    // hand-written interface, this fails to type-check.
+    const interfaceShaped: CohortApplicationInput = { ...VALID_APPLICATION_MINIMAL };
+    const inferredShaped: CohortApplicationInputType = interfaceShaped;
+    // And the opposite direction
+    const back: CohortApplicationInput = inferredShaped;
+    const result = CohortApplicationInputSchema.parse(back);
+    expect(result.cohortSlug).toBe(VALID_APPLICATION_MINIMAL.cohortSlug);
+  });
+});
+
+describe('CohortApplicationInputSchema barrel integration', () => {
+  it('infra_validators_module_barrel_wired: CohortApplicationInputSchema importable via @/content/schemas barrel', () => {
+    expect(CohortApplicationInputSchemaBarrel).toBeDefined();
+    const result = CohortApplicationInputSchemaBarrel.parse(VALID_APPLICATION_MINIMAL);
+    expect(result.cohortSlug).toBe(VALID_APPLICATION_MINIMAL.cohortSlug);
+  });
+});
+
+// ── Security Tests (STRIDE: Tampering + DoS) ────────────────────────
+
+describe('CohortApplicationInputSchema security (ce-3.1)', () => {
+  it("sec_tampering_invalid_commitment_level_rejected: commitmentLevel = 'maybe' is rejected at the validator boundary", () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      commitmentLevel: 'maybe',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("sec_tampering_invalid_pillar_interest_rejected: pillarInterest = 'marketing' is rejected (not in CONTENT_PILLARS)", () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      pillarInterest: 'marketing',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('sec_tampering_cohort_slug_must_be_kebab_lowercase: uppercase, whitespace, and SQL-injection-shaped slugs rejected', () => {
+    const vectors = ['UPPER', 'has spaces', "sql'; DROP TABLE--", 'with_underscore', 'has.dot'];
+    for (const v of vectors) {
+      const result = CohortApplicationInputSchema.safeParse({
+        ...VALID_APPLICATION_MINIMAL,
+        cohortSlug: v,
+      });
+      expect(result.success, `Expected slug "${v}" to be rejected`).toBe(false);
+    }
+  });
+
+  it('sec_dos_background_max_length_enforced: background of 5000 characters is rejected with "under 2000 characters" message', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      background: STR(5000),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/under 2000/);
+    }
+  });
+
+  it('sec_dos_referral_source_max_length_enforced: referralSource of 500 characters is rejected with "max 200" message', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      referralSource: STR(500),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/max 200/);
+    }
+  });
+
+  it("sec_tampering_timezone_regex_rejects_special_chars: 'bad!zone' and '<script>' rejected by timezone regex", () => {
+    const vectors = ['bad!zone', '<script>alert(1)</script>', 'has spaces', 'America$NewYork'];
+    for (const v of vectors) {
+      const result = CohortApplicationInputSchema.safeParse({
+        ...VALID_APPLICATION_MINIMAL,
+        timezone: v,
+      });
+      expect(result.success, `Expected timezone "${v}" to be rejected`).toBe(false);
+    }
+  });
+});
+
+// ── Edge Case Tests (input boundaries + FormData coercion) ──────────
+
+describe('CohortApplicationInputSchema edge cases (ce-3.1)', () => {
+  it('edge_input_background_at_min_boundary: background of exactly 80 chars passes; 79 chars fails', () => {
+    const ok = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      background: STR(80),
+    });
+    expect(ok.success).toBe(true);
+
+    const tooShort = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      background: STR(79),
+    });
+    expect(tooShort.success).toBe(false);
+    if (!tooShort.success) {
+      const messages = tooShort.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/at least a couple of sentences/);
+    }
+  });
+
+  it('edge_input_background_at_max_boundary: background of exactly 2000 chars passes; 2001 fails', () => {
+    const ok = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      background: STR(2000),
+    });
+    expect(ok.success).toBe(true);
+
+    const tooLong = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      background: STR(2001),
+    });
+    expect(tooLong.success).toBe(false);
+  });
+
+  it('edge_input_goals_at_min_boundary: goals of exactly 40 chars passes; 20 chars fails', () => {
+    const ok = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      goals: STR(40),
+    });
+    expect(ok.success).toBe(true);
+
+    const tooShort = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      goals: STR(20),
+    });
+    expect(tooShort.success).toBe(false);
+    if (!tooShort.success) {
+      const messages = tooShort.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/at least one concrete outcome/);
+    }
+  });
+
+  it("edge_input_commitment_hours_formdata_string_coerces: commitmentHours = '8' (string) is coerced to number 8 and passes", () => {
+    const result = CohortApplicationInputSchema.parse({
+      ...VALID_APPLICATION_MINIMAL,
+      // FormData delivers everything as strings — schema must coerce
+      commitmentHours: '8' as unknown as number,
+    });
+    expect(result.commitmentHours).toBe(8);
+    expect(typeof result.commitmentHours).toBe('number');
+  });
+
+  it('edge_input_commitment_hours_zero_rejected: commitmentHours = 0 fails with "at least 1 hour" message', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      commitmentHours: 0,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/at least 1 hour/);
+    }
+  });
+
+  it('edge_input_commitment_hours_over_max_rejected: commitmentHours = 100 fails with "max 80 hours" message', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      commitmentHours: 100,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join(' | ');
+      expect(messages.toLowerCase()).toMatch(/max 80 hours/);
+    }
+  });
+
+  it('edge_input_commitment_hours_fractional_rejected: commitmentHours = 8.5 fails (int constraint)', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      commitmentHours: 8.5,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('edge_input_referral_source_at_max_boundary: referralSource of exactly 200 chars passes; 201 fails', () => {
+    const ok = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      referralSource: STR(200),
+    });
+    expect(ok.success).toBe(true);
+
+    const tooLong = CohortApplicationInputSchema.safeParse({
+      ...VALID_APPLICATION_MINIMAL,
+      referralSource: STR(201),
+    });
+    expect(tooLong.success).toBe(false);
+  });
+});
+
+// ── Error Recovery Tests ────────────────────────────────────────────
+
+describe('CohortApplicationInputSchema error recovery (ce-3.1)', () => {
+  it('err_safe_parse_returns_aggregated_errors: safeParse on multi-bad-field input returns >= 3 issues with .path identifying each', () => {
+    const result = CohortApplicationInputSchema.safeParse({
+      cohortSlug: 'UPPER',
+      background: STR(10),
+      goals: STR(5),
+      commitmentLevel: 'maybe',
+      commitmentHours: 0,
+      timezone: 'bad!zone',
+      pillarInterest: 'marketing',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.length).toBeGreaterThanOrEqual(3);
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      // At least three distinct field paths should appear
+      const uniquePaths = new Set(paths);
+      expect(uniquePaths.size).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+// ── Data Integrity Tests ────────────────────────────────────────────
+
+describe('CohortApplicationInputSchema data integrity (ce-3.1)', () => {
+  it('data_consistency_schema_satisfies_typescript_interface: parsed output satisfies CohortApplicationInput (compile + runtime)', () => {
+    // Compile-time: the `satisfies z.ZodType<CohortApplicationInput>` clause in
+    // validators.ts means parse() output is assignable to CohortApplicationInput.
+    const parsed: CohortApplicationInput = CohortApplicationInputSchema.parse(
+      VALID_APPLICATION_MINIMAL,
+    );
+    // Runtime: every required field exists.
+    const requiredFields: ReadonlyArray<keyof CohortApplicationInput> = [
+      'cohortSlug',
+      'background',
+      'goals',
+      'commitmentLevel',
+      'commitmentHours',
+      'timezone',
+      'pillarInterest',
+    ];
+    for (const f of requiredFields) {
+      expect(parsed).toHaveProperty(f);
+    }
+  });
+
+  it('data_consistency_zod_enum_aligned_with_db_check: Zod commitmentLevel enum sourced from APPLICATION_COMMITMENT_LEVELS (same tuple Drizzle schema.ts feeds the CHECK clause)', () => {
+    // Cross-section invariant: the same `as const` tuple used to build the
+    // Drizzle CHECK constraint is what the Zod validator enforces, so the two
+    // can't drift. We verify here by asserting (a) every value in the tuple
+    // round-trips through the schema, and (b) any other plausible string fails.
+    for (const level of APPLICATION_COMMITMENT_LEVELS) {
+      const ok = CohortApplicationInputSchema.safeParse({
+        ...VALID_APPLICATION_MINIMAL,
+        commitmentLevel: level,
+      });
+      expect(ok.success, `Tuple value "${level}" must pass`).toBe(true);
+    }
+    // Strings the planning doc proposed but the DB does not allow
+    for (const phantom of ['exploring', 'serious', 'all-in']) {
+      const result = CohortApplicationInputSchema.safeParse({
+        ...VALID_APPLICATION_MINIMAL,
+        commitmentLevel: phantom,
+      });
+      expect(result.success, `Non-tuple value "${phantom}" must fail`).toBe(false);
+    }
+  });
+});

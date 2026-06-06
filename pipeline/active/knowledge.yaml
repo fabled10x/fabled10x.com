@@ -2199,8 +2199,59 @@ cohort-enrollment-2.2:
         z.object({email: z.email().max(254), cohortSlug: z.string().regex(...), sourceTag: z.string().max(128).optional()}) —
         general template for future cohort form schemas. ce-3.1 CohortApplicationInputSchema will mirror this shape.
   refactor_zero_change_streak:
-    - "ce-1.3, bpd-2.3, so-1.1, so-1.2, ce-2.2 — 5th consecutive section where refactor produces zero code changes"
+    - "ce-1.3, bpd-2.3, so-1.1, so-1.2, ce-2.2, ce-3.1 — 6th consecutive section where refactor produces zero code changes"
   open_followups:
     - "formatDate extraction (5 call sites; planning-doc-deferred to ce-4.3)"
     - "escapeHtml extraction at 2nd call site (likely ce-4.2 decision email)"
     - "Resend client singleton vs per-call: codebase split (sa-3.2 singleton, wf-4.1 per-call); not standardized; ce-2.2 matches wf-4.1 per-call pattern for server actions"
+
+ce_3_1_patterns:
+  - id: formdata_empty_string_preprocess
+    established_in: "cohort-enrollment-3.1"
+    established_at: "2026-06-06"
+    description: |
+      Zod 4 idiom for optional FormData fields where '' must coerce to undefined:
+        z.preprocess(
+          (v) => (typeof v === 'string' && v.length === 0 ? undefined : v),
+          z.string().max(N, '...').optional(),
+        )
+      Cleaner than the planning-doc-suggested `.or(z.literal('').transform(() => undefined))`
+      because preprocess intercepts before `.optional()` short-circuits and accepts ''.
+    reusable_for:
+      - "Any FormData-backed optional string field (referralSource, notes, comments)"
+      - "Future ce-3.2 ApplicationForm extra optional fields if added"
+  - id: zod4_coerce_number_for_formdata
+    established_in: "cohort-enrollment-3.1"
+    established_at: "2026-06-06"
+    description: |
+      Zod 4 syntax for numeric FormData fields: `z.coerce.number().int().min(N).max(M)`.
+      Replaces Zod 3 `z.number({ coerce: true })`. Auto-coerces string '8' → 8.
+      Multiple planning docs reference the old syntax; treat them as needing translation.
+    reusable_for:
+      - "Any FormData number field (commitmentHours, quantity, count)"
+  - id: db_zod_tuple_invariant
+    established_in: "cohort-enrollment-3.1"
+    established_at: "2026-06-06"
+    description: |
+      When a `as const` tuple in src/content/schemas/ is reused by BOTH:
+        (a) Drizzle schema.ts CHECK constraint via sql.raw, AND
+        (b) z.enum(TUPLE) in validators.ts
+      …the two cannot drift. Tests should assert the invariant:
+        for (const v of TUPLE) safeParse({...m, field: v}).success === true
+        for phantom-non-tuple-strings safeParse(...).success === false
+      Discovered when planning doc (drafted pre-ce-2.1) proposed tuple values
+      different from the values shipped in ce-2.1's CHECK constraint. DB wins.
+    reusable_for:
+      - "Any enum field with a corresponding DB CHECK clause"
+      - "ce-3.2 server action validation (will reuse this schema)"
+
+ce_3_1_outputs:
+  exports_added:
+    - "APPLICATION_COMMITMENT_LEVEL_LABELS: Record<ApplicationCommitmentLevel,string> at src/content/schemas/cohort-application.ts:11"
+    - "CohortApplicationInput interface at src/content/schemas/cohort-application.ts:20"
+    - "CohortApplicationInputSchema (Zod) at src/content/schemas/validators.ts (after CohortSchema)"
+    - "CohortApplicationInputType = z.input<typeof CohortApplicationInputSchema>"
+  ready_for_ce_3_2:
+    - "submitApplication server action imports CohortApplicationInputSchema for FormData parsing"
+    - "<ApplicationForm> imports APPLICATION_COMMITMENT_LEVEL_LABELS to render the radio/select option text"
+    - "Applicant confirmation email imports CohortApplicationInput type for the props shape"

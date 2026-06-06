@@ -5,6 +5,10 @@ import { SOURCE_MATERIAL_KINDS } from './source-material';
 import { CASE_STATUSES } from './case';
 import { PRODUCT_CATEGORIES, PRODUCT_LICENSE_TYPES } from './product';
 import { COHORT_STATUSES, type Cohort } from './cohort';
+import {
+  APPLICATION_COMMITMENT_LEVELS,
+  type CohortApplicationInput,
+} from './cohort-application';
 
 export const EpisodeSchema = z.object({
   id: z.string().min(1),
@@ -115,11 +119,43 @@ export const CohortSchema = z.object({
   publishedAt: z.iso.datetime(),
 }) satisfies z.ZodType<Cohort>;
 
+export const CohortApplicationInputSchema = z.object({
+  cohortSlug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/, 'invalid slug'),
+  background: z
+    .string()
+    .min(80, 'Tell us a bit more — at least a couple of sentences.')
+    .max(2000, 'Please keep background under 2000 characters.'),
+  goals: z
+    .string()
+    .min(40, 'Share at least one concrete outcome you are aiming for.')
+    .max(1500, 'Please keep goals under 1500 characters.'),
+  commitmentLevel: z.enum(APPLICATION_COMMITMENT_LEVELS),
+  commitmentHours: z.coerce
+    .number()
+    .int()
+    .min(1, 'Please enter at least 1 hour per week.')
+    .max(80, 'Please enter a realistic weekly commitment (max 80 hours).'),
+  timezone: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z_+\-/0-9]+$/, 'Invalid timezone.'),
+  pillarInterest: z.enum(CONTENT_PILLARS),
+  referralSource: z.preprocess(
+    (v) => (typeof v === 'string' && v.length === 0 ? undefined : v),
+    z.string().max(200, 'Please keep referral source to max 200 characters.').optional(),
+  ),
+}) satisfies z.ZodType<CohortApplicationInput>;
+
 export type EpisodeInput = z.input<typeof EpisodeSchema>;
 export type SourceMaterialInput = z.input<typeof SourceMaterialSchema>;
 export type CaseInput = z.input<typeof CaseSchema>;
 export type ProductInput = z.input<typeof ProductSchema>;
 export type CohortInput = z.input<typeof CohortSchema>;
+export type CohortApplicationInputType = z.input<typeof CohortApplicationInputSchema>;
 
 // ── Build-log schemas (build-in-public-docs-1.1) ────────────────────
 
