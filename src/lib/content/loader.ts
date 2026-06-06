@@ -1,4 +1,3 @@
-import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { ComponentType } from 'react';
 import type { ZodType } from 'zod';
@@ -12,29 +11,24 @@ export interface LoadedEntry<T> {
 export interface LoadContentOptions<T> {
   directory: string;
   schema: ZodType<T>;
-  importFn?: (filePath: string) => Promise<{ default: ComponentType; meta: unknown }>;
-  readdirFn?: (dirPath: string) => Promise<string[]>;
+  importFn: (filePath: string) => Promise<{ default: ComponentType; meta: unknown }>;
+  readdirFn: (dirPath: string) => Promise<string[]>;
 }
 
 export async function loadContent<T>(
   options: LoadContentOptions<T>,
 ): Promise<LoadedEntry<T>[]> {
   const dir = path.resolve(process.cwd(), options.directory);
-  const doReaddir = options.readdirFn ?? (async (p: string) => (await readdir(p)).map(String));
-  const files = await doReaddir(dir);
+  const files = await options.readdirFn(dir);
   const mdxFiles = files.filter((f) => f.endsWith('.mdx'));
 
   if (mdxFiles.length === 0) return [];
-
-  const doImport =
-    options.importFn ??
-    ((filePath: string) => import(filePath) as Promise<{ default: ComponentType; meta: unknown }>);
 
   return Promise.all(
     mdxFiles.map(async (file) => {
       const slug = file.replace(/\.mdx$/, '');
       const filePath = path.join(dir, file);
-      const mod = await doImport(filePath);
+      const mod = await options.importFn(filePath);
 
       if (!mod.default) {
         throw new Error(

@@ -1,5 +1,7 @@
+import path from 'node:path';
 import type { Episode } from '@/content/schemas';
 import { EpisodeSchema } from '@/content/schemas';
+import { episodeManifest } from '@/content/episodes/manifest';
 import { loadContent, type LoadedEntry } from './loader';
 
 let cache: LoadedEntry<Episode>[] | null = null;
@@ -9,6 +11,15 @@ export async function getAllEpisodes(): Promise<LoadedEntry<Episode>[]> {
     const entries = await loadContent({
       directory: 'src/content/episodes',
       schema: EpisodeSchema,
+      readdirFn: async () => Object.keys(episodeManifest),
+      importFn: async (filePath: string) => {
+        const filename = path.basename(filePath);
+        const mod = episodeManifest[filename];
+        if (!mod) {
+          throw new Error(`Unknown episode file: ${filename}`);
+        }
+        return mod;
+      },
     });
     cache = entries.sort((a, b) => {
       const dateA = a.meta.publishedAt ?? '';

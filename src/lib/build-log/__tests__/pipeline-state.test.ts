@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-const { liveSectionIdsMock } = vi.hoisted(() => ({
+const { liveSectionIdsMock, repoRootMock } = vi.hoisted(() => ({
   liveSectionIdsMock: vi.fn(async () => new Set<string>()),
+  repoRootMock: vi.fn(async () => process.cwd()),
 }));
 
 vi.mock('../worktree-state', () => ({
@@ -11,7 +12,8 @@ vi.mock('../worktree-state', () => ({
 }));
 
 vi.mock('../repo-root', () => ({
-  getRepoRoot: async () => process.cwd(),
+  getRepoRoot: repoRootMock,
+  __resetRepoRootCacheForTests: () => {},
 }));
 
 const PIPELINE_DIR = path.join(process.cwd(), 'pipeline', 'active');
