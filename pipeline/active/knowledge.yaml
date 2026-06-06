@@ -4161,3 +4161,73 @@ cohort-enrollment-4.1:
     ce-4.3 (Account cohorts view + SEO polish) follows after ce-4.2.
 
     '
+styling-overhaul-3.2:
+  completed_at: '2026-06-06'
+  commit_message: Add BrushstrokeSeam with 43 tests (styling-overhaul-3.2)
+  patterns_established:
+    - description: SVG turbulence + linear-gradient mask composition for organic feathered seams
+      file: src/components/brand/BrushstrokeSeam.tsx
+      reusable_for: |
+        Any brand surface that needs an organic (not geometric) feathered edge between two
+        color zones. Pattern: inline aria-hidden width=0 height=0 SVG carrying <filter>
+        (feTurbulence + feDisplacementMap) and <mask> defs; foreground layer uses
+        maskImage + WebkitMaskImage = `url(#mask-id), linear-gradient(<dir>, black <feather>, transparent)`
+        with maskComposite='source-over'. Direction-suffixed ids (brushstroke-mask-{dir},
+        brushstroke-feather-{dir}) avoid collisions when multiple seams share a page.
+    - description: Stable turbulenceSeed constant (no Math.random/Date.now) for SSR-stable SVG noise
+      file: src/components/brand/BrushstrokeSeam.tsx:15
+      reusable_for: |
+        Any SSR-rendered SVG noise/turbulence effect. The `const turbulenceSeed = 7` constant
+        is grep-asserted by data_consistency_brushstroke_seed_is_constant, which also verifies
+        the rendered DOM seed attribute matches the source declaration. Hydration mismatch
+        proof + AGENTS.md no-random-in-render compliant.
+    - description: motion-reduce dampening on backgroundContent layer
+      file: src/components/brand/BrushstrokeSeam.tsx (bg layer JSX)
+      reusable_for: |
+        Phase 9.3 reduced-motion contract: pattern `motion-safe:opacity-100 motion-reduce:opacity-80`
+        on the background photo/texture layer. When user prefers reduced motion, the background
+        fades back instead of the brushstroke feather being eliminated — preserves layout
+        while reducing visual intensity.
+    - description: isolate-rooted stacking context for layered mask primitives
+      file: src/components/brand/BrushstrokeSeam.tsx:38
+      reusable_for: |
+        Brand primitives that paint multiple absolutely-positioned layers (bg + foreground mask +
+        children) inside a parent that may itself be layered. `className="relative isolate"` on
+        the root div ensures the z-stack is sealed; children paint above the masked layer via
+        a `relative` wrapper without leaking z-index into ancestors.
+  gotchas:
+    - |
+      jsdom doesn't expose `CSSStyleDeclaration.webkitMaskImage` (camelCase) — only
+      `WebkitMaskImage` (PascalCase) works at runtime. TS lib.dom.d.ts types only the camelCase
+      form. Test must use `(masked.style as unknown as { WebkitMaskImage: string }).WebkitMaskImage`
+      to keep tsc clean while accessing the actual jsdom-supported property.
+    - |
+      Sibling section's barrel-count test (Surfaces.test.tsx#infra_surface_barrel_export_count)
+      whitelist needs explicit update when a new sibling lands in the same barrel. Adding
+      BrushstrokeSeam to src/components/brand/index.ts caused Surfaces.test to fail until its
+      whitelist Set was extended. Cross-section sibling-test sync is mechanical but required —
+      not a test-intent change.
+    - |
+      React JSX permits `<feDisplacementMap in="SourceGraphic" />` even though `in` is a JS
+      reserved word — React maps it to the SVG attribute as-is. No bracket-prop workaround
+      needed.
+    - |
+      Pre-existing /episodes/[slug] page-data build failure on origin/main is independent of
+      this section (verified by stashing the BrushstrokeSeam changes and re-running build —
+      same failure). It's a content-loader dynamic-import issue belonging to a different
+      job, not blocked by this section.
+  reusable_utilities: []
+  deferred_followups:
+    - title: Consumer mounts for BrushstrokeSeam
+      reason: |
+        Planning doc names four downstream consumers: src/app/page.tsx (homepage hero, Phase 7.1),
+        src/components/brand/SectionDivider.tsx (Phase 4.4), src/app/opengraph-image.tsx family
+        (Phase 8.2), src/app/(internal)/thumb-preview/page.tsx (Phase 8.3). Per the so-3.1
+        precedent, Phase 3 primitives ship standalone for downstream mounting — no consumer
+        site mount in 3.2. Audit treats this as infrastructure, same as so-3.1 / so-2.3.
+  blocker_cleared: |
+    styling-overhaul Phase 3 (Material Language): so-3.2 (BrushstrokeSeam) COMPLETE.
+    Phase 3 is now 2/3 complete. so-3.3 (forbidden-pattern sentinel) is the canonical
+    next so section to close Phase 3. Phase 4.4 (SectionDivider), Phase 7.1 (homepage
+    hero), Phase 8.2 (opengraph-image), Phase 8.3 (thumb-preview) can all consume
+    BrushstrokeSeam once their phases land.

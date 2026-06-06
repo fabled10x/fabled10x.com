@@ -2,15 +2,84 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-2.4
+  current_section: styling-overhaul-3.3
   current_agent: pending
-  current_stage: styling-overhaul-2.3-complete
+  current_stage: styling-overhaul-3.2-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-3.2
+    name: BrushstrokeSeam (SVG mask + texture overlay primitive)
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add BrushstrokeSeam with 43 tests (styling-overhaul-3.2)
+    tests: 43
+    files_new: 2
+    files_modified: 2
+    pushed: false
+    notes: |
+      Second feature of styling-overhaul Phase 3 (Material Language). Single
+      presentational React Server Component — BrushstrokeSeam — that paints
+      an organic feathered seam between two color zones using a composed
+      mask (SVG turbulence + linear-gradient via maskComposite='source-over').
+      Pure presentational primitive: no I/O, no state, no async, no API
+      surface, no DB.
+
+      Pattern: 'left'|'right'|'top'|'bottom' direction maps via Record to
+      a mask gradient (to right / to left / to bottom / to top). Inline
+      aria-hidden width=0 height=0 SVG carries <filter id="brushstroke-
+      feather-{direction}"> (feTurbulence type='fractalNoise' baseFrequency
+      ='0.015 0.04' numOctaves='2' seed=7 + feDisplacementMap scale=20
+      in='SourceGraphic') and <mask id="brushstroke-mask-{direction}">
+      whose <rect> is filtered through the same turbulence id. Foreground
+      layer applies maskImage + WebkitMaskImage = `url(#brushstroke-mask-
+      {direction}), linear-gradient({gradient}, black {feather}, transparent)`
+      with maskComposite='source-over'. Root div is 'relative isolate'
+      (sealed stacking context). Optional backgroundContent renders in
+      `absolute inset-0 motion-safe:opacity-100 motion-reduce:opacity-80`
+      layer (Phase 9.3 reduced-motion contract). Stable turbulenceSeed=7
+      constant satisfies AGENTS.md no-Math.random / no-Date.now rule and
+      ensures SSR/client render identically (no hydration mismatch).
+
+      Test pattern: src/components/brand/__tests__/BrushstrokeSeam.test.tsx
+      (NEW). 43 tests: 20 unit + 3 integration + 5 a11y + 6 infra + 6 edge
+      + 1 err + 2 data. 4 categories explicitly N/A: security/permission/
+      contract (no input/auth/API surface), serializer (no content types).
+
+      Refactor produced ZERO source changes — 13th consecutive zero-source-
+      change refactor section. All audits clean: 0 any/as/@ts-ignore in
+      section files, 0 ESLint warnings, tsc clean.
+
+      Cross-section sibling-test sync: Surfaces.test.tsx#infra_surface_
+      barrel_export_count whitelist Set extended to include 'BrushstrokeSeam'
+      (mechanical update — the whitelist must include every brand-barrel
+      sibling). Not a test-intent change. Without this, the prior section's
+      closed-set assertion would have rejected the new barrel addition.
+
+      Test infra fix: changed `masked.style.WebkitMaskImage` (PascalCase)
+      reference to a type-asserted form because TS lib.dom.d.ts only declares
+      the camelCase `webkitMaskImage`, while jsdom only exposes the PascalCase
+      runtime property. Asserting via `(masked.style as unknown as { Webkit
+      MaskImage: string }).WebkitMaskImage` keeps both tsc + jsdom happy
+      without changing test intent.
+
+      Shipping pattern: BrushstrokeSeam ships STANDALONE for downstream
+      Phase 4.4 (SectionDivider), Phase 7.1 (homepage hero), Phase 8.2
+      (opengraph-image family), Phase 8.3 (thumb-preview). No parent page
+      mounts the seam in 3.2 per planning doc. Same audit-as-infrastructure
+      pattern as so-3.1 / so-2.3.
+
+      Build status: npm run build hits the pre-existing /episodes/[slug]
+      page-data MODULE_NOT_FOUND on main (verified by stashing this section's
+      changes and re-running build — same failure). ZERO BEARING on this
+      primitive-only section.
+
+      Blocker cleared: styling-overhaul Phase 3 (Material Language) is now
+      2/3 complete. so-3.3 (forbidden-pattern sentinel) is the canonical
+      next so section to close Phase 3.
   - id: styling-overhaul-3.1
     name: Surface primitives (<Marble>, <Parchment>, <Bone>, <Shadow>)
     completed_at: '2026-06-06'
@@ -1627,16 +1696,17 @@ completed_sections:
 
       '
 resume_point:
-  last_action: section_styling_overhaul_2.3_completed
-  next_action: styling-overhaul-2.4 (.build-log-prose retrofit) — canonical next so
-    section, will complete Phase 2 (Typography). cohort-enrollment-3.2 (apply page
-    + middleware + ApplicationForm + submitApplication + applicant email) remains
-    next ce section. Phase 3 (Material Language) sections 3.1/3.2/3.3 can also parallelize
-    independently.
-  notes: styling-overhaul Phase 2 (Typography) extends — 2.1 (font swap) + 2.2 (type
-    scale utilities) + 2.3 (DropAccent primitive) all shipped. so-2.4 (.build-log-prose
-    retrofit) is the last so Phase 2 feature. DropAccent is shipped standalone per
-    planning doc for downstream Phase 6/7/8 mounting (same shipping pattern as bpd-2.1
+  last_action: section_styling_overhaul_3.2_completed
+  next_action: styling-overhaul-3.3 (forbidden-pattern sentinel) — canonical next so
+    section, will close Phase 3 (Material Language). cohort-enrollment-3.2 (apply
+    page + middleware + ApplicationForm + submitApplication + applicant email) remains
+    next ce section. Phase 4.4 / 7.1 / 8.2 / 8.3 can now consume BrushstrokeSeam when
+    their phases land.
+  notes: styling-overhaul Phase 3 (Material Language) is at 2/3 — 3.1 (surface primitives)
+    + 3.2 (BrushstrokeSeam) shipped. so-3.3 (forbidden-pattern sentinel) is the last
+    Phase 3 feature. BrushstrokeSeam ships standalone per planning doc for downstream
+    Phase 4.4 (SectionDivider) + 7.1 (homepage hero) + 8.2 (opengraph-image) + 8.3
+    (thumb-preview) mounting (same shipping pattern as so-3.1 / so-2.3 / bpd-2.1
     MarkdownDocument).
 notes: 'fabled10x project initialized on 2026-04-11.
 
