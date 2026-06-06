@@ -1859,3 +1859,80 @@ styling-overhaul-1.1:
     30 skipped (pre-existing DB-gated) | 0 failed; lint clean; tsc clean;
     npm run build clean (Tailwind 4 + 52 static pages prerendered).
 
+styling-overhaul-1.2:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - id: css_tokens_append_to_theme_block
+      file: "src/app/globals.css"
+      description: |
+        Token additions to the existing @theme inline block via append-before-
+        font-aliases insertion (not full-block rewrite). Preserves all prior-
+        section token declarations verbatim — regression guard test enforces
+        this via grep over the same theme-block extraction. Pattern reusable
+        for every future so token section (2.2 type scale, future brand
+        additions). The append point is "right before the Phase 2.1 font
+        aliases" — keeps font aliases at the bottom of the block as the
+        natural transitional zone for downstream font swaps.
+      reusable_for: "All future styling-overhaul token-extension sections (2.2 type scale + any subsequent additions)"
+    - id: sibling_test_file_per_token_category
+      file: "src/__tests__/brand/spacing.test.ts (sibling of tokens.test.ts)"
+      description: |
+        When a new category of brand tokens lands, create a sibling test file
+        rather than extending the existing one. so-1.1 owns tokens.test.ts
+        (palette + aliases + contrast pairs); so-1.2 owns spacing.test.ts
+        (spacing + rhythm + radius + edge). Each file stays scannable
+        (~200 lines) and the concern-per-file split keeps cognitive scope
+        small. Pattern: src/__tests__/brand/{category}.test.ts.
+      reusable_for: "so-2.2 (type scale → src/__tests__/brand/typography.test.ts), so-3.3 (forbidden-pattern sentinel → src/__tests__/brand/forbidden-patterns.test.ts), so-9.2 (WCAG contrast guard → contrast.test.ts)"
+    - id: regression_guard_test_for_prior_section_tokens
+      file: "src/__tests__/brand/spacing.test.ts:integration_so_1_1_palette_preserved"
+      description: |
+        Token-extension sections include a single integration test that
+        regrep-asserts every token from prior sections still exists in
+        @theme. Cheap (~25 lines, single test), catches accidental token
+        clobbering during multi-section refactors or merges. Pattern:
+        one integration_so_{N}_{tokens}_preserved test per consumed prior
+        section.
+      reusable_for: "Every so token section after so-1.1; chain forward as so-2.2 will guard so-1.1 + so-1.2"
+    - id: forbidden_pattern_assertions_at_token_layer
+      file: "src/__tests__/brand/spacing.test.ts (edge_no_* tests)"
+      description: |
+        Edge-case tests that assert non-presence of forbidden values
+        (no radius > 4px, no half-step spacing above 8px, no --shadow-*
+        tokens, no raw rem/px in --section-y-*). These pass VACUOUSLY when
+        the section's tokens don't yet exist (Red phase) AND pass
+        substantively after Green adds compliant tokens. Vacuous-pass is
+        not a Red-phase smell here — the constraint is the value, not the
+        existence. The forbidden-pattern sentinel arriving in so-3.3 widens
+        these to project-wide grep, but token-layer assertions catch drift
+        at point-of-add.
+      reusable_for: "Any future token-layer constraint enforcement; precedent for so-3.3 sentinel structure"
+
+  gotchas:
+    - "Token append point matters: inserting BETWEEN the contrast-pair block and the font-alias block (not at end of @theme) keeps the natural reading order — material values, then surfaces, then pairs, then scales, then font hooks. The regex /@theme inline\\s*\\{([\\s\\S]*?)\\n\\}/ captures everything inside the block regardless of insertion point, so tests don't care, but humans do."
+    - "Vacuous-pass tests in Red are legitimate when the assertion is 'value must not equal X' rather than 'value must equal Y'. 4 of 32 spacing tests passed in Red because the forbidden patterns weren't present (no tokens at all). Documented in red-progress.yaml#verification.notes to head off audit confusion."
+    - "section-y tokens MUST reference var(--space-N), never raw rem/px values, so the rhythm scale stays single-source-of-truth. edge_section_y_uses_space_token_refs enforces this via regex (^var\\(\\s*--space-\\d+\\s*\\)$). If a future section adds --section-y-xl that wants a value outside the existing space scale, ADD --space-11 (or whatever) first, then alias section-y-xl to it — never inline."
+    - "ESLint and tsc are CLEAN on the working tree for this section despite pre-existing modifications in CLAUDE.md, currentwork/website-foundation/*, src/lib/content/* etc. The section's tests + lint + build run isolated to the section's actual edits. Don't conflate prior-session uncommitted work with this section's scope."
+
+  reusable_utilities: []
+  # No new shared utilities. The themeBlock extraction is the candidate for the
+  # so-1.1-flagged static-file-content helper extraction; deferred again here
+  # because so-1.2 only adds the SECOND call site. so-2.2 (type scale tokens)
+  # adds the third and triggers the extraction.
+
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: "src/__tests__/brand/ helper extraction (readFileSync + theme-block regex)"
+      description: "Now 2 call sites (tokens.test.ts + spacing.test.ts). Will trigger at 3 (so-2.2 typography.test.ts). Extract to src/__tests__/brand/_helpers.ts with getThemeBlock() / getBodyBlock() / getGlobalsCss() helpers."
+      priority: low
+      decision: defer-until-so-2.2
+
+  scope_recap: |
+    CSS-tokens-only section. Single source file modified (src/app/globals.css
+    +27 lines, append-only inside @theme block), one test file added
+    (src/__tests__/brand/spacing.test.ts, 32 tests). No schemas, no API,
+    no DB, no UI components, no hooks, no forms, no nav. 32 section tests
+    cover all 5 checklist items at 100% (4 of 5 items + 1 regression guard).
+    Full suite: 968 passed | 30 skipped (pre-existing DB-gated) | 0 failed;
+    lint clean; tsc clean; npm run build clean (52 static pages prerendered).
+    Refactor produced ZERO code changes (matches so-1.1 precedent).
+

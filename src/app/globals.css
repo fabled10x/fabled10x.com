@@ -33,6 +33,34 @@
   --pair-dark-cta-bg: var(--color-ink);
   --pair-dark-cta-accent: var(--color-oxblood);
 
+  /* Spacing — 8px grid, half-step only at the small end for tight rhythm */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-1: 0.25rem;   /* 4px — half-step */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.5rem;    /* 24px */
+  --space-6: 2rem;      /* 32px */
+  --space-7: 3rem;      /* 48px */
+  --space-8: 4rem;      /* 64px */
+  --space-9: 6rem;      /* 96px */
+  --space-10: 8rem;     /* 128px */
+
+  /* Vertical rhythm tokens for <Section> */
+  --section-y-sm: var(--space-7);   /* 48px — tight section */
+  --section-y-md: var(--space-8);   /* 64px — default */
+  --section-y-lg: var(--space-9);   /* 96px — hero, between major content blocks */
+
+  /* Radius — restrained. Brand is carved stone, not rounded plastic. */
+  --radius-sharp: 0;
+  --radius-soft: 2px;
+  --radius-card: 4px;
+
+  /* 1px edge — the brand's depth signal (no UI shadows) */
+  --edge-color: var(--color-ink);
+  --edge-color-subtle: color-mix(in oklab, var(--color-ink) 20%, transparent);
+
   /* Font aliases — Phase 2.1 repoints these to Cinzel / Inter / JetBrains Mono */
   --font-display: var(--font-geist-sans);
   --font-body: var(--font-geist-sans);

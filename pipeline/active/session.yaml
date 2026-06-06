@@ -2,9 +2,9 @@ session:
   id: "2026-04-11-001"
   started_at: "2026-04-11T00:00:00Z"
   current_phase: "styling-overhaul"
-  current_section: "styling-overhaul-1.1"
+  current_section: "styling-overhaul-1.2"
   current_agent: discovery
-  current_stage: "styling-overhaul-1.1-complete"
+  current_stage: "styling-overhaul-1.2-discovery-complete"
   concurrent_jobs: []
 
 context_window:
@@ -690,16 +690,71 @@ completed_sections:
     files_modified: 12
     pushed: true
 
-  - id: "styling-overhaul-1.1"
-    name: "Palette swap + contrast pairs + dark-mode removal"
+  - id: "styling-overhaul-1.2"
+    name: "Spacing + radius scale (8px grid, restrained corners)"
     completed_at: "2026-06-06"
     commit_hash: pending
     commit_message: pending
+    tests: 32  # 20 unit + 5 integration + 2 infra + 5 edge; security/perm/contract/a11y/err/data N/A; full suite 968 passed | 30 skipped (was 940 passed pre-section)
+    files_new: 1   # src/__tests__/brand/spacing.test.ts
+    files_modified: 1  # src/app/globals.css
+    pushed: false  # will be set true after push
+    notes: |
+      Second section of styling-overhaul (so) job — Phase 1 spacing /
+      radius / edge token append. Pure additive CSS edit to
+      src/app/globals.css: appends 12 spacing tokens (--space-0..--space-10
+      + --space-px) on the 8px grid (half-step at 4px only), 3 vertical-
+      rhythm tokens (--section-y-sm/md/lg referencing --space-7/8/9),
+      3 radius tokens (--radius-sharp:0 / --radius-soft:2px / --radius-card:4px),
+      and 2 edge tokens (--edge-color, --edge-color-subtle) for 1px depth
+      borders instead of UI shadows. Preserves so-1.1's palette + aliases
+      + contrast pairs intact (verified by integration_so_1_1_palette_preserved
+      regression guard).
+
+      Test file: src/__tests__/brand/spacing.test.ts (NEW) — sibling of
+      so-1.1's tokens.test.ts. 32 tests using the canonical
+      readFileSync(globals.css) + theme-block regex pattern. Categories:
+      20 unit (per-token value) + 5 integration (block coverage +
+      regression) + 2 infra (count assertions) + 5 edge (forbidden patterns:
+      radius > 4px, half-step spacing above 8px, box-shadow tokens, sharp != none,
+      section-y must ref --space-N). Security / permission / contract /
+      accessibility / error_recovery / data_integrity N/A per discovery
+      (CSS tokens have no API / user input / auth / runtime / persistence).
+
+      Refactor produced ZERO code changes — matches so-1.1 precedent for
+      pure CSS-tokens sections. One cross-section DRY opportunity flagged
+      + deferred: readFileSync + theme-block extractor duplicated between
+      tokens.test.ts and spacing.test.ts (2 call sites). Per 3-call-site
+      threshold (precedent: bpd-2.2 PhaseNav label format, so-1.1 4-loader
+      factory), defer until so-2.2 type-scale tokens add the third call
+      site and trigger extraction to src/__tests__/brand/_helpers.ts.
+
+      Concurrent runs: working tree has prior modifications from earlier
+      session work (CLAUDE.md, currentwork/website-foundation/*,
+      src/lib/content/*, storefront-auth-3.3 dir deletions, vitest.config.ts
+      deletion). Commit explicitly stages ONLY this section's files
+      (globals.css append, spacing.test.ts new, README status flip,
+      session.yaml + knowledge.yaml shared state).
+
+      Inherited loader_build_incompat P1 fully resolved — npm run build
+      clean (52 static pages prerendered). 6th consecutive section with
+      clean build (sa-2.1 → ce-1.2 → bpd-3.1 → sa-3.x → so-1.1 → so-1.2).
+
+      Blocker cleared: styling-overhaul-1.3 (brand doc rewrite +
+      design-system doc) is the next so section, parallelizable with
+      any of Phase 2 once Phase 1 is fully landed. Phase 2 typography
+      depends on 1.2's vertical-rhythm tokens — now available.
+
+  - id: "styling-overhaul-1.1"
+    name: "Palette swap + contrast pairs + dark-mode removal"
+    completed_at: "2026-06-06"
+    commit_hash: "c20ad8a"
+    commit_message: "Add brand palette tokens with 38 tests (styling-overhaul-1.1)"
     tests: 38  # 23 unit + 5 integration + 3 a11y + 2 infra + 5 edge; security/perm/contract/err/data N/A; full suite 936 passed | 30 skipped (was 908 passed pre-section)
     files_new: 1   # src/__tests__/brand/tokens.test.ts
     files_modified: 2  # src/app/globals.css + currentwork/styling-overhaul/README.md (status flip)
     files_deleted: 1   # src/app/__tests__/globals-css.test.ts (obsolete wf-1.3 leftover, superseded)
-    pushed: false  # set true after push
+    pushed: true
     notes: |
       First section of styling-overhaul (so) job — kicks off the brand reset.
       Pure CSS-tokens-only edit to src/app/globals.css: replaces the wf-1.3
