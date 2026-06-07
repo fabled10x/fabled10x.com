@@ -470,9 +470,14 @@ log itself), Cinzel headings, JetBrains Mono for any code / log content.
 
 **MODIFY** `src/app/build-log/page.tsx`:
 
+The index already groups jobs into three status buckets — **In progress**,
+**Planned**, **Complete** — via `groupJobs()` (commit `7187fc5`). Preserve
+that grouping; the editorial reskin wraps each section's grid in the
+brand chrome, it does not flatten the list back into one ul.
+
 ```tsx
 // shell: Bone / Section / Container width="wide"
-<span className="label">In Progress</span>
+<span className="label">Build Log</span>
 <h1 className="display-1 mt-(--space-3)">Build Log</h1>
 <p className="body-1 mt-(--space-4) text-(--color-muted) max-w-prose">
   Every job's plan, phases, and post-mortem. Updated as work proceeds.
@@ -482,13 +487,36 @@ log itself), Cinzel headings, JetBrains Mono for any code / log content.
   <JobsRollupTable jobs={jobs} />
 </div>
 
-<div className="mt-(--space-8)">
-  <h2 className="display-2">All Jobs</h2>
-  <ul className="mt-(--space-5) grid grid-cols-1 md:grid-cols-2 gap-(--space-4)">
-    {jobs.map(j => <li key={j.slug}><JobCard job={j} /></li>)}
-  </ul>
-</div>
+{groups.map((group) => (
+  <section
+    key={group.id}
+    aria-labelledby={`group-${group.id}`}
+    className="mt-(--space-8)"
+  >
+    <header className="flex items-baseline justify-between gap-(--space-4) border-b border-(--color-mist) pb-(--space-2)">
+      <h2 id={`group-${group.id}`} className="display-2">
+        {group.heading}
+      </h2>
+      <span className="label tabular-nums text-(--color-muted)">
+        {group.items.length} {group.items.length === 1 ? 'job' : 'jobs'}
+      </span>
+    </header>
+    <p className="body-2 mt-(--space-3) text-(--color-muted)">{group.blurb}</p>
+    <ul className="mt-(--space-5) grid grid-cols-1 md:grid-cols-2 gap-(--space-4)">
+      {group.items.map(({ job, rollup, excerpt }) => (
+        <li key={job.slug}>
+          <JobCard rollup={rollup} excerpt={excerpt} />
+        </li>
+      ))}
+    </ul>
+  </section>
+))}
 ```
+
+`groupJobs()` returns groups in fixed order (In progress → Planned →
+Complete) and drops any group whose `items` array is empty, so a
+single-job workspace with only Planned jobs collapses to one section
+without an empty In progress / Complete header gap.
 
 **MODIFY** `src/app/build-log/jobs/[slug]/page.tsx`:
 
@@ -554,6 +582,16 @@ content, no inner panel (the table is the artifact).
   all spec-sheet content.
 - **PhaseNav as a chip rail.** Phases are a small linear sequence;
   a chip rail is more legible than tabs (which imply switching).
+- **Status grouping stays.** The three-section split (In progress →
+  Planned → Complete) shipped pre-reskin because alphabetical flat lists
+  buried active work in the archive. The reskin replaces chrome but
+  keeps the information architecture. Do NOT collapse the groups back
+  into one list.
+- **JobCard props stay `{ rollup, excerpt }`.** The reskin restyles the
+  card surface — adopt Bone/Parchment, Cinzel for the title, mono for
+  the feature count — but does not change the component's interface or
+  call sites. The existing " — Implementation Plan" suffix strip in
+  JobCard stays in place.
 
 ### Files
 
