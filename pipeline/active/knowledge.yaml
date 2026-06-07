@@ -4772,135 +4772,228 @@ styling-overhaul-3.3:
       commit on that work will fast-forward.
 
       '
-
 styling-overhaul-4.1:
   completed_at: '2026-06-06'
   patterns_established:
-    - description: |
-        Brand-set Logo lockup as pure presentational RSC — wrapper-with-aria-label
+    - description: 'Brand-set Logo lockup as pure presentational RSC — wrapper-with-aria-label
+
         + two aria-hidden inner spans, sizeScale Record<NonNullable<size>,
+
         {wordmark, mark, gap}> for parametric size, mono prop toggles default
+
         brand tokens vs currentColor. Reusable for any future brand mark that
+
         needs sizing + monochrome variants on inheriting-color surfaces.
+
+        '
       file: src/components/brand/Logo.tsx
-      reusable_for: |
-        any brand-tier presentational primitive needing size variants + an
+      reusable_for: 'any brand-tier presentational primitive needing size variants
+        + an
+
         explicit monochrome mode for og:image / icon strip / dark-section
+
         compositions.
+
+        '
   gotchas:
-    - |
-        jsdom serializes CSS color keywords as lowercase. `element.style.color`
-        for inline `style={{ color: 'currentColor' }}` returns 'currentcolor',
-        NOT 'currentColor'. Tests asserting inline-style color values must
-        compare case-insensitively (.toLowerCase() on both sides). var(--token)
-        values are unaffected — they round-trip exactly.
-    - |
-        Cross-section closed-set sentinel propagation: when a new brand-barrel
-        sibling ships, BOTH the Surfaces.test.tsx whitelist Set AND the
-        BrushstrokeSeam.test.tsx whitelist Set must be extended. They are
-        independent closed-set assertions over the same Set; missing one will
-        pass the section's own tests + suite-level focused run but fail at full
-        npm test. Discovered planning should explicitly enumerate ALL sibling
-        whitelist Sets to extend, not just the one nearest the new primitive.
-    - |
-        Next.js @next/next/no-html-link-for-pages ESLint rule fires on
-        <a href="/"> even in test files. The rule is path-based — any href
-        that maps to a known Next route triggers it. Using <a href="#fragment">
-        bypasses the rule when the test's intent is just to wrap a child in an
-        anchor element (not exercise Next routing).
+    - 'jsdom serializes CSS color keywords as lowercase. `element.style.color`
+
+      for inline `style={{ color: ''currentColor'' }}` returns ''currentcolor'',
+
+      NOT ''currentColor''. Tests asserting inline-style color values must
+
+      compare case-insensitively (.toLowerCase() on both sides). var(--token)
+
+      values are unaffected — they round-trip exactly.
+
+      '
+    - 'Cross-section closed-set sentinel propagation: when a new brand-barrel
+
+      sibling ships, BOTH the Surfaces.test.tsx whitelist Set AND the
+
+      BrushstrokeSeam.test.tsx whitelist Set must be extended. They are
+
+      independent closed-set assertions over the same Set; missing one will
+
+      pass the section''s own tests + suite-level focused run but fail at full
+
+      npm test. Discovered planning should explicitly enumerate ALL sibling
+
+      whitelist Sets to extend, not just the one nearest the new primitive.
+
+      '
+    - 'Next.js @next/next/no-html-link-for-pages ESLint rule fires on
+
+      <a href="/"> even in test files. The rule is path-based — any href
+
+      that maps to a known Next route triggers it. Using <a href="#fragment">
+
+      bypasses the rule when the test''s intent is just to wrap a child in an
+
+      anchor element (not exercise Next routing).
+
+      '
   reusable_utilities:
-    - function: 'inline-style brand-color test pattern'
+    - function: inline-style brand-color test pattern
       file: src/components/brand/__tests__/Logo.test.tsx
-      purpose: |
-        Pattern for asserting inline-style CSS values in jsdom-rendered
+      purpose: 'Pattern for asserting inline-style CSS values in jsdom-rendered
+
         presentational primitives. Wrapper-with-aria-label as selector anchor,
-        querySelectorAll('span[aria-hidden="true"]') for inner-spans extraction,
+
+        querySelectorAll(''span[aria-hidden="true"]'') for inner-spans extraction,
+
         case-insensitive comparison for CSS color keywords (currentColor),
+
         exact-string comparison for var(--token) values.
+
+        '
   deferred_followups:
-    - |
-        brand-sentinel-test-helpers refactor section: extract readFileSync +
-        themeBlock/componentsBlock regex helpers (now in 5+ brand sentinel
-        tests: tokens, spacing, fonts, type-scale, build-log-prose) AND the
-        brand-barrel whitelist Set (now in 2 brand sentinel tests:
-        Surfaces.test.tsx + BrushstrokeSeam.test.tsx). Trigger firmly met
-        across 7 files. Extraction target: src/components/brand/__tests__/_
-        sentinel-helpers.ts or similar. Bundles cleanly with the prior so-2.1+
-        deferred entries.
+    - 'brand-sentinel-test-helpers refactor section: extract readFileSync +
+
+      themeBlock/componentsBlock regex helpers (now in 5+ brand sentinel
+
+      tests: tokens, spacing, fonts, type-scale, build-log-prose) AND the
+
+      brand-barrel whitelist Set (now in 2 brand sentinel tests:
+
+      Surfaces.test.tsx + BrushstrokeSeam.test.tsx). Trigger firmly met
+
+      across 7 files. Extraction target: src/components/brand/__tests__/_
+
+      sentinel-helpers.ts or similar. Bundles cleanly with the prior so-2.1+
+
+      deferred entries.
+
+      '
   out_of_scope_changes_landed: []
 styling-overhaul-4.3:
   completed_at: '2026-06-06'
   patterns_established:
-    - description: |
-        Brand-surface chrome restyle template: wrap the legacy <{semanticEl}
-        className='...legacy palette...'> with <{Surface} as='{semanticEl}'
-        className='border-{edge} border-(--edge-color)'>. Move the inner
+    - description: 'Brand-surface chrome restyle template: wrap the legacy <{semanticEl}
+
+        className=''...legacy palette...''> with <{Surface} as=''{semanticEl}''
+
+        className=''border-{edge} border-(--edge-color)''>. Move the inner
+
         <Container> to token padding/gap (py-(--space-N), gap-(--space-N)).
+
         Drop legacy palette utilities (border-mist, text-accent, text-muted,
+
         text-foreground, font-display, text-lg). Direct counterpart of the
+
         Header restyle (4.2) — same shape, swap Marble for Parchment, swap
+
         Logo size, swap nav list for whatever sister content the surface
-        carries. Pure synchronous RSC, no 'use client', no async.
+
+        carries. Pure synchronous RSC, no ''use client'', no async.
+
+        '
       file: src/components/site/Footer.tsx
-      reusable_for: |
-        Any future chrome surface restyle in this codebase (e.g. future
+      reusable_for: 'Any future chrome surface restyle in this codebase (e.g. future
+
         sidebar / sticky CTA bar / sectioning shells in Phase 7 pages,
+
         opengraph-image static chrome in Phase 8.2). Mirrors Header.tsx
+
         line-for-line at the structural level — the two together establish
+
         the editorial mirror-page composition (Marble top, Parchment
+
         bottom).
-    - description: |
-        Verdigris-on-Bone outbound-link treatment for sister-project /
+
+        '
+    - description: 'Verdigris-on-Bone outbound-link treatment for sister-project /
+
         completion-pointer anchors. Default state bg-(--color-bone)
+
         text-(--color-verdigris) + border-(--edge-color-subtle); hover
+
         inverts to bg-(--color-verdigris) text-(--color-bone) via
-        transition-colors duration-150. Includes target='_blank'
-        rel='noreferrer' and an aria-hidden '→' glyph appended after the
+
+        transition-colors duration-150. Includes target=''_blank''
+
+        rel=''noreferrer'' and an aria-hidden ''→'' glyph appended after the
+
         link text. Brand spec reserves Verdigris for completion/success;
-        a sister-project link is exactly a "you've finished here, go
+
+        a sister-project link is exactly a "you''ve finished here, go
+
         there" pointer.
+
+        '
       file: src/components/site/Footer.tsx
-      reusable_for: |
-        Any future LLL crosslink, any "see also" pointer to a completed
-        artifact, any "you finished, here's what's next" terminal CTA.
+      reusable_for: 'Any future LLL crosslink, any "see also" pointer to a completed
+
+        artifact, any "you finished, here''s what''s next" terminal CTA.
+
         The CSS pattern (default-light, hover-inverts, no underline,
+
         typographic arrow glyph) is the canonical brand treatment for
+
         outbound completion pointers — distinct from Oxblood (in-system
+
         accent) and Marble surfaces.
+
+        '
   gotchas:
-    - |
-        @testing-library's getByRole('link', { name: /pattern/ }) treats the
-        aria-hidden '→' glyph as accessible text for matching purposes ONLY
-        when the regex spans the text — using {name: /largelanguagelibrary\.ai/i}
-        worked because the visible text is the matched portion. If a test
-        instead used the full string 'largelanguagelibrary.ai →', it would
-        FAIL because aria-hidden content is stripped from the accessible name
-        first. Lesson: when an aria-hidden sibling sits inside a link, match
-        on the visible text only.
-    - |
-        Footer mount in src/app/layout.tsx survives the restyle untouched —
-        the export name (Footer) and module path (@/components/site/Footer)
-        are stable. Restyle work never touches the layout when the component
-        is already mounted there. Always verify the mount path BEFORE the
-        Green phase to confirm wiring is a no-op (saved ~5 min here).
+    - '@testing-library''s getByRole(''link'', { name: /pattern/ }) treats the
+
+      aria-hidden ''→'' glyph as accessible text for matching purposes ONLY
+
+      when the regex spans the text — using {name: /largelanguagelibrary\.ai/i}
+
+      worked because the visible text is the matched portion. If a test
+
+      instead used the full string ''largelanguagelibrary.ai →'', it would
+
+      FAIL because aria-hidden content is stripped from the accessible name
+
+      first. Lesson: when an aria-hidden sibling sits inside a link, match
+
+      on the visible text only.
+
+      '
+    - 'Footer mount in src/app/layout.tsx survives the restyle untouched —
+
+      the export name (Footer) and module path (@/components/site/Footer)
+
+      are stable. Restyle work never touches the layout when the component
+
+      is already mounted there. Always verify the mount path BEFORE the
+
+      Green phase to confirm wiring is a no-op (saved ~5 min here).
+
+      '
   reusable_utilities:
-    - function: 'Brand chrome restyle test template'
+    - function: Brand chrome restyle test template
       file: src/components/site/__tests__/Footer.test.tsx
-      purpose: |
-        Template for restyle test suites that combine (a) DOM-render
+      purpose: 'Template for restyle test suites that combine (a) DOM-render
+
         assertions against new brand classes via className regex, (b)
+
         readFileSync source assertions that lock out legacy palette/layout
+
         utilities by name, and (c) invariant-lock tests for behavior that
+
         must survive the restyle (text content, href stability, landmark
-        role). The mix produces 5-10 'failing in Red' tests that drive new
-        behavior and 3-7 'passing in Red' tests that lock invariants — a
+
+        role). The mix produces 5-10 ''failing in Red'' tests that drive new
+
+        behavior and 3-7 ''passing in Red'' tests that lock invariants — a
+
         legitimate Red-phase shape for any visual-only restyle.
+
+        '
   deferred_followups:
-    - |
-        BrandHomeLink extraction trigger now at 2 use sites (Header + Footer)
-        — wait for a 3rd (likely Phase 8.2 og:image renderer or a /not-found
-        page) before extracting <BrandHomeLink size='sm|md' />. Documented in
-        refactor-progress.yaml deferred block.
+    - 'BrandHomeLink extraction trigger now at 2 use sites (Header + Footer)
+
+      — wait for a 3rd (likely Phase 8.2 og:image renderer or a /not-found
+
+      page) before extracting <BrandHomeLink size=''sm|md'' />. Documented in
+
+      refactor-progress.yaml deferred block.
+
+      '
   out_of_scope_changes_landed: []
 styling-overhaul-4.4:
   completed_at: '2026-06-06'
@@ -4909,471 +5002,916 @@ styling-overhaul-4.4:
   files_new: 2
   files_modified: 4
   patterns_established:
-    - description: |
-        Polymorphic-primitive base shape now extended beyond the brand
+    - description: 'Polymorphic-primitive base shape now extended beyond the brand
+
         surfaces (Marble/Parchment/Bone/Shadow) to layout chrome. Idiom
-        across 8+ files: `type Props<E extends ElementType = 'tag'> = {
+
+        across 8+ files: `type Props<E extends ElementType = ''tag''> = {
+
         as?: E; <variant>?: <Variant>; className?: string; } &
-        Omit<ComponentPropsWithoutRef<E>, 'as' | 'className'>`, then
+
+        Omit<ComponentPropsWithoutRef<E>, ''as'' | ''className''>`, then
+
         `const variantClass: Record<Variant, string> = { ... }; const
-        Tag: ElementType = as ?? 'tag'; const merged = [<base>,
-        variantClass[variant], className].filter(Boolean).join(' ');
+
+        Tag: ElementType = as ?? ''tag''; const merged = [<base>,
+
+        variantClass[variant], className].filter(Boolean).join('' '');
+
         return <Tag className={merged} {...rest} />;`
+
+        '
       file: src/components/brand/Section.tsx
       reusable_for: Future primitives in Phase 5 (Button, StatusBadge), Phase 6 (EditorialCard).
-    - description: |
-        Container backward-compat default-width pattern. When a feature
+    - description: 'Container backward-compat default-width pattern. When a feature
+
         section modifies a widely-imported primitive, ship the new API
+
         as a strict superset: existing default behavior preserved
-        (`width='layout'` → `max-w-5xl` = the only width before), all
+
+        (`width=''layout''` → `max-w-5xl` = the only width before), all
+
         consumers continue to work without diff, new consumers opt in.
+
         No follow-up migration required.
+
+        '
       file: src/components/site/Container.tsx
-      reusable_for: Phase 5 EmailCapture / Button reskin, any future primitive-modification section.
-    - description: |
-        Sibling barrel-export sentinel pattern. Three pre-existing infra
+      reusable_for: Phase 5 EmailCapture / Button reskin, any future primitive-modification
+        section.
+    - description: 'Sibling barrel-export sentinel pattern. Three pre-existing infra
+
         tests (Surfaces.test.tsx, BrushstrokeSeam.test.tsx, Logo.test.tsx)
+
         hard-code the canonical brand barrel set. Adding a new brand
+
         component requires extending the set in all three. Sibling-test
+
         maintenance has now happened 3x (so-3.2 BrushstrokeSeam, so-4.1
+
         Logo, so-4.4 Section + SectionDivider) — it IS the pattern, not
+
         a smell. Any so-N.x section adding a brand-barrel export must
+
         update all three sentinels in the same PR.
+
+        '
       reusable_for: Every future brand-primitive section.
   reusable_utilities: []
   gotchas:
-    - |
-        Forbidden-pattern sentinel from so-3.3 scans ALL src/ files
-        including __tests__/. Initial Section.test.tsx used `bg-red-100`
-        for className-passthrough; SectionDivider.test.tsx used
-        `#ffffff` / `#000000` for hex color test values. All flagged.
-        Future test files in src/components/brand/__tests__/ must use
-        brand-compliant values for any token-shaped string the sentinel
-        scans: Tailwind palette → `bg-(--color-<token>)`, white →
-        #f7f4ec (Marble), black → #1c1814 (Ink). Sentinel has no
-        per-file allowlist — fix at the test-value level.
-    - |
-        EnterWorktree harness tool rejects sibling slot paths outside
-        .claude/worktrees/. The worktree-claim skill places slots at
-        $WORKTREES/section-{id} (sibling to main repo, by design — to
-        avoid acceptEdits prompts), but EnterWorktree won't accept the
-        path. Workaround for so-4.4: --no-worktree fallback (LEGACY
-        single-branch mode, all 7 CLAIM beats N/A). Long-term fix
-        needed: either move slots under .claude/worktrees/ (loses
-        acceptEdits perk) or extend EnterWorktree to accept any path
-        in `git worktree list`. Flag for skill maintainers.
-  deferred_followups:
-    - |
-        Polymorphic-primitive helper extraction. 8+ sites (Marble,
-        Parchment, Bone, Shadow, Logo, DropAccent, Container, Section)
-        share the polymorphic + variant-record + classname-construction
-        idiom. Extraction deferred to a future cross-cutting refactor
-        section (so-9.x or similar) because touching 6 unrelated files
-        would bleed work outside the so-4.4 boundary. so-3.2's 4-call-
-        site threshold firmly exceeded — overdue, gated on a dedicated
-        cross-cutting PR.
-  out_of_scope_changes_landed:
-    - |
-        Three sibling test files (Surfaces.test.tsx, BrushstrokeSeam
-        .test.tsx, Logo.test.tsx) had their hard-coded brand-barrel-
-        export whitelist extended with 'Section' and 'SectionDivider'.
-        Executed identically to so-3.2 and so-4.1 — see the sibling-
-        sentinel pattern in patterns_established. Test intent (closed-
-        set invariant) preserved.
+    - 'Forbidden-pattern sentinel from so-3.3 scans ALL src/ files
 
+      including __tests__/. Initial Section.test.tsx used `bg-red-100`
+
+      for className-passthrough; SectionDivider.test.tsx used
+
+      `#ffffff` / `#000000` for hex color test values. All flagged.
+
+      Future test files in src/components/brand/__tests__/ must use
+
+      brand-compliant values for any token-shaped string the sentinel
+
+      scans: Tailwind palette → `bg-(--color-<token>)`, white →
+
+      #f7f4ec (Marble), black → #1c1814 (Ink). Sentinel has no
+
+      per-file allowlist — fix at the test-value level.
+
+      '
+    - 'EnterWorktree harness tool rejects sibling slot paths outside
+
+      .claude/worktrees/. The worktree-claim skill places slots at
+
+      $WORKTREES/section-{id} (sibling to main repo, by design — to
+
+      avoid acceptEdits prompts), but EnterWorktree won''t accept the
+
+      path. Workaround for so-4.4: --no-worktree fallback (LEGACY
+
+      single-branch mode, all 7 CLAIM beats N/A). Long-term fix
+
+      needed: either move slots under .claude/worktrees/ (loses
+
+      acceptEdits perk) or extend EnterWorktree to accept any path
+
+      in `git worktree list`. Flag for skill maintainers.
+
+      '
+  deferred_followups:
+    - 'Polymorphic-primitive helper extraction. 8+ sites (Marble,
+
+      Parchment, Bone, Shadow, Logo, DropAccent, Container, Section)
+
+      share the polymorphic + variant-record + classname-construction
+
+      idiom. Extraction deferred to a future cross-cutting refactor
+
+      section (so-9.x or similar) because touching 6 unrelated files
+
+      would bleed work outside the so-4.4 boundary. so-3.2''s 4-call-
+
+      site threshold firmly exceeded — overdue, gated on a dedicated
+
+      cross-cutting PR.
+
+      '
+  out_of_scope_changes_landed:
+    - 'Three sibling test files (Surfaces.test.tsx, BrushstrokeSeam
+
+      .test.tsx, Logo.test.tsx) had their hard-coded brand-barrel-
+
+      export whitelist extended with ''Section'' and ''SectionDivider''.
+
+      Executed identically to so-3.2 and so-4.1 — see the sibling-
+
+      sentinel pattern in patterns_established. Test intent (closed-
+
+      set invariant) preserved.
+
+      '
 styling-overhaul-5.1:
   completed_at: '2026-06-06'
   patterns_established:
-    - description: 'Polymorphic Button primitive with variant + size Records'
+    - description: Polymorphic Button primitive with variant + size Records
       file: src/components/brand/Button.tsx
-      reusable_for: |
-        Any future interactive primitive needing (variant × size) class swap with a
+      reusable_for: 'Any future interactive primitive needing (variant × size) class
+        swap with a
+
         polymorphic root element. Mirrors so-3.1 Surfaces pattern (Variant union +
+
         Record<Variant, string>) extended with a second orthogonal axis (size).
+
         Two-Record composition pattern: variantClass[variant] + sizeClass[size]
-        merged via [BASE, ...records, className].filter(Boolean).join(' ').
+
+        merged via [BASE, ...records, className].filter(Boolean).join('' '').
+
         BASE constant houses cross-variant shared classes (focus-visible ring,
-        disabled state, layout, transitions). E extends ElementType = 'button'
+
+        disabled state, layout, transitions). E extends ElementType = ''button''
+
         default so consumers can render as <a>, <span>, etc. without losing
+
         button semantics. Direct precedent for the next interactive primitives
+
         in Phase 5 (StatusBadge variant restyle 5.2, EmailCapture input 5.3)
+
         and Phase 6 (EditorialCard 6.1).
+
+        '
   gotchas:
-    - |
-      Sibling-sentinel sync grew to 5 brand-barrel test files: Surfaces,
+    - 'Sibling-sentinel sync grew to 5 brand-barrel test files: Surfaces,
+
       BrushstrokeSeam, Logo, Section, AND the implicit one in Section.test
+
       (infra_brand_barrel_export_set_includes_section_and_divider line 135).
+
       Discovery only flagged 3; Section.test was discovered in the full-suite
-      green run. ALWAYS grep '__tests__/.*\\.test\\.tsx' for new Set(\\[
+
+      green run. ALWAYS grep ''__tests__/.*\\.test\\.tsx'' for new Set(\\[
+
       to find every brand-barrel whitelist before red phase.
-    - |
-      forbidden-patterns sentinel (so-3.3) scans for shadow-md|... regex
+
+      '
+    - 'forbidden-patterns sentinel (so-3.3) scans for shadow-md|... regex
+
       literals. Brand-sibling test files that legitimately include this
+
       regex (to source-grep their own components for it) MUST be added to
+
       SKIP_PATHS at line 110-111. Button.test.tsx joined Surfaces.test.tsx
+
       and BrushstrokeSeam.test.tsx in this allow-list. Pattern is now
+
       well-established — any future brand-primitive test that source-greps
+
       for forbidden patterns needs the same addition.
-    - |
-      The polymorphic-primitive boilerplate is now duplicated across 9
+
+      '
+    - 'The polymorphic-primitive boilerplate is now duplicated across 9
+
       brand primitives (Marble/Parchment/Bone/Shadow/Container/Section/
+
       SectionDivider/Logo-non-polymorphic/Button). The 8+ call-site
+
       threshold flagged in so-3.2 + so-4.4 is now firmly exceeded.
+
       Deferred to so-9.x brand-primitive-factory section, as established.
+
       Continuing per established defer pattern; do NOT extract mid-Phase-5.
+
+      '
   reusable_utilities: []
   deferred_followups:
-    - cross_section_dry_brand_primitive_factory: |
-        9 brand primitives share polymorphic generic + Tag fallback +
-        rest-prop spread + .filter(Boolean).join(' ') className pattern.
+    - cross_section_dry_brand_primitive_factory: '9 brand primitives share polymorphic
+        generic + Tag fallback +
+
+        rest-prop spread + .filter(Boolean).join('' '') className pattern.
+
         Defer to dedicated so-9.x section.
-    - cross_section_brand_sentinel_test_helpers: |
-        5 sibling test files share readFileSync REPO_ROOT pattern +
+
+        '
+    - cross_section_brand_sentinel_test_helpers: '5 sibling test files share readFileSync
+        REPO_ROOT pattern +
+
         whitelist Set + infra_no_use_client + infra_no_forbidden_shadow +
+
         infra_tailwind4_paren_syntax checks. Whitelist sync is now manual
+
         cross-file edit (this section had to edit 4 sibling whitelist Sets
+
         + the forbidden-pattern SKIP_PATHS). Strong signal for extraction.
 
-
+        '
 styling-overhaul-5.2:
-  completed_at: "2026-06-06"
+  completed_at: '2026-06-06'
   patterns_established:
-    - description: "variantClass + variantLabel paired Record-of-status pattern"
-      file: "src/components/build-log/StatusBadge.tsx"
-      reusable_for: "Any future status-driven badge / chip where label rename, class swap, and glyph gating are all driven by the same discriminator union. Mirrors so-5.1 Button (variantClass + sizeClass) and so-3.1 Surfaces (edgeClass)."
-    - description: "data-testid contract preservation across restyles"
-      file: "src/components/build-log/StatusBadge.tsx"
-      reusable_for: "Any component restyle where cross-consumer test files query a stable data-testid. The integration tests added (integration_jobcard_consumer_still_finds_badge + integration_jobs_rollup_consumer_renders_two_badges) lock the contract from BOTH directions — primitive owner + consumer barrel."
+    - description: variantClass + variantLabel paired Record-of-status pattern
+      file: src/components/build-log/StatusBadge.tsx
+      reusable_for: Any future status-driven badge / chip where label rename, class
+        swap, and glyph gating are all driven by the same discriminator union. Mirrors
+        so-5.1 Button (variantClass + sizeClass) and so-3.1 Surfaces (edgeClass).
+    - description: data-testid contract preservation across restyles
+      file: src/components/build-log/StatusBadge.tsx
+      reusable_for: Any component restyle where cross-consumer test files query a
+        stable data-testid. The integration tests added (integration_jobcard_consumer_still_finds_badge
+        + integration_jobs_rollup_consumer_renders_two_badges) lock the contract from
+        BOTH directions — primitive owner + consumer barrel.
   gotchas:
-    - "Word-boundary regex (\\b) does NOT bound a quoted hyphenated key like 'in-progress' — the apostrophe is non-word so the transition never happens. Use .toContain() with an explicit token table instead of regex when asserting on quoted-hyphenated keys."
-    - "Source-extraction regex like /SKIP_PATHS[^[]*=\\s*\\[/ short-circuits on the [ inside the type annotation `: string[]`. Use [^=]* (skip up to =) for type-annotated declarations."
-    - "The JobStatus union does NOT have a named alias in src/content/schemas — it is inlined as JobRollupEntry['status']. Planning docs may reference `JobStatus` but the codebase uses indexed-access. Preserve the inlined access; do NOT add a new named alias just to match planning prose."
-    - "JobsRollupTable.test.tsx + JobCard.test.tsx assert on data-testid=`status-badge-${status}` literal — restyles must preserve that exact testid format. Document with explicit cross-consumer integration tests in the primitive owner's test file so the contract is visible from both sides."
-    - "fabled10x has no /scripts directory, no docker setup, no .env files in main, no test DB. PWTC (per-worktree test container) machinery from partymasters is fully N/A here — pipeline + worktree-claim short-circuit cleanly via CLAIM-04a PWTC_DISABLED-equivalent + env-symlink loop's [[ -e ]] guard."
+    - Word-boundary regex (\b) does NOT bound a quoted hyphenated key like 'in-progress'
+      — the apostrophe is non-word so the transition never happens. Use .toContain()
+      with an explicit token table instead of regex when asserting on quoted-hyphenated
+      keys.
+    - 'Source-extraction regex like /SKIP_PATHS[^[]*=\s*\[/ short-circuits on the
+      [ inside the type annotation `: string[]`. Use [^=]* (skip up to =) for type-annotated
+      declarations.'
+    - The JobStatus union does NOT have a named alias in src/content/schemas — it
+      is inlined as JobRollupEntry['status']. Planning docs may reference `JobStatus`
+      but the codebase uses indexed-access. Preserve the inlined access; do NOT add
+      a new named alias just to match planning prose.
+    - JobsRollupTable.test.tsx + JobCard.test.tsx assert on data-testid=`status-badge-${status}`
+      literal — restyles must preserve that exact testid format. Document with explicit
+      cross-consumer integration tests in the primitive owner's test file so the contract
+      is visible from both sides.
+    - fabled10x has no /scripts directory, no docker setup, no .env files in main,
+      no test DB. PWTC (per-worktree test container) machinery from partymasters is
+      fully N/A here — pipeline + worktree-claim short-circuit cleanly via CLAIM-04a
+      PWTC_DISABLED-equivalent + env-symlink loop's [[ -e ]] guard.
   reusable_utilities:
-    - function: "rootFor(container, status) helper"
-      file: "src/components/build-log/__tests__/StatusBadge.test.tsx"
-      purpose: "Resolve the root element of a status-discriminated badge via data-testid lookup. Asserts not-null with a contextual message. Pattern is generic — copies cleanly to any badge/chip primitive test that uses a data-testid template."
-    - function: "makeRollup(over: Partial<JobRollupEntry>) fixture"
-      file: "src/components/build-log/__tests__/StatusBadge.test.tsx"
-      purpose: "Single-call rollup fixture with sensible defaults and selective override. Used by the cross-consumer integration tests to construct JobCard + JobsRollupTable inputs without verbose object literals. Replicates the pattern from JobsRollupTable.test.tsx#makeRow."
-
-
+    - function: rootFor(container, status) helper
+      file: src/components/build-log/__tests__/StatusBadge.test.tsx
+      purpose: Resolve the root element of a status-discriminated badge via data-testid
+        lookup. Asserts not-null with a contextual message. Pattern is generic — copies
+        cleanly to any badge/chip primitive test that uses a data-testid template.
+    - function: 'makeRollup(over: Partial<JobRollupEntry>) fixture'
+      file: src/components/build-log/__tests__/StatusBadge.test.tsx
+      purpose: Single-call rollup fixture with sensible defaults and selective override.
+        Used by the cross-consumer integration tests to construct JobCard + JobsRollupTable
+        inputs without verbose object literals. Replicates the pattern from JobsRollupTable.test.tsx#makeRow.
 styling-overhaul-5.3:
-  completed_at: "2026-06-07"
+  completed_at: '2026-06-07'
   patterns_established:
-    - description: "Brand-primitive-consumed presentational form pattern"
-      file: "src/components/capture/EmailCapture.tsx"
-      reusable_for: |
-        Any form that needs to read as a brand surface rather than an
+    - description: Brand-primitive-consumed presentational form pattern
+      file: src/components/capture/EmailCapture.tsx
+      reusable_for: 'Any form that needs to read as a brand surface rather than an
+
         ad-hoc UI shell. The Bone-edge-subtle outer wrapper hosts both the
+
         idle/error form AND the success state — single surface, three
+
         renders. Sibling reskin sections (so-5.4 SignInForm /
+
         SignOutButton / BuyButton) should use the same shape: <Bone
-        edge='subtle' className='p-(--space-5)'> as the surface owner;
+
+        edge=''subtle'' className=''p-(--space-5)''> as the surface owner;
+
         brand <Button> for the submit; .label utility for the field
+
         legend; underline-only inputs (border-0 + border-b +
+
         border-(--color-ink) + focus:border-(--color-oxblood)) so the
-        input reads as 'signature line' rather than 'data field'.
-    - description: "useActionState wiring preserved through visual reskin"
-      file: "src/components/capture/EmailCapture.tsx"
-      reusable_for: |
-        Reskinning a wf-4.x server-action-backed form without touching
+
+        input reads as ''signature line'' rather than ''data field''.
+
+        '
+    - description: useActionState wiring preserved through visual reskin
+      file: src/components/capture/EmailCapture.tsx
+      reusable_for: 'Reskinning a wf-4.x server-action-backed form without touching
+
         actions.ts. The whole render tree is rewritten; the
-        useActionState hook + the action's CaptureState union (idle |
+
+        useActionState hook + the action''s CaptureState union (idle |
+
         success | error+message) + the FormData payload contract are all
+
         preserved verbatim. Same approach applies to so-5.4 (SignInForm
+
         from auth-3.x, BuyButton from products-x.x).
-    - description: "Hybrid red-phase posture for behavior-preserving reskin"
-      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
-      reusable_for: |
-        Any reskin section where the source had a pre-existing test
+
+        '
+    - description: Hybrid red-phase posture for behavior-preserving reskin
+      file: src/components/capture/__tests__/EmailCapture.test.tsx
+      reusable_for: 'Any reskin section where the source had a pre-existing test
+
         suite (wf-N.x foundation tests). The red phase REPLACES the old
+
         test file with an expanded version that PRESERVES every behavior
+
         test (form landmark, action receives FormData, double-submit
+
         prevention, error message rendering, etc.) AND adds brand-surface
+
         tests (Bone wrapper, token pairings, brand discipline asserts,
+
         sentinel SKIP_PATHS regression guard, planning-doc copy
+
         pinning). The preserved tests pass at red-start (PIN behavior);
+
         the new tests fail at red-start (DRIVE reskin); both halves are
-        green at green-end. Replaces the strict 'all-red-must-fail'
+
+        green at green-end. Replaces the strict ''all-red-must-fail''
+
         convention for behavior-preserving change sections.
-    - description: "Planning-doc copy pinning via source-grep data-integrity test"
-      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
-      reusable_for: |
-        Sections where default prop values or visible strings come
+
+        '
+    - description: Planning-doc copy pinning via source-grep data-integrity test
+      file: src/components/capture/__tests__/EmailCapture.test.tsx
+      reusable_for: 'Sections where default prop values or visible strings come
+
         verbatim from the planning doc (brand voice strings, copy
+
         decisions). Add a data_integrity test that source-greps for the
+
         exact literal — so future ad-hoc edits surface as failures and
-        the brand voice doesn't drift silently. Pattern:
-        expect(SRC).toContain('Welcome to the library.').
+
+        the brand voice doesn''t drift silently. Pattern:
+
+        expect(SRC).toContain(''Welcome to the library.'').
+
+        '
   gotchas:
-    - |
-      EmailCapture lives in src/components/capture/, NOT
+    - 'EmailCapture lives in src/components/capture/, NOT
+
       src/components/brand/. The 5-file sibling brand-barrel whitelist
+
       sentinel sync flagged in so-5.1 / so-5.2 knowledge does NOT apply
+
       to this section. Future reskins of non-brand-located components
+
       (auth/, products/, cohorts/, etc.) likewise skip the brand-barrel
+
       sync — only sections that ADD a new export to src/components/brand/
+
       need that sync.
-    - |
-      Test file for a reskin of a wf-N.x component already exists from
-      the wf-N.x section. Red phase REPLACES it whole (don't try to
+
+      '
+    - 'Test file for a reskin of a wf-N.x component already exists from
+
+      the wf-N.x section. Red phase REPLACES it whole (don''t try to
+
       surgically add tests around the existing ones — the new test file
+
       reorganizes the suite with clearer category dividers and adds
+
       brand-surface tests that need a consistent helper layout).
-    - |
-      For the input field, both border-0 AND border-b are required —
-      border-0 zeroes all four sides (kills Tailwind's default input
+
+      '
+    - 'For the input field, both border-0 AND border-b are required —
+
+      border-0 zeroes all four sides (kills Tailwind''s default input
+
       border-1) and border-b re-adds bottom only. Forgetting border-0
+
       leaves a 1px ink box around the input on top of the intended
+
       underline.
-    - |
-      <Button> default variant=primary + default size=md exactly matches
+
+      '
+    - '<Button> default variant=primary + default size=md exactly matches
+
       the editorial CTA spec — do NOT pass variant/size explicitly when
+
       the default fits. Keeps consumer call sites terse and means future
+
       Button default tweaks propagate automatically.
-    - |
-      React Testing Library's getByRole('form') only resolves when the
-      <form> has an accessible name. Preserve aria-label='Email capture'
+
+      '
+    - 'React Testing Library''s getByRole(''form'') only resolves when the
+
+      <form> has an accessible name. Preserve aria-label=''Email capture''
+
       (or add aria-labelledby) on the form element — without it, the
+
       a11y_form_landmark test fails silently because getByRole returns
+
       undefined.
-    - |
-      currentwork/{job-slug}/README.md must be edited in the WORKTREE,
+
+      '
+    - 'currentwork/{job-slug}/README.md must be edited in the WORKTREE,
+
       not in the main repo. Editing /home/travis/Projects/fabled10x/
+
       currentwork/... pollutes the main working tree and breaks the
-      worktree's isolated commit. Always confirm cwd is inside
+
+      worktree''s isolated commit. Always confirm cwd is inside
+
       $WORKTREES/section-{id}/ before touching files outside src/.
-    - |
-      README status field for so-5.2 (StatusBadge) is still 'Planned' on
+
+      '
+    - 'README status field for so-5.2 (StatusBadge) is still ''Planned'' on
+
       origin/main as of this section — the so-5.2 /finish skipped its
+
       planning-checklist update. Per section-scoped rule, did NOT fix
+
       that here; flagging for whoever runs so-5.4 next.
+
+      '
   reusable_utilities:
-    - function: "boneSurfaceRoot(container) helper"
-      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
-      purpose: |
-        Resolves the outermost <Bone> wrapper of a Bone-rooted
+    - function: boneSurfaceRoot(container) helper
+      file: src/components/capture/__tests__/EmailCapture.test.tsx
+      purpose: 'Resolves the outermost <Bone> wrapper of a Bone-rooted
+
         component for token/className assertions. Asserts not-null
+
         with a contextual message. Generic across any Bone-rooted
+
         component test (so-5.4 will likely reuse).
-    - function: "emailInput(container) + sourceInput(container) + formEl(container) helpers"
-      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
-      purpose: |
-        Form-specific element resolvers via name-attribute querySelector
+
+        '
+    - function: emailInput(container) + sourceInput(container) + formEl(container)
+        helpers
+      file: src/components/capture/__tests__/EmailCapture.test.tsx
+      purpose: 'Form-specific element resolvers via name-attribute querySelector
+
         with contextual not-null assertions. Pattern reusable for any
+
         form test that needs to grab specific named inputs without
+
         relying on test IDs.
 
+        '
 styling-overhaul-5.4:
-  completed_at: "2026-06-07"
-  scope: "Auth + storefront button consistency — SignInForm, SignOutButton, BuyButton adopt Button primitive"
+  completed_at: '2026-06-07'
+  scope: Auth + storefront button consistency — SignInForm, SignOutButton, BuyButton
+    adopt Button primitive
   patterns_established:
-    - description: "Behavior-preserving chrome swap on existing client components"
-      file: "src/components/products/BuyButton.tsx"
-      reusable_for: |
-        Future styling-overhaul sections that must adopt the Button primitive on
+    - description: Behavior-preserving chrome swap on existing client components
+      file: src/components/products/BuyButton.tsx
+      reusable_for: 'Future styling-overhaul sections that must adopt the Button primitive
+        on
+
         components with existing useActionState / useTransition / form-action wiring.
+
         The pattern: import {Button}, replace <button>...</button> with
-        <Button type='submit' variant='...' size='...' disabled={pending}>...</Button>
+
+        <Button type=''submit'' variant=''...'' size=''...'' disabled={pending}>...</Button>
+
         and otherwise leave the component shell, mocks, and side effects intact.
+
         Existing behavior tests pass through unchanged.
-    - description: "Underline-only input chrome (post-EmailCapture)"
-      file: "src/components/auth/SignInForm.tsx"
-      reusable_for: |
-        Any auth or capture-style form input that wants the brand's underline-on-Ink
+
+        '
+    - description: Underline-only input chrome (post-EmailCapture)
+      file: src/components/auth/SignInForm.tsx
+      reusable_for: 'Any auth or capture-style form input that wants the brand''s
+        underline-on-Ink
+
         / focus-on-Oxblood treatment. Class string:
+
         bg-transparent border-0 border-b border-(--color-ink)
+
         focus:outline-none focus:border-(--color-oxblood)
+
         py-(--space-2) body-1 placeholder:text-(--color-muted)
-    - description: "Embedded-price CTA label"
-      file: "src/components/products/BuyButton.tsx"
-      reusable_for: |
-        Storefront CTAs that want price-in-button affordance. Accept priceCents+currency
-        as props (not the full Product), format via Intl.NumberFormat('en-US', currency,
-        0/0 fraction digits) to match ProductCard, and embed as 'Buy — $XX'.
+
+        '
+    - description: Embedded-price CTA label
+      file: src/components/products/BuyButton.tsx
+      reusable_for: 'Storefront CTAs that want price-in-button affordance. Accept
+        priceCents+currency
+
+        as props (not the full Product), format via Intl.NumberFormat(''en-US'', currency,
+
+        0/0 fraction digits) to match ProductCard, and embed as ''Buy — $XX''.
+
+        '
   gotchas:
-    - |
-      The phase-5 plan suggests using `signOut` from 'next-auth/react' in SignOutButton
-      and replacing the SignInForm label to 'Send sign-in link'. The actually-shipped
+    - 'The phase-5 plan suggests using `signOut` from ''next-auth/react'' in SignOutButton
+
+      and replacing the SignInForm label to ''Send sign-in link''. The actually-shipped
+
       components diverged from the plan before 5.4: SignOutButton uses a server action
-      (signOutAction) and SignInForm's label is 'Send me a sign-in link'. Decision:
+
+      (signOutAction) and SignInForm''s label is ''Send me a sign-in link''. Decision:
+
       preserve the existing behavior + label so the 60+ existing behavior tests keep
+
       passing without rewrites. This is purely a chrome swap.
-    - |
-      BuyButton signature changed: from `{ productSlug }` to `{ productSlug, priceCents,
+
+      '
+    - 'BuyButton signature changed: from `{ productSlug }` to `{ productSlug, priceCents,
+
       currency }`. Every consumer (currently only products/[slug]/page.tsx) and every
+
       mocked Component in tests (products/[slug]/__tests__/page.test.tsx) had to be
-      updated. If a future section adds another BuyButton consumer, it must thread the
+
+      updated. If a future section adds another BuyButton consumer, it must thread
+      the
+
       same props.
+
+      '
   reusable_utilities:
-    - function: "formatPrice (Intl.NumberFormat en-US / currency / 0-0 fraction digits)"
-      file: |
-        Currently duplicated in 7 sites:
-          src/components/account/PurchaseList.tsx
-          src/app/products/[slug]/page.tsx
-          src/app/products/account/purchases/[id]/page.tsx
-          src/components/cohorts/CohortDetailHero.tsx
-          src/components/products/BuyButton.tsx (added this section)
-          src/components/products/ProductCard.tsx
-          src/components/cohorts/CohortCard.tsx
-      purpose: |
-        Format priceCents → '$49' (whole dollars). Identified for cross-section DRY
+    - function: formatPrice (Intl.NumberFormat en-US / currency / 0-0 fraction digits)
+      file: "Currently duplicated in 7 sites:\n  src/components/account/PurchaseList.tsx\n\
+        \  src/app/products/[slug]/page.tsx\n  src/app/products/account/purchases/[id]/page.tsx\n\
+        \  src/components/cohorts/CohortDetailHero.tsx\n  src/components/products/BuyButton.tsx\
+        \ (added this section)\n  src/components/products/ProductCard.tsx\n  src/components/cohorts/CohortCard.tsx\n"
+      purpose: 'Format priceCents → ''$49'' (whole dollars). Identified for cross-section
+        DRY
+
         extraction in refactor-progress.yaml but deferred — predates 5.4 and would
+
         touch 6 out-of-scope files. Candidate for a /full-refactor or shared-utilities
+
         job (extract to src/lib/currency/format-price.ts).
 
+        '
 styling-overhaul-6.1:
-  completed_at: "2026-06-07"
-  scope: "EditorialCard primitive — single brand component that enforces the three-level hierarchy (tag → headline → subtitle) on a Marble surface for every editorial card on the site"
+  completed_at: '2026-06-07'
+  scope: EditorialCard primitive — single brand component that enforces the three-level
+    hierarchy (tag → headline → subtitle) on a Marble surface for every editorial
+    card on the site
   patterns_established:
-    - description: "Whole-card-clickable primitive via conditional Link wrap"
-      file: "src/components/brand/EditorialCard.tsx"
-      reusable_for: |
-        Future card-like primitives that need a 'whole surface is the link OR nothing
-        is' affordance. Pattern: define const `inner` with the visible <article>;
+    - description: Whole-card-clickable primitive via conditional Link wrap
+      file: src/components/brand/EditorialCard.tsx
+      reusable_for: 'Future card-like primitives that need a ''whole surface is the
+        link OR nothing
+
+        is'' affordance. Pattern: define const `inner` with the visible <article>;
+
         when `href` is provided, return `<Link href={href} className={LINK_BASE}>{inner}</Link>`;
+
         otherwise return `inner` directly. The article picks up hover:bg-(--color-bone)
+
         and cursor-pointer only when href is present. Avoids the nested-<a> trap that
+
         kills double-click semantics + a11y.
-    - description: "BASE + CONDITIONAL + CALLER className composition (extends so-5.1 Button pattern)"
-      file: "src/components/brand/EditorialCard.tsx"
-      reusable_for: |
-        Any brand primitive that has a fixed base class string + one or two
+
+        '
+    - description: BASE + CONDITIONAL + CALLER className composition (extends so-5.1
+        Button pattern)
+      file: src/components/brand/EditorialCard.tsx
+      reusable_for: 'Any brand primitive that has a fixed base class string + one
+        or two
+
         boolean-conditional class strings + caller passthrough. Pattern:
-        `const articleClass = [BASE_ARTICLE, href ? HOVER_LINK : '', className]
-        .filter(Boolean).join(' ');` — deterministic, no double spaces, handles
+
+        `const articleClass = [BASE_ARTICLE, href ? HOVER_LINK : '''', className]
+
+        .filter(Boolean).join('' '');` — deterministic, no double spaces, handles
+
         empty caller className cleanly. Tested by data_serialization_classname_construction_deterministic
+
         and data_consistency_classname_no_duplicate_spaces.
-    - description: "DropAccent embedded inline in headline (size='inline')"
-      file: "src/components/brand/EditorialCard.tsx"
-      reusable_for: |
-        Any card / list item / chip that wants the Oxblood drop-accent treatment
-        on its primary text. Wrap the text in <DropAccent glyph={accent} size='inline'>{text}</DropAccent>
-        only when the accent prop is set; otherwise emit the plain text directly so screen
-        readers don't have to skip an empty fragment.
+
+        '
+    - description: DropAccent embedded inline in headline (size='inline')
+      file: src/components/brand/EditorialCard.tsx
+      reusable_for: 'Any card / list item / chip that wants the Oxblood drop-accent
+        treatment
+
+        on its primary text. Wrap the text in <DropAccent glyph={accent} size=''inline''>{text}</DropAccent>
+
+        only when the accent prop is set; otherwise emit the plain text directly so
+        screen
+
+        readers don''t have to skip an empty fragment.
+
+        '
   gotchas:
-    - |
-      jsdom's nwsapi (the CSS selector parser used by jsdom in Vitest)
-      cannot parse `:scope > div` when the parent element's className
+    - 'jsdom''s nwsapi (the CSS selector parser used by jsdom in Vitest)
+
+      cannot parse `:scope > div` when the parent element''s className
+
       contains Tailwind 4 paren-syntax tokens like `bg-(--color-marble)`.
-      It produces `'article.bg-,--color-marble, > div' is not a valid selector`.
+
+      It produces `''article.bg-,--color-marble, > div'' is not a valid selector`.
+
       Workaround for tests that need to assert no direct child of a tag exists:
-      use `Array.from(parent.children).filter(c => c.tagName === 'DIV')` instead
-      of `parent.querySelectorAll(':scope > div')`. Test intent is preserved.
+
+      use `Array.from(parent.children).filter(c => c.tagName === ''DIV'')` instead
+
+      of `parent.querySelectorAll('':scope > div'')`. Test intent is preserved.
+
       Applies to ANY assertion that runs a compound selector through an element
+
       whose className contains Tailwind 4 paren tokens.
-    - |
-      Adding a new brand primitive incurs a cross-test maintenance cost: 5 sibling
+
+      '
+    - 'Adding a new brand primitive incurs a cross-test maintenance cost: 5 sibling
+
       test files maintain barrel-export whitelist Sets that must each be extended
+
       with the new export name. Files: Surfaces.test.tsx, BrushstrokeSeam.test.tsx,
+
       Logo.test.tsx, Button.test.tsx, Section.test.tsx. PLUS forbidden-patterns.test.ts
+
       SKIP_PATHS must be extended IF the new test file contains the FORBIDDEN regex
+
       literal (which it will, for any primitive that ships an `infra_no_forbidden_shadow_class`
+
       sentinel). The Red phase is the right time to update all 6 files — they fail
+
       until Green ships the barrel export, which is the same Red signal as the
-      primitive's own tests.
-    - |
-      EditorialCard.tsx itself is intentionally orphaned by the implementation
+
+      primitive''s own tests.
+
+      '
+    - 'EditorialCard.tsx itself is intentionally orphaned by the implementation
+
       audit at the moment 6.1 ships — no page mounts it. This is by planning-doc
+
       design: 6.1 ships the primitive only; consumer cards (JobCard, ProductCard,
+
       CohortCard) refactor onto it in 6.2 / 6.3 / 6.4. Mark
+
       audit_component_mounts + audit_feature_reconciliation as done with a
-      'published to brand barrel for 6.2/6.3/6.4' note, not as orphan fail. Same
+
+      ''published to brand barrel for 6.2/6.3/6.4'' note, not as orphan fail. Same
+
       precedent as so-5.1 Button — primitives ship ahead of consumers.
+
+      '
   reusable_utilities:
-    - function: "EditorialCard component"
-      file: "src/components/brand/EditorialCard.tsx"
-      purpose: |
-        Three-level editorial hierarchy enforcement: tag (Oxblood label) → headline
+    - function: EditorialCard component
+      file: src/components/brand/EditorialCard.tsx
+      purpose: 'Three-level editorial hierarchy enforcement: tag (Oxblood label) →
+        headline
+
         (Cinzel display-3) → subtitle (Inter body-2 muted) on a Marble surface with
+
         1px Ink edge. Optional footer slot below the three levels. Optional accent
-        glyph inside the headline (DropAccent size='inline'). Optional href makes
+
+        glyph inside the headline (DropAccent size=''inline''). Optional href makes
+
         the whole card a Next.js Link with focus-visible:outline-(--color-oxblood).
+
         Hover tint to (--color-bone) when href set. Consumed by JobCard (6.2),
+
         ProductCard (6.3), CohortCard + CohortDetailHero + CohortStatusBadge (6.4).
 
+        '
+  styling-overhaul-4.2:
+    completed_at: '2026-06-07'
+    posture: zero-source-change-ratification
+    patterns_established:
+      - description: Hybrid red-phase posture extended to zero-source-change green/refactor
+        file: src/components/site/__tests__/Header.test.tsx
+        reusable_for: 'Any future section whose implementation already shipped via
+          prior-section
+
+          side effects. The discipline: write NEW ratification test pins that lock
+
+          the design-doc decisions in place; expect them to pass at red-start
+
+          (preservation + new infra-grep sentinels); Green is a no-op verification;
+
+          Refactor is no-op. The audit trail then ratifies the planning-doc
+
+          checklist row as Complete while producing zero production-source diff.
+
+          Precedents: so-5.3 partial preservation (17/38 passed at red-start);
+
+          so-4.2 (this section) FULL preservation (42/42 passed at red-start).
+
+          '
+      - description: Per-route active-state integration matrix for site Header
+        file: src/components/site/__tests__/Header.test.tsx
+        reusable_for: 'Any nav-bearing layout component. Pattern: one integration
+          test per
+
+          NAV_ITEMS entry asserting aria-current=''page'' on that route AND its
+
+          absence on a sibling — plus one nested-path test per dynamic-slug route
+
+          (/cohorts/[slug], /products/[slug], /episodes/[slug]). Cross-mutex
+
+          covered by a11y_*_exactly_one_link_aria_current_per_route plus
+
+          a11y_*_zero_aria_current_when_off_nav.
+
+          '
+      - description: Source-grep ratification sentinels for design-doc 'no-X' decisions
+        file: src/components/site/__tests__/NavLink.test.tsx
+        reusable_for: 'Lock ''no hover:underline / no hover:scale / no hover:transform
+          / no
+
+          inline style attr / no inline gradients / no UI shadows / no legacy
+
+          palette tokens'' via readFileSync + .not.toMatch regex. Pattern: one
+
+          unit/infra test per forbidden pattern. Already applied at so-3.3 (top-
+
+          level forbidden-pattern sentinel); this section embeds the same
+
+          discipline at the consumer-component level.
+
+          '
+    gotchas:
+      - When asserting screen.getByRole('banner') in a NEW test block, the test must
+        call render(<Header />) FIRST. The shared `beforeEach` only sets the usePathname
+        mock — render does NOT carry over from prior tests inside the same describe
+        block. Caught by red-phase verify when unit_header_marble_edge_uses_edge_color_token
+        threw 'Unable to find an accessible element with the role banner'. Fixed inline.
+      - 'Tailwind 4 token-class regex must match literal paren form: /text-\(--color-X\)/
+        not /text-\[var\(--color-X\)\]/. The braces inside paren tokens are stable
+        Tailwind 4 syntax; downstream tests assume this exact shape.'
+      - 'next/navigation.usePathname() in jsdom mocks: the mock must return a string
+        or null — passing undefined causes ''pathname?.startsWith'' to short-circuit
+        to undefined which then compares falsy. The current NavLink implementation
+        uses `pathname?.startsWith(`${href}/`) === true` which safely returns false
+        for null/undefined. Locked by edge_navlink_null_pathname (existing) + edge_header_active_state_with_null_pathname
+        (existing).'
+    reusable_utilities: []
+    deferred_followups:
+      - 'Cross-section brand-sentinel-test-helpers extraction (now 6+ sites: Surfaces.test,
+        BrushstrokeSeam.test, Logo.test, Button.test, Section.test, EmailCapture.test,
+        Header.test infra block). Threshold rising; revisit at so-6.x when Card primitive
+        tests would push to 8+.'
+      - NavLink focus-visible:outline-(--color-oxblood) decoration — deliberately
+        deferred to so-9.x a11y polish section per planning doc. Sentinel infra_navlink_no_focus_outline_override
+        guards against premature removal of the browser default outline.
+    chrome_status_after:
+      header: complete
+      footer: complete
+      logo: complete
+      layout_primitives: complete
+      remaining_phase_4: none
+      phase_4_status: 4/4 features shipped — Phase 4 Logo+Chrome COMPLETE
 styling-overhaul-6.2:
-  completed_at: "2026-06-07"
+  completed_at: '2026-06-07'
   patterns_established:
-    - description: "JobCard as thin EditorialCard composition"
-      file: "src/components/build-log/JobCard.tsx"
-      reusable_for: |
-        Reference shape for the remaining card refactors (6.3 ProductCard,
+    - description: JobCard as thin EditorialCard composition
+      file: src/components/build-log/JobCard.tsx
+      reusable_for: 'Reference shape for the remaining card refactors (6.3 ProductCard,
+
         6.4 CohortCard). Pattern: import { EditorialCard } from
-        '@/components/brand', map domain fields to tag/headline/subtitle/footer,
+
+        ''@/components/brand'', map domain fields to tag/headline/subtitle/footer,
+
         href = canonical detail page. Wrap multiple footer elements in a
-        fragment so EditorialCard's footer DIV stays one direct child.
-    - description: "Source-level sentinel test guards"
-      file: "src/components/build-log/__tests__/JobCard.test.tsx"
-      reusable_for: |
-        After a primitive (EditorialCard, Surfaces, etc.) lands, consumer
+
+        fragment so EditorialCard''s footer DIV stays one direct child.
+
+        '
+    - description: Source-level sentinel test guards
+      file: src/components/build-log/__tests__/JobCard.test.tsx
+      reusable_for: 'After a primitive (EditorialCard, Surfaces, etc.) lands, consumer
+
         refactor tests should fs-read the consumer source and assert it does
+
         NOT contain the pre-refactor classes (bg-marble-texture, border-mist,
+
         rounded-lg, hover:border-accent, text-xl, font-display, etc.). Cheaper
+
         than UI snapshot tests and catches regressions where someone re-adds
+
         an inline style.
+
+        '
   gotchas:
-    - |
-      Worktree-claim CLAIM-04's `mount --bind /home/travis/Projects/fabled10x/node_modules`
+    - 'Worktree-claim CLAIM-04''s `mount --bind /home/travis/Projects/fabled10x/node_modules`
+
       is denied by the auto-mode classifier ("requires elevated privileges").
+
       Symlink fallback works for Vitest but Turbopack rejects the symlink at
+
       `npm run build` with `Symlink ... is invalid, it points out of the
+
       filesystem root`. Workaround: ask the user via AskUserQuestion before
+
       build; they can approve a one-off `mount --bind`. Or pre-approve mount
+
       in settings.local.json. Future pipeline runs should either bypass the
+
       symlink fallback or surface this earlier in CLAIM-04.
-    - |
-      StatusBadge already carries `class="label"` (the brand small-caps
-      utility). When asserting on EditorialCard's tag slot in JobCard tests,
+
+      '
+    - 'StatusBadge already carries `class="label"` (the brand small-caps
+
+      utility). When asserting on EditorialCard''s tag slot in JobCard tests,
+
       use `article > span.label` (direct child) — `article span.label`
+
       matches the StatusBadge inside the footer too and produces confusing
-      "expected 'Build Log', received 'In Progress'" failures. Apply same
+
+      "expected ''Build Log'', received ''In Progress''" failures. Apply same
+
       direct-child selectivity for the 6.4 cohort tests where
+
       CohortStatusBadge will be wrapped by EditorialCard footers.
-    - |
-      JobCard's alias field had to move from the header ("Alias: dj" line)
+
+      '
+    - 'JobCard''s alias field had to move from the header ("Alias: dj" line)
+
       to the footer ("(dj)") to fit the three-level editorial hierarchy.
+
       Behavior preserved (alias-present test + alias-absent test) but the
+
       visual location changed — flag in next visual walk-through.
+
+      '
   reusable_utilities:
-    - function: "formatFeatureCount(rollup): string"
-      file: "src/components/build-log/JobCard.tsx"
-      purpose: |
-        Returns 'M / N features' or 'M / N features · X%' depending on whether
+    - function: 'formatFeatureCount(rollup): string'
+      file: src/components/build-log/JobCard.tsx
+      purpose: 'Returns ''M / N features'' or ''M / N features · X%'' depending on
+        whether
+
         percentComplete is null. Local helper, not exported. If a second
+
         build-log card ever needs the same string (e.g. a compact JobRow),
+
         promote to src/lib/build-log/format.ts.
 
+        '
 styling-overhaul-6.3:
-  completed_at: "2026-06-07"
-  scope: "ProductCard refactored onto so-6.1 <EditorialCard>. Single-file presentational refactor consuming EditorialCard primitive with tag=PRODUCT_CATEGORY_LABELS[category], headline=title, subtitle=tagline, href=/products/{slug}, footer=mono-styled price span. Also dropped outer <Link> in src/app/products/page.tsx to avoid nested anchors (EditorialCard owns the link)."
+  completed_at: '2026-06-07'
+  scope: ProductCard refactored onto so-6.1 <EditorialCard>. Single-file presentational
+    refactor consuming EditorialCard primitive with tag=PRODUCT_CATEGORY_LABELS[category],
+    headline=title, subtitle=tagline, href=/products/{slug}, footer=mono-styled price
+    span. Also dropped outer <Link> in src/app/products/page.tsx to avoid nested anchors
+    (EditorialCard owns the link).
   patterns_established:
-    - description: "Card refactor onto EditorialCard — preserve currency-aware formatPrice helper; pass PRODUCT_CATEGORY_LABELS[category] (not raw enum slug) as tag; mono-styled <span> in footer slot"
-      file: "src/components/products/ProductCard.tsx"
-      reusable_for: "Future so-6.4 CohortCard (start date + duration + seats + price all monospace per planning doc), and any future card type whose dominant numeric/spec content should render in JetBrains Mono"
-    - description: "Page-level outer Link drop when refactoring child to consume EditorialCard's href prop"
-      file: "src/app/products/page.tsx (line 35-37)"
-      reusable_for: "Anywhere a list page wraps cards in <Link>...<Card/>...</Link> — when the child gains an internal href via EditorialCard, the outer Link MUST be removed to prevent nested anchors. so-6.2 JobCard refactor and so-6.4 cohort grid pages should apply the same pattern."
-    - description: "Page test mock update — when a child component gains internal link ownership, the page test's vi.mock for that child must render an <a> instead of a <div>, and the source-grep integration test 'integration_{page}_drops_outer_link' should be added to lock the no-outer-wrapper contract."
-      file: "src/app/products/__tests__/page.test.tsx (lines 26-39, 130-160)"
-      reusable_for: "6.4 (CohortCard pages) — same mock pattern + source-grep test for any consumer page after a card refactor relocates its link inside the card."
+    - description: Card refactor onto EditorialCard — preserve currency-aware formatPrice
+        helper; pass PRODUCT_CATEGORY_LABELS[category] (not raw enum slug) as tag;
+        mono-styled <span> in footer slot
+      file: src/components/products/ProductCard.tsx
+      reusable_for: Future so-6.4 CohortCard (start date + duration + seats + price
+        all monospace per planning doc), and any future card type whose dominant numeric/spec
+        content should render in JetBrains Mono
+    - description: Page-level outer Link drop when refactoring child to consume EditorialCard's
+        href prop
+      file: src/app/products/page.tsx (line 35-37)
+      reusable_for: Anywhere a list page wraps cards in <Link>...<Card/>...</Link>
+        — when the child gains an internal href via EditorialCard, the outer Link
+        MUST be removed to prevent nested anchors. so-6.2 JobCard refactor and so-6.4
+        cohort grid pages should apply the same pattern.
+    - description: Page test mock update — when a child component gains internal link
+        ownership, the page test's vi.mock for that child must render an <a> instead
+        of a <div>, and the source-grep integration test 'integration_{page}_drops_outer_link'
+        should be added to lock the no-outer-wrapper contract.
+      file: src/app/products/__tests__/page.test.tsx (lines 26-39, 130-160)
+      reusable_for: 6.4 (CohortCard pages) — same mock pattern + source-grep test
+        for any consumer page after a card refactor relocates its link inside the
+        card.
   gotchas:
-    - 'Planning doc §6.3 showed simplified $((cents/100).toFixed(0)) and raw product.category as the tag — but the current ProductCard contract uses Intl.NumberFormat (currency-aware) and PRODUCT_CATEGORY_LABELS lookup. PRESERVE the existing contracts; the planning doc is lossy. The cross-consumer Product test fixtures + storefront UX depend on real currency formatting (matching so-5.4 BuyButton precedent) and human labels (the enum slug ''workflow-templates'' would be a visible regression).'
-    - "EditorialCard renders the headline as h3.display-3 — not h2. Pre-6.3 ProductCard used h2. Tests that assert heading level on cards (unit_card_title) must update from level 2 to level 3. The page h1 Products + card h3 is the documented anti-skip exception (h2 would be an empty section heading)."
-    - "EditorialCard wraps inner article in a Link when href is set. If a parent page also wraps ProductCard in Link, the result is nested anchors (invalid HTML, accessibility violation). When refactoring a card to consume EditorialCard.href, ALWAYS audit parent pages for outer Link wrappers and drop them. Source-grep test integration_{page}_drops_outer_link pins this."
-    - "Refactor produced ZERO source-code changes — 19th consecutive zero-source-change refactor section. Same precedent as so-5.3, 5.4, 6.1. Cross-section formatPrice 7-site duplication (so-5.4 finding) remains deferred per established discipline; would touch 6 out-of-scope files."
-    - "Concurrent worktree merge: so-6.2 (JobCard) landed on main between so-6.3 claim and so-6.3 release. The rebase produced additive conflicts on session.yaml, knowledge.yaml, and currentwork/styling-overhaul/README.md — resolved manually by union (worktree-release resolvers not yet implemented). Future cross-section work should expect this scenario."
+    - Planning doc §6.3 showed simplified $((cents/100).toFixed(0)) and raw product.category
+      as the tag — but the current ProductCard contract uses Intl.NumberFormat (currency-aware)
+      and PRODUCT_CATEGORY_LABELS lookup. PRESERVE the existing contracts; the planning
+      doc is lossy. The cross-consumer Product test fixtures + storefront UX depend
+      on real currency formatting (matching so-5.4 BuyButton precedent) and human
+      labels (the enum slug 'workflow-templates' would be a visible regression).
+    - EditorialCard renders the headline as h3.display-3 — not h2. Pre-6.3 ProductCard
+      used h2. Tests that assert heading level on cards (unit_card_title) must update
+      from level 2 to level 3. The page h1 Products + card h3 is the documented anti-skip
+      exception (h2 would be an empty section heading).
+    - EditorialCard wraps inner article in a Link when href is set. If a parent page
+      also wraps ProductCard in Link, the result is nested anchors (invalid HTML,
+      accessibility violation). When refactoring a card to consume EditorialCard.href,
+      ALWAYS audit parent pages for outer Link wrappers and drop them. Source-grep
+      test integration_{page}_drops_outer_link pins this.
+    - Refactor produced ZERO source-code changes — 19th consecutive zero-source-change
+      refactor section. Same precedent as so-5.3, 5.4, 6.1. Cross-section formatPrice
+      7-site duplication (so-5.4 finding) remains deferred per established discipline;
+      would touch 6 out-of-scope files.
+    - 'Concurrent worktree merge: so-6.2 (JobCard) landed on main between so-6.3 claim
+      and so-6.3 release. The rebase produced additive conflicts on session.yaml,
+      knowledge.yaml, and currentwork/styling-overhaul/README.md — resolved manually
+      by union (worktree-release resolvers not yet implemented). Future cross-section
+      work should expect this scenario.'
   deferred_followups:
-    - "Cross-section formatPrice extraction (NOW 7 use sites: ProductCard, BuyButton, PurchaseList, products/[slug]/page, products/account/purchases/[id]/page, CohortCard, CohortDetailHero). Identical Intl.NumberFormat en-US currency 0-fraction-digits. Should extract to src/lib/format-currency.ts in a dedicated cross-cutting refactor section after Phase 6 ships. Re-flagged from so-5.4."
+    - 'Cross-section formatPrice extraction (NOW 7 use sites: ProductCard, BuyButton,
+      PurchaseList, products/[slug]/page, products/account/purchases/[id]/page, CohortCard,
+      CohortDetailHero). Identical Intl.NumberFormat en-US currency 0-fraction-digits.
+      Should extract to src/lib/format-currency.ts in a dedicated cross-cutting refactor
+      section after Phase 6 ships. Re-flagged from so-5.4.'
   reusable_utilities: []
-  blocker_cleared: |
-    styling-overhaul Phase 6 (Card Primitives) is now 3/4 complete (6.1
+  blocker_cleared: 'styling-overhaul Phase 6 (Card Primitives) is now 3/4 complete
+    (6.1
+
     EditorialCard + 6.2 JobCard + 6.3 ProductCard — 6.2 landed concurrently
+
     in another worktree and was merged into main between 6.3 claim and 6.3
+
     release, surfaced via rebase additive merge). Only 6.4 (CohortCard +
+
     hero + status reskin) remains. 6.4 is the canonical next so section.
+
     so-4.2 (Header restyle) also remains Planned from Phase 4. Cross-section
+
     formatPrice extraction (confirmed 7-site duplication) is the strongest
+
     cross-cutting refactor candidate post-Phase 6.
+
+    '
