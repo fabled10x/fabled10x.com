@@ -5959,3 +5959,22 @@ styling-overhaul-6.4:
         Currency passed lowercase normalized via .toUpperCase().
 
         '
+
+styling-overhaul-7.1:
+  completed_at: '2026-06-07'
+  patterns_established:
+    - description: 'Page-level brand reskin pattern — replace raw <section>/<Container>/Tailwind-utility composition with brand-primitive composition'
+      file: src/app/page.tsx
+      reusable_for: 'Phase 7 sections 7.2–7.6 (episodes/cases/build-log/storefront/about/auth/error pages). Sequence: (1) wrap each top-level block in <Section rhythm=sm|md|lg> with optional bg-(--color-*) className for surface change; (2) wrap content in <Container width=prose|layout|wide>; (3) replace placeholder type utilities with .label / .display-1 / .display-2 / .body-1 / .body-2; (4) chain blocks with <SectionDivider top bottom /> between surface transitions; (5) wrap secondary blocks in <Bone> when they need visual separation from main marble surface; (6) use <DropAccent glyph={?|.|→|✕|✓}> on display headings for editorial flourish; (7) compose card lists onto <EditorialCard> tag/headline/subtitle/href.'
+    - description: 'Conditional divider collapse — wrap a Section + its surrounding dividers together in {data && (<>...</>)} so missing-data states collapse cleanly without orphaned brushstrokes between surfaces that no longer transition'
+      file: src/app/page.tsx
+      reusable_for: 'Any page where a block is conditional on loader data (latest-episode, recent-cases, featured-product). Pattern: <SectionDivider top=A bottom=B /> + <Section bg=B> + <SectionDivider top=B bottom=C /> all inside the {data && (<>...</>)} so when data is null the chain shortcuts directly from surface A to C.'
+    - description: 'Source-level brand sentinel pattern — readFileSync the page.tsx (and the brand SKIP_PATHS sentinel) inside a test file and assert no banned placeholder utility tokens remain in source AND that brand utility tokens are positively adopted'
+      file: src/app/__tests__/page.test.tsx
+      reusable_for: 'Every Phase 7 page reskin. Lock the banned-utility list (text-accent, text-muted, font-display, text-5xl, md:text-6xl, text-3xl, text-2xl, text-xl, text-lg, text-sm, border-mist, bg-marble-texture, rounded-lg, hover:border-accent, hover:text-accent, text-link, font-semibold, tracking-wide, tracking-tight, leading-[1.05], uppercase) into a const BANNED = [...] array and assert hits.length === 0. Pair with a positive adoption test that the file uses .label / .display-N / .body-N utilities at least once each.'
+  gotchas:
+    - 'next/image rewrites src into a /_next/image?url=... URL even in jsdom, so selectors like img[src*="/hero/floatbg.png"] return null. Use img[alt=""][aria-hidden="true"] scoped to the hero <section> instead — the alt+aria signature survives the URL rewrite and unambiguously identifies the decorative hero image.'
+    - 'EditorialCard renders <Link><article>...</article></Link> when href is set. Tests that walk from the title link to the article must use querySelector("article") (descendant), NOT closest("article") (ancestor) — the article is INSIDE the link, not around it.'
+    - 'The brand forbidden-patterns sentinel (src/__tests__/brand/forbidden-patterns.test.ts) only forbids gradients/shadows/pure-black-white-red/forbidden-palette utilities. It does NOT forbid font-display, text-Nxl, text-muted, border-mist, etc. — those are "placeholder utilities to remove" per the page reskin spec, enforced by per-section source-level sentinels (see infra_brand_sentinel_passes_on_page_tsx pattern above), not by the brand-wide sentinel.'
+    - 'getLatestEpisode returns a LoadedEntry<Episode>, not a raw Episode. Fields live under .meta.* (latest.meta.title, latest.meta.summary, latest.meta.series, latest.meta.act, latest.meta.episodeNumber). The .slug field is on the LoadedEntry wrapper, not under .meta. Tests must construct fixtures matching the wrapped shape.'
+  reusable_utilities: []

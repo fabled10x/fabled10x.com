@@ -2,15 +2,58 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-6.2
+  current_section: styling-overhaul-7.2
   current_agent: pending
-  current_stage: styling-overhaul-6.4-complete
+  current_stage: styling-overhaul-7.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-7.1
+    name: Homepage hero
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add homepage hero brand reskin with 44 tests (styling-overhaul-7.1)
+    tests: 44
+    files_new: 0
+    files_modified: 2
+    pushed: false
+    notes: 'First feature of styling-overhaul Phase 7 (Page Surfaces). Homepage
+      reskin onto brand primitives. Hero scaffold (Image + HeroBackdrop)
+      preserved from prior spike; this section restructured the rest:
+      raw <section>/Container collapsed onto <Section rhythm=lg|md>; .label /
+      .display-1 / .display-2 / .body-1 brand utilities replaced all
+      placeholder typography (text-accent, text-muted, font-display,
+      text-5xl, text-lg, text-sm, border-mist, bg-marble-texture,
+      rounded-lg, text-link); latest-episode block restructured onto
+      EditorialCard (tag=`{series} · Act {act}`, accent=?); SECTIONS
+      constant rewritten from 3 entries (Episodes/Cases/About) to 4
+      (Episodes/Case Studies/Build Log/Products) per spec; legacy "Inside
+      the build" section replaced with sister-project Bone block + DropAccent
+      (glyph=→) on "The Large Language Library" heading + outbound link to
+      https://largelanguagelibrary.ai. Three SectionDividers chain the
+      surface transitions (marble→parchment→marble→bone) and collapse
+      together when getLatestEpisode returns null. RSC-pure throughout.
+
+
+      44 tests in src/app/__tests__/page.test.tsx (22 unit, 4 integration,
+      6 a11y, 4 infra, 4 edge, 1 err, 3 data; security/permission/contract
+      N/A — UI-only page). Source-level infra sentinels read page.tsx via
+      readFileSync to lock the 21 banned placeholder utility tokens out of
+      future edits and to assert positive adoption of .label / .display-1 /
+      .display-2 / .body-1 and the brand primitive imports.
+
+
+      3 tests rewritten during green with intent preserved: image selector
+      switched from src*=floatbg.png to alt=""+aria-hidden=true (next/image
+      rewrites src); divider count when latest=null reduced from 2 to 1
+      (cleanest brand semantics — both surrounding dividers collapse with
+      the parchment block); empty-summary check scoped to the EditorialCard
+      article descendant instead of a too-broad screen-wide empty-text query.
+
+      '
   - id: styling-overhaul-6.2
     name: JobCard refactor onto EditorialCard
     completed_at: '2026-06-07'
