@@ -9,3 +9,4 @@ export { Logo } from './Logo';
 export { Section } from './Section';
 export { SectionDivider } from './SectionDivider';
 export { Button } from './Button';
+export { EditorialCard } from './EditorialCard';

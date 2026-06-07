@@ -2,15 +2,55 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-6.1
+  current_section: styling-overhaul-6.2
   current_agent: pending
-  current_stage: styling-overhaul-5.4-complete
+  current_stage: styling-overhaul-6.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-6.1
+    name: EditorialCard primitive
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add EditorialCard primitive with 53 tests (styling-overhaul-6.1)
+    tests: 53
+    files_new: 2
+    files_modified: 7
+    pushed: false
+    notes: |
+      First feature of styling-overhaul Phase 6 (Card Primitives). NEW brand
+      primitive `<EditorialCard>` enforces the three-level hierarchy (tag →
+      headline → subtitle) on a Marble surface with 1px Ink edge. Single
+      71-line component composes DropAccent (so-2.3) for the optional accent
+      glyph inside the headline and Next.js Link for whole-card-clickable
+      mode (focus-visible:outline-(--color-oxblood), hover:bg-(--color-bone)).
+      Three module-level class constants (BASE_ARTICLE / HOVER_LINK /
+      LINK_BASE) mirror the so-5.1 Button composition shape. RSC-pure
+      (no 'use client'). Forbidden-pattern sentinel green.
+
+      Cross-test coupling resolved during Red: 5 sibling brand tests
+      (Surfaces, BrushstrokeSeam, Logo, Button, Section) extended with
+      'EditorialCard' in their barrel-export whitelist Set; the so-3.3
+      forbidden-pattern sentinel SKIP_PATHS extended with the new test file
+      (same precedent as Button.test.tsx — the test legitimately contains
+      the FORBIDDEN regex literal for the no-shadow assertion).
+
+      Two test selectors switched from `:scope > div` to
+      `Array.from(article.children).filter(c => c.tagName === 'DIV')` —
+      jsdom's nwsapi parser chokes on compound selectors when the parent's
+      className contains Tailwind 4 paren tokens like bg-(--color-marble).
+      Test intent preserved exactly. Captured to knowledge.yaml as a
+      reusable gotcha for any future brand primitive that needs to assert
+      child-element shape.
+
+      Primitive is published to the brand barrel for downstream consumption
+      by 6.2 (JobCard), 6.3 (ProductCard), 6.4 (CohortCard + Hero +
+      StatusBadge). At the moment 6.1 ships, no page mounts EditorialCard —
+      same precedent as so-5.1 Button shipping ahead of its consumers
+      (5.3, 5.4).
   - id: styling-overhaul-5.4
     name: Auth + storefront button consistency
     completed_at: '2026-06-07'

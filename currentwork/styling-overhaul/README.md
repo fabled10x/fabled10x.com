@@ -93,7 +93,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 5.2 | `<StatusBadge>` variant restyle (Oxblood / Verdigris / Ink / Bone)                       | 5 - Component Primitives       | S    | Complete |
 | 5.3 | `EmailCapture` reskin (Bone input, Ink button, Verdigris success)                        | 5 - Component Primitives       | M    | Complete |
 | 5.4 | Auth + storefront button consistency (`SignInForm`, `SignOutButton`, `BuyButton`)        | 5 - Component Primitives       | S    | Complete |
-| 6.1 | `<EditorialCard>` primitive enforcing three-level hierarchy                              | 6 - Card Primitives            | L    | Planned |
+| 6.1 | `<EditorialCard>` primitive enforcing three-level hierarchy                              | 6 - Card Primitives            | L    | Complete |
 | 6.2 | `JobCard` refactored onto `<EditorialCard>`                                              | 6 - Card Primitives            | S    | Planned |
 | 6.3 | `ProductCard` refactored onto `<EditorialCard>` (price in monospace)                     | 6 - Card Primitives            | S    | Planned |
 | 6.4 | `CohortCard` + `CohortDetailHero` + `CohortStatusBadge` reskin                           | 6 - Card Primitives            | M    | Planned |

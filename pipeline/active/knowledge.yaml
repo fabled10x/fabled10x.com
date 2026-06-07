@@ -5223,3 +5223,73 @@ styling-overhaul-5.4:
         extraction in refactor-progress.yaml but deferred — predates 5.4 and would
         touch 6 out-of-scope files. Candidate for a /full-refactor or shared-utilities
         job (extract to src/lib/currency/format-price.ts).
+
+styling-overhaul-6.1:
+  completed_at: "2026-06-07"
+  scope: "EditorialCard primitive — single brand component that enforces the three-level hierarchy (tag → headline → subtitle) on a Marble surface for every editorial card on the site"
+  patterns_established:
+    - description: "Whole-card-clickable primitive via conditional Link wrap"
+      file: "src/components/brand/EditorialCard.tsx"
+      reusable_for: |
+        Future card-like primitives that need a 'whole surface is the link OR nothing
+        is' affordance. Pattern: define const `inner` with the visible <article>;
+        when `href` is provided, return `<Link href={href} className={LINK_BASE}>{inner}</Link>`;
+        otherwise return `inner` directly. The article picks up hover:bg-(--color-bone)
+        and cursor-pointer only when href is present. Avoids the nested-<a> trap that
+        kills double-click semantics + a11y.
+    - description: "BASE + CONDITIONAL + CALLER className composition (extends so-5.1 Button pattern)"
+      file: "src/components/brand/EditorialCard.tsx"
+      reusable_for: |
+        Any brand primitive that has a fixed base class string + one or two
+        boolean-conditional class strings + caller passthrough. Pattern:
+        `const articleClass = [BASE_ARTICLE, href ? HOVER_LINK : '', className]
+        .filter(Boolean).join(' ');` — deterministic, no double spaces, handles
+        empty caller className cleanly. Tested by data_serialization_classname_construction_deterministic
+        and data_consistency_classname_no_duplicate_spaces.
+    - description: "DropAccent embedded inline in headline (size='inline')"
+      file: "src/components/brand/EditorialCard.tsx"
+      reusable_for: |
+        Any card / list item / chip that wants the Oxblood drop-accent treatment
+        on its primary text. Wrap the text in <DropAccent glyph={accent} size='inline'>{text}</DropAccent>
+        only when the accent prop is set; otherwise emit the plain text directly so screen
+        readers don't have to skip an empty fragment.
+  gotchas:
+    - |
+      jsdom's nwsapi (the CSS selector parser used by jsdom in Vitest)
+      cannot parse `:scope > div` when the parent element's className
+      contains Tailwind 4 paren-syntax tokens like `bg-(--color-marble)`.
+      It produces `'article.bg-,--color-marble, > div' is not a valid selector`.
+      Workaround for tests that need to assert no direct child of a tag exists:
+      use `Array.from(parent.children).filter(c => c.tagName === 'DIV')` instead
+      of `parent.querySelectorAll(':scope > div')`. Test intent is preserved.
+      Applies to ANY assertion that runs a compound selector through an element
+      whose className contains Tailwind 4 paren tokens.
+    - |
+      Adding a new brand primitive incurs a cross-test maintenance cost: 5 sibling
+      test files maintain barrel-export whitelist Sets that must each be extended
+      with the new export name. Files: Surfaces.test.tsx, BrushstrokeSeam.test.tsx,
+      Logo.test.tsx, Button.test.tsx, Section.test.tsx. PLUS forbidden-patterns.test.ts
+      SKIP_PATHS must be extended IF the new test file contains the FORBIDDEN regex
+      literal (which it will, for any primitive that ships an `infra_no_forbidden_shadow_class`
+      sentinel). The Red phase is the right time to update all 6 files — they fail
+      until Green ships the barrel export, which is the same Red signal as the
+      primitive's own tests.
+    - |
+      EditorialCard.tsx itself is intentionally orphaned by the implementation
+      audit at the moment 6.1 ships — no page mounts it. This is by planning-doc
+      design: 6.1 ships the primitive only; consumer cards (JobCard, ProductCard,
+      CohortCard) refactor onto it in 6.2 / 6.3 / 6.4. Mark
+      audit_component_mounts + audit_feature_reconciliation as done with a
+      'published to brand barrel for 6.2/6.3/6.4' note, not as orphan fail. Same
+      precedent as so-5.1 Button — primitives ship ahead of consumers.
+  reusable_utilities:
+    - function: "EditorialCard component"
+      file: "src/components/brand/EditorialCard.tsx"
+      purpose: |
+        Three-level editorial hierarchy enforcement: tag (Oxblood label) → headline
+        (Cinzel display-3) → subtitle (Inter body-2 muted) on a Marble surface with
+        1px Ink edge. Optional footer slot below the three levels. Optional accent
+        glyph inside the headline (DropAccent size='inline'). Optional href makes
+        the whole card a Next.js Link with focus-visible:outline-(--color-oxblood).
+        Hover tint to (--color-bone) when href set. Consumed by JobCard (6.2),
+        ProductCard (6.3), CohortCard + CohortDetailHero + CohortStatusBadge (6.4).
