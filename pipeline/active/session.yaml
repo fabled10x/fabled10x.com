@@ -2,15 +2,51 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-6.2
+  current_section: styling-overhaul-6.3
   current_agent: pending
-  current_stage: styling-overhaul-6.1-complete
+  current_stage: styling-overhaul-6.2-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-6.2
+    name: JobCard refactor onto EditorialCard
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add JobCard EditorialCard refactor with 30 tests (styling-overhaul-6.2)
+    tests: 30
+    files_new: 0
+    files_modified: 1
+    pushed: false
+    notes: |
+      Second feature of styling-overhaul Phase 6 (Card Primitives). JobCard
+      collapses from 44 inline lines of editorial styling to a 33-line thin
+      composition over <EditorialCard>: tag="Build Log" (Oxblood constant),
+      headline = title with ' — Implementation Plan' suffix stripped, subtitle =
+      excerpt prop, footer = StatusBadge + feature-count text + optional alias
+      hint. Whole card is the link (href=`/build-log/jobs/${rollup.slug}`),
+      focus-visible outline inherited from EditorialCard's LINK_BASE constant.
+      RSC-pure.
+
+      Removed all deprecated inline classes (bg-marble-texture, border-mist,
+      rounded-lg, hover:border-accent, text-link, text-xl, font-display,
+      text-sm, line-clamp-3). Source-level sentinels in JobCard.test.tsx
+      enforce that none of these reappear in future edits.
+
+      The alias hint moved from header ("Alias: dj") to footer
+      ("(dj)") to fit EditorialCard's three-level hierarchy. No breaking
+      change to the consumer at src/app/build-log/page.tsx (props API
+      preserved: { rollup: JobRollupEntry, excerpt: string }).
+
+      Worktree-claim quirk: CLAIM-04's mount --bind was denied by the
+      auto-mode classifier; fell back to symlink. Turbopack rejected the
+      symlinked node_modules at npm run build with "Symlink ... is invalid,
+      it points out of the filesystem root". User approved a one-off
+      mount --bind via AskUserQuestion, after which the build gate passed
+      cleanly. Future sections should bind-mount from the start.
+
   - id: styling-overhaul-6.1
     name: EditorialCard primitive
     completed_at: '2026-06-07'

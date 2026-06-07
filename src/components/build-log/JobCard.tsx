@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import type { JobRollupEntry } from '@/content/schemas';
+import { EditorialCard } from '@/components/brand';
 import { StatusBadge } from './StatusBadge';
+import type { JobRollupEntry } from '@/content/schemas';
 
 interface JobCardProps {
   rollup: JobRollupEntry;
@@ -9,36 +9,31 @@ interface JobCardProps {
 
 const IMPLEMENTATION_PLAN_SUFFIX = / — Implementation Plan$/i;
 
+function formatFeatureCount(rollup: JobRollupEntry): string {
+  const counts = `${rollup.completedFeatures} / ${rollup.totalFeatures} features`;
+  return rollup.percentComplete !== null
+    ? `${counts} · ${rollup.percentComplete}%`
+    : counts;
+}
+
 export function JobCard({ rollup, excerpt }: JobCardProps) {
-  const href = `/build-log/jobs/${rollup.slug}`;
-  const displayTitle = rollup.title.replace(IMPLEMENTATION_PLAN_SUFFIX, '');
+  const headline = rollup.title.replace(IMPLEMENTATION_PLAN_SUFFIX, '');
+  const aliasHint = rollup.alias ? `(${rollup.alias})` : null;
   return (
-    <article className="bg-marble-texture border border-mist rounded-lg p-6 hover:border-accent transition-colors">
-      <header className="flex items-start justify-between gap-4 mb-3">
-        <div>
-          <h3 className="text-xl font-display">
-            <Link href={href} className="text-foreground hover:text-accent">
-              {displayTitle}
-            </Link>
-          </h3>
-          {rollup.alias && (
-            <p className="text-sm text-muted mt-1">
-              Alias: <code className="text-accent">{rollup.alias}</code>
-            </p>
+    <EditorialCard
+      tag="Build Log"
+      headline={headline}
+      subtitle={excerpt}
+      footer={
+        <>
+          <StatusBadge status={rollup.status} />
+          <span className="body-3 text-(--color-muted)">{formatFeatureCount(rollup)}</span>
+          {aliasHint && (
+            <span className="body-3 text-(--color-muted)">{aliasHint}</span>
           )}
-        </div>
-        <StatusBadge status={rollup.status} />
-      </header>
-      <p className="text-sm text-muted line-clamp-3">{excerpt}</p>
-      <footer className="mt-4 flex items-center justify-between text-xs text-muted">
-        <span>
-          {rollup.completedFeatures} / {rollup.totalFeatures} features
-          {rollup.percentComplete !== null && ` · ${rollup.percentComplete}%`}
-        </span>
-        <Link href={href} className="text-link hover:text-accent">
-          View →
-        </Link>
-      </footer>
-    </article>
+        </>
+      }
+      href={`/build-log/jobs/${rollup.slug}`}
+    />
   );
 }

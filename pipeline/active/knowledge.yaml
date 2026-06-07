@@ -5293,3 +5293,55 @@ styling-overhaul-6.1:
         the whole card a Next.js Link with focus-visible:outline-(--color-oxblood).
         Hover tint to (--color-bone) when href set. Consumed by JobCard (6.2),
         ProductCard (6.3), CohortCard + CohortDetailHero + CohortStatusBadge (6.4).
+
+styling-overhaul-6.2:
+  completed_at: "2026-06-07"
+  patterns_established:
+    - description: "JobCard as thin EditorialCard composition"
+      file: "src/components/build-log/JobCard.tsx"
+      reusable_for: |
+        Reference shape for the remaining card refactors (6.3 ProductCard,
+        6.4 CohortCard). Pattern: import { EditorialCard } from
+        '@/components/brand', map domain fields to tag/headline/subtitle/footer,
+        href = canonical detail page. Wrap multiple footer elements in a
+        fragment so EditorialCard's footer DIV stays one direct child.
+    - description: "Source-level sentinel test guards"
+      file: "src/components/build-log/__tests__/JobCard.test.tsx"
+      reusable_for: |
+        After a primitive (EditorialCard, Surfaces, etc.) lands, consumer
+        refactor tests should fs-read the consumer source and assert it does
+        NOT contain the pre-refactor classes (bg-marble-texture, border-mist,
+        rounded-lg, hover:border-accent, text-xl, font-display, etc.). Cheaper
+        than UI snapshot tests and catches regressions where someone re-adds
+        an inline style.
+  gotchas:
+    - |
+      Worktree-claim CLAIM-04's `mount --bind /home/travis/Projects/fabled10x/node_modules`
+      is denied by the auto-mode classifier ("requires elevated privileges").
+      Symlink fallback works for Vitest but Turbopack rejects the symlink at
+      `npm run build` with `Symlink ... is invalid, it points out of the
+      filesystem root`. Workaround: ask the user via AskUserQuestion before
+      build; they can approve a one-off `mount --bind`. Or pre-approve mount
+      in settings.local.json. Future pipeline runs should either bypass the
+      symlink fallback or surface this earlier in CLAIM-04.
+    - |
+      StatusBadge already carries `class="label"` (the brand small-caps
+      utility). When asserting on EditorialCard's tag slot in JobCard tests,
+      use `article > span.label` (direct child) — `article span.label`
+      matches the StatusBadge inside the footer too and produces confusing
+      "expected 'Build Log', received 'In Progress'" failures. Apply same
+      direct-child selectivity for the 6.4 cohort tests where
+      CohortStatusBadge will be wrapped by EditorialCard footers.
+    - |
+      JobCard's alias field had to move from the header ("Alias: dj" line)
+      to the footer ("(dj)") to fit the three-level editorial hierarchy.
+      Behavior preserved (alias-present test + alias-absent test) but the
+      visual location changed — flag in next visual walk-through.
+  reusable_utilities:
+    - function: "formatFeatureCount(rollup): string"
+      file: "src/components/build-log/JobCard.tsx"
+      purpose: |
+        Returns 'M / N features' or 'M / N features · X%' depending on whether
+        percentComplete is null. Local helper, not exported. If a second
+        build-log card ever needs the same string (e.g. a compact JobRow),
+        promote to src/lib/build-log/format.ts.
