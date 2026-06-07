@@ -4828,3 +4828,77 @@ styling-overhaul-4.1:
         sentinel-helpers.ts or similar. Bundles cleanly with the prior so-2.1+
         deferred entries.
   out_of_scope_changes_landed: []
+styling-overhaul-4.3:
+  completed_at: '2026-06-06'
+  patterns_established:
+    - description: |
+        Brand-surface chrome restyle template: wrap the legacy <{semanticEl}
+        className='...legacy palette...'> with <{Surface} as='{semanticEl}'
+        className='border-{edge} border-(--edge-color)'>. Move the inner
+        <Container> to token padding/gap (py-(--space-N), gap-(--space-N)).
+        Drop legacy palette utilities (border-mist, text-accent, text-muted,
+        text-foreground, font-display, text-lg). Direct counterpart of the
+        Header restyle (4.2) — same shape, swap Marble for Parchment, swap
+        Logo size, swap nav list for whatever sister content the surface
+        carries. Pure synchronous RSC, no 'use client', no async.
+      file: src/components/site/Footer.tsx
+      reusable_for: |
+        Any future chrome surface restyle in this codebase (e.g. future
+        sidebar / sticky CTA bar / sectioning shells in Phase 7 pages,
+        opengraph-image static chrome in Phase 8.2). Mirrors Header.tsx
+        line-for-line at the structural level — the two together establish
+        the editorial mirror-page composition (Marble top, Parchment
+        bottom).
+    - description: |
+        Verdigris-on-Bone outbound-link treatment for sister-project /
+        completion-pointer anchors. Default state bg-(--color-bone)
+        text-(--color-verdigris) + border-(--edge-color-subtle); hover
+        inverts to bg-(--color-verdigris) text-(--color-bone) via
+        transition-colors duration-150. Includes target='_blank'
+        rel='noreferrer' and an aria-hidden '→' glyph appended after the
+        link text. Brand spec reserves Verdigris for completion/success;
+        a sister-project link is exactly a "you've finished here, go
+        there" pointer.
+      file: src/components/site/Footer.tsx
+      reusable_for: |
+        Any future LLL crosslink, any "see also" pointer to a completed
+        artifact, any "you finished, here's what's next" terminal CTA.
+        The CSS pattern (default-light, hover-inverts, no underline,
+        typographic arrow glyph) is the canonical brand treatment for
+        outbound completion pointers — distinct from Oxblood (in-system
+        accent) and Marble surfaces.
+  gotchas:
+    - |
+        @testing-library's getByRole('link', { name: /pattern/ }) treats the
+        aria-hidden '→' glyph as accessible text for matching purposes ONLY
+        when the regex spans the text — using {name: /largelanguagelibrary\.ai/i}
+        worked because the visible text is the matched portion. If a test
+        instead used the full string 'largelanguagelibrary.ai →', it would
+        FAIL because aria-hidden content is stripped from the accessible name
+        first. Lesson: when an aria-hidden sibling sits inside a link, match
+        on the visible text only.
+    - |
+        Footer mount in src/app/layout.tsx survives the restyle untouched —
+        the export name (Footer) and module path (@/components/site/Footer)
+        are stable. Restyle work never touches the layout when the component
+        is already mounted there. Always verify the mount path BEFORE the
+        Green phase to confirm wiring is a no-op (saved ~5 min here).
+  reusable_utilities:
+    - function: 'Brand chrome restyle test template'
+      file: src/components/site/__tests__/Footer.test.tsx
+      purpose: |
+        Template for restyle test suites that combine (a) DOM-render
+        assertions against new brand classes via className regex, (b)
+        readFileSync source assertions that lock out legacy palette/layout
+        utilities by name, and (c) invariant-lock tests for behavior that
+        must survive the restyle (text content, href stability, landmark
+        role). The mix produces 5-10 'failing in Red' tests that drive new
+        behavior and 3-7 'passing in Red' tests that lock invariants — a
+        legitimate Red-phase shape for any visual-only restyle.
+  deferred_followups:
+    - |
+        BrandHomeLink extraction trigger now at 2 use sites (Header + Footer)
+        — wait for a 3rd (likely Phase 8.2 og:image renderer or a /not-found
+        page) before extracting <BrandHomeLink size='sm|md' />. Documented in
+        refactor-progress.yaml deferred block.
+  out_of_scope_changes_landed: []

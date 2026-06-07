@@ -1,33 +1,33 @@
 import Link from 'next/link';
+import { Parchment } from '@/components/brand/Parchment';
+import { Logo } from '@/components/brand/Logo';
 import { Container } from './Container';
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-mist py-12">
-      <Container className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="font-display text-lg font-semibold">
-            fabled<span className="text-accent">10x</span>
-          </p>
-          <p className="mt-2 max-w-sm text-sm text-muted">
+    <Parchment as="footer" className="border-t border-(--edge-color)">
+      <Container className="py-(--space-6) flex flex-col gap-(--space-4) md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-(--space-2)">
+          <Link href="/" className="inline-flex">
+            <Logo size="sm" />
+          </Link>
+          <p className="body-3">
             One person. An agent team. Full SaaS delivery.
           </p>
         </div>
-        <div className="max-w-sm text-sm text-muted">
-          <p className="font-semibold text-foreground">Sister project</p>
-          <p className="mt-1">
-            The structured AI knowledge base built and championed by Fabled10X
-            lives at{' '}
-            <Link
-              href="https://largelanguagelibrary.ai"
-              className="text-link underline-offset-2 hover:underline"
-            >
-              largelanguagelibrary.ai
-            </Link>
-            .
-          </p>
+        <div className="flex flex-col items-start md:items-end gap-(--space-1)">
+          <span className="label">Sister Project</span>
+          <a
+            href="https://largelanguagelibrary.ai"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-(--space-2) bg-(--color-bone) text-(--color-verdigris) border border-(--edge-color-subtle) px-(--space-3) py-(--space-1) transition-colors duration-150 hover:bg-(--color-verdigris) hover:text-(--color-bone)"
+          >
+            largelanguagelibrary.ai
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </Container>
-    </footer>
+    </Parchment>
   );
 }
