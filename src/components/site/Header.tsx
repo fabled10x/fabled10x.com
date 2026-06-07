@@ -17,7 +17,7 @@ export function Header() {
     <Marble
       as="header"
       edge="none"
-      className="border-b border-(--edge-color)"
+      className="border-b border-(--edge-color) bg-marble-texture"
     >
       <Container className="flex items-center justify-between py-(--space-4)">
         <Link href="/" className="inline-flex">

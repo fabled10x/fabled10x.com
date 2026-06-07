@@ -69,7 +69,7 @@ export default async function Home() {
               <li key={section.href}>
                 <Link
                   href={section.href}
-                  className="block rounded-lg border border-mist p-6 hover:border-accent"
+                  className="block bg-marble-texture rounded-lg border border-mist p-6 hover:border-accent"
                 >
                   <p className="font-display text-xl font-semibold">{section.title}</p>
                   <p className="mt-2 text-sm text-muted">{section.description}</p>

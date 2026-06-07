@@ -143,10 +143,31 @@ function isSkipped(file: string): boolean {
   return SKIP_PATHS.some(skip => file.endsWith(skip));
 }
 
+// Per-pattern allow-list. Unlike SKIP_PATHS (which exempts a file from EVERY
+// forbidden pattern), this exempts a file from ONE specific pattern. Use it
+// when a file legitimately contains one forbidden token but should still be
+// scanned for all others.
+//
+// Current entries:
+// - `CSS linear-gradient` × `src/app/globals.css` — the `.bg-marble-texture`
+//   scrim utility. A two-stop translucent cream wash over a marble texture
+//   image, used for text-legibility over photos/textures. Brand-approved as
+//   a "scrim" (functional readability overlay), distinct from decorative
+//   color sweeps the rule targets. See docs/fabled10x-design-system.md
+//   § Material Language → Exceptions.
+const PATTERN_ALLOW_PATHS: Record<string, string[]> = {
+  'CSS linear-gradient': ['src/app/globals.css'],
+};
+
+function isPatternAllowed(file: string, patternName: string): boolean {
+  return (PATTERN_ALLOW_PATHS[patternName] ?? []).some(p => file.endsWith(p));
+}
+
 function scanContent(content: string, file: string): Hit[] {
   if (isSkipped(file)) return [];
   const hits: Hit[] = [];
   for (const { name, regex, reason } of FORBIDDEN) {
+    if (isPatternAllowed(file, name)) continue;
     const match = content.match(regex);
     if (!match || match.index === undefined) continue;
     const idx = match.index;

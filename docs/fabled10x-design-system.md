@@ -44,6 +44,18 @@ neural meshes, robot icons, lightning bolts, rockets, gears, sparkles, 3D
 rendering, isometric perspective, pure black, pure white, pure red, any
 saturated primary other than Oxblood.
 
+**Exceptions — scrims**: a translucent color wash layered over a texture or
+photograph for text legibility is brand-approved. Same shape as the
+illuminated-manuscript hero overlay (`HeroBackdrop`) and the marble nav
+texture (`.bg-marble-texture`). These are functional readability overlays,
+not decorative color sweeps — the "no gradients" rule targets the latter.
+Implemented via a two-stop translucent cream wash because CSS has no other
+one-property way to lay a tint over a `background-image`. Allow-listed
+per-pattern in `src/__tests__/brand/forbidden-patterns.test.ts`. A scrim is
+always: same hue across both stops, low alpha range, functional purpose
+(legibility). Anything else — color shifts, decorative purpose — is still
+forbidden.
+
 Test: if the element could appear on an object pulled from a museum or
 archaeological dig, it belongs. If it could appear on an AI startup's About
 page, it doesn't.
