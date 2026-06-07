@@ -309,7 +309,7 @@ describe('BrushstrokeSeam — material-language seam primitive', () => {
   });
 
   it('infra_brushstroke_barrel_export_count', () => {
-    const expected = new Set(['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'Logo']);
+    const expected = new Set(['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'Logo', 'Section', 'SectionDivider']);
     const actual = new Set(
       Object.keys(brandBarrel).filter(
         k => k !== 'default' && typeof (brandBarrel as Record<string, unknown>)[k] !== 'undefined'

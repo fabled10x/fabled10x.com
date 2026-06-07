@@ -284,6 +284,8 @@ describe('Logo', () => {
       'Shadow',
       'BrushstrokeSeam',
       'Logo',
+      'Section',
+      'SectionDivider',
     ]);
     const actual = new Set(
       Object.keys(brandBarrel).filter((key) => /^[A-Z]/.test(key))

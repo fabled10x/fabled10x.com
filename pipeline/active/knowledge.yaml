@@ -4902,3 +4902,81 @@ styling-overhaul-4.3:
         page) before extracting <BrandHomeLink size='sm|md' />. Documented in
         refactor-progress.yaml deferred block.
   out_of_scope_changes_landed: []
+styling-overhaul-4.4:
+  completed_at: '2026-06-06'
+  commit_message: Add layout primitives with 47 tests (styling-overhaul-4.4)
+  tests: 47
+  files_new: 2
+  files_modified: 4
+  patterns_established:
+    - description: |
+        Polymorphic-primitive base shape now extended beyond the brand
+        surfaces (Marble/Parchment/Bone/Shadow) to layout chrome. Idiom
+        across 8+ files: `type Props<E extends ElementType = 'tag'> = {
+        as?: E; <variant>?: <Variant>; className?: string; } &
+        Omit<ComponentPropsWithoutRef<E>, 'as' | 'className'>`, then
+        `const variantClass: Record<Variant, string> = { ... }; const
+        Tag: ElementType = as ?? 'tag'; const merged = [<base>,
+        variantClass[variant], className].filter(Boolean).join(' ');
+        return <Tag className={merged} {...rest} />;`
+      file: src/components/brand/Section.tsx
+      reusable_for: Future primitives in Phase 5 (Button, StatusBadge), Phase 6 (EditorialCard).
+    - description: |
+        Container backward-compat default-width pattern. When a feature
+        section modifies a widely-imported primitive, ship the new API
+        as a strict superset: existing default behavior preserved
+        (`width='layout'` → `max-w-5xl` = the only width before), all
+        consumers continue to work without diff, new consumers opt in.
+        No follow-up migration required.
+      file: src/components/site/Container.tsx
+      reusable_for: Phase 5 EmailCapture / Button reskin, any future primitive-modification section.
+    - description: |
+        Sibling barrel-export sentinel pattern. Three pre-existing infra
+        tests (Surfaces.test.tsx, BrushstrokeSeam.test.tsx, Logo.test.tsx)
+        hard-code the canonical brand barrel set. Adding a new brand
+        component requires extending the set in all three. Sibling-test
+        maintenance has now happened 3x (so-3.2 BrushstrokeSeam, so-4.1
+        Logo, so-4.4 Section + SectionDivider) — it IS the pattern, not
+        a smell. Any so-N.x section adding a brand-barrel export must
+        update all three sentinels in the same PR.
+      reusable_for: Every future brand-primitive section.
+  reusable_utilities: []
+  gotchas:
+    - |
+        Forbidden-pattern sentinel from so-3.3 scans ALL src/ files
+        including __tests__/. Initial Section.test.tsx used `bg-red-100`
+        for className-passthrough; SectionDivider.test.tsx used
+        `#ffffff` / `#000000` for hex color test values. All flagged.
+        Future test files in src/components/brand/__tests__/ must use
+        brand-compliant values for any token-shaped string the sentinel
+        scans: Tailwind palette → `bg-(--color-<token>)`, white →
+        #f7f4ec (Marble), black → #1c1814 (Ink). Sentinel has no
+        per-file allowlist — fix at the test-value level.
+    - |
+        EnterWorktree harness tool rejects sibling slot paths outside
+        .claude/worktrees/. The worktree-claim skill places slots at
+        $WORKTREES/section-{id} (sibling to main repo, by design — to
+        avoid acceptEdits prompts), but EnterWorktree won't accept the
+        path. Workaround for so-4.4: --no-worktree fallback (LEGACY
+        single-branch mode, all 7 CLAIM beats N/A). Long-term fix
+        needed: either move slots under .claude/worktrees/ (loses
+        acceptEdits perk) or extend EnterWorktree to accept any path
+        in `git worktree list`. Flag for skill maintainers.
+  deferred_followups:
+    - |
+        Polymorphic-primitive helper extraction. 8+ sites (Marble,
+        Parchment, Bone, Shadow, Logo, DropAccent, Container, Section)
+        share the polymorphic + variant-record + classname-construction
+        idiom. Extraction deferred to a future cross-cutting refactor
+        section (so-9.x or similar) because touching 6 unrelated files
+        would bleed work outside the so-4.4 boundary. so-3.2's 4-call-
+        site threshold firmly exceeded — overdue, gated on a dedicated
+        cross-cutting PR.
+  out_of_scope_changes_landed:
+    - |
+        Three sibling test files (Surfaces.test.tsx, BrushstrokeSeam
+        .test.tsx, Logo.test.tsx) had their hard-coded brand-barrel-
+        export whitelist extended with 'Section' and 'SectionDivider'.
+        Executed identically to so-3.2 and so-4.1 — see the sibling-
+        sentinel pattern in patterns_established. Test intent (closed-
+        set invariant) preserved.

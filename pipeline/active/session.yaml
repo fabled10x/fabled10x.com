@@ -2,15 +2,94 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-4.2
-  current_agent: pending
-  current_stage: styling-overhaul-4.1-complete
+  current_section: styling-overhaul-4.4
+  current_agent: finish
+  current_stage: styling-overhaul-4.4-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-4.4
+    name: Layout primitives
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add layout primitives with 47 tests (styling-overhaul-4.4)
+    tests: 47
+    files_new: 2
+    files_modified: 4
+    pushed: false
+    notes: |
+      Fourth feature of styling-overhaul Phase 4 (Logo + Chrome). Three
+      polymorphic presentational primitives — Container (refresh), Section
+      (NEW), SectionDivider (NEW) — all React Server Components.
+
+      Container rewritten as polymorphic <E extends ElementType = 'div'>
+      with width: 'prose' | 'layout' (default) | 'wide' mapping to
+      max-w-prose | max-w-5xl | max-w-7xl. Backward-compat is the design
+      ask: every existing src/app/**/page.tsx caller lands on max-w-5xl
+      today, so making 'layout' the default preserves their behavior
+      without diff. Gutters now token-based px-(--space-5) md:px-(--space-7)
+      replacing the prior px-6 md:px-10 fixed values — aligns gutter to
+      the 8px-grid from so-1.2 vertical-rhythm tokens.
+
+      Section is a NEW polymorphic vertical-rhythm wrapper at
+      src/components/brand/Section.tsx. Defaults: tag='section',
+      rhythm='md'. rhythm variants map to py-(--section-y-{sm,md,lg})
+      — the vertical-rhythm tokens declared at globals.css lines 51-53
+      by so-1.2. Section has NO max-width / NO horizontal padding —
+      composability with Container is independent (per planning doc
+      'No <Container> inside <Section>').
+
+      SectionDivider is a NEW thin (h-(--space-7)) aria-hidden wrapper
+      composing <BrushstrokeSeam direction="bottom" feather="3rem"
+      foreground={top} background={bottom} />. Defaults: top=Marble,
+      bottom=Parchment — the canonical homepage seam color pairing.
+      top/bottom typed as raw string (NOT var()-restricted) so callers
+      may pass any CSS color string including hex.
+
+      47 tests = 24 unit + 4 integration + 4 a11y + 5 infra + 6 edge +
+      1 err + 3 data. 3 categories N/A: security/contract/permission
+      (no IO/auth/API surface — STRIDE recorded at section level all
+      n/a in interfaces.yaml#stride_section_level).
+
+      Refactor produced ZERO code changes — implementation already
+      idiomatic against the Marble/Surfaces polymorphic-primitive
+      precedent (mirrors so-3.1 zero-op refactor). One cross-section
+      finding deferred (8+ polymorphic-primitive sites → cross-cutting
+      so-9.x extraction; so-3.2's 4-call-site threshold now firmly
+      exceeded).
+
+      Three sibling test files (Surfaces.test.tsx, BrushstrokeSeam
+      .test.tsx, Logo.test.tsx) had their hard-coded brand-barrel
+      whitelist extended with 'Section' and 'SectionDivider' — the
+      documented sentinel pattern, mirroring so-3.2 (BrushstrokeSeam)
+      and so-4.1 (Logo). Forbidden-pattern sentinel from so-3.3
+      flagged 3 hits in my own new test files (bg-red-100 in
+      Section.test.tsx, #ffffff/#000000 in SectionDivider.test.tsx) —
+      fixed by switching to brand-compliant values
+      (bg-(--color-bone), #f7f4ec Marble, #1c1814 Ink) without
+      changing test intent.
+
+      Pipeline run in --no-worktree LEGACY single-branch mode because
+      EnterWorktree harness tool rejects sibling slot paths under
+      $WORKTREES/. All 7 CLAIM beats N/A. Worktree-claim skill ←→
+      EnterWorktree mismatch flagged in knowledge.yaml gotchas for
+      skill-maintainer follow-up.
+
+      Concurrent runs: working tree has prior modifications from earlier
+      session work (CLAUDE.md, currentwork/website-foundation/*, deleted
+      pipeline/active/storefront-auth-3.3/*, deleted styling-overhaul-
+      {2.2,2.3,3.3}/beats.yaml, src/content/knowledge/.gitkeep). Commit
+      explicitly stages ONLY this section's files (3 new + 3 modified
+      brand + 1 modified site + barrel + planning checklist +
+      knowledge.yaml + session.yaml) per so-3.2 precedent.
+
+      Phase 4 status after this commit: 3/4 (4.1, 4.3, 4.4 shipped; 4.2
+      Header restyle remains Planned). Section + SectionDivider unblock
+      Phase 7.1 homepage hero; Container width variants unblock
+      text-heavy Phase 7.x pages (about, episodes detail, cases detail).
   - id: styling-overhaul-4.1
     name: Logo lockup + SVG
     completed_at: '2026-06-06'
@@ -2039,17 +2118,25 @@ completed_sections:
 
       '
 resume_point:
-  last_action: section_styling_overhaul_3.2_completed
-  next_action: styling-overhaul-3.3 (forbidden-pattern sentinel) — canonical next
-    so section, will close Phase 3 (Material Language). cohort-enrollment-3.2 (apply
-    page + middleware + ApplicationForm + submitApplication + applicant email) remains
-    next ce section. Phase 4.4 / 7.1 / 8.2 / 8.3 can now consume BrushstrokeSeam when
-    their phases land.
-  notes: styling-overhaul Phase 3 (Material Language) is at 2/3 — 3.1 (surface primitives)
-    + 3.2 (BrushstrokeSeam) shipped. so-3.3 (forbidden-pattern sentinel) is the last
-    Phase 3 feature. BrushstrokeSeam ships standalone per planning doc for downstream
-    Phase 4.4 (SectionDivider) + 7.1 (homepage hero) + 8.2 (opengraph-image) + 8.3
-    (thumb-preview) mounting (same shipping pattern as so-3.1 / so-2.3 / bpd-2.1 MarkdownDocument).
+  last_action: section_styling_overhaul_4.4_completed
+  next_action: |
+    styling-overhaul-4.2 (Header restyle) is the only Phase 4 feature still Planned
+    in currentwork/styling-overhaul/README.md — close it out to complete Phase 4
+    (Logo + Chrome). With 4.1 (Logo), 4.3 (Footer), and 4.4 (Layout primitives) all
+    shipped, Phase 5 (Component Primitives) becomes unblocked: 5.1 (Button)
+    cascades to 5.2/5.3/5.4. cohort-enrollment-3.2 (apply page + middleware +
+    ApplicationForm + submitApplication + applicant email) remains the next ce
+    section. Phase 7.1 (homepage hero), 7.4 (build-log surfaces), and other
+    page-surface work can now consume Container width variants + Section rhythm +
+    SectionDivider.
+  notes: |
+    styling-overhaul Phase 4 (Logo + Chrome) is at 3/4 — 4.1 (Logo), 4.3 (Footer),
+    4.4 (Layout primitives) shipped. so-4.2 (Header restyle) remains. Section +
+    SectionDivider ship standalone per the so-3.1/3.2/4.1 primitive precedent for
+    downstream consumption by 4.2 (Header may use Section), 7.1 (homepage hero +
+    SectionDivider), 7.x page surfaces (Container width='prose' for text-heavy
+    pages, Section rhythm for vertical-rhythm consistency), and 8.2/8.3 (og:image
+    + thumb-preview will compose against the seam).
 notes: 'fabled10x project initialized on 2026-04-11.
 
   Skills ported from partymasters (see pipeline/TECH-DECISIONS.md).

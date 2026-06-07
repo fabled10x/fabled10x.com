@@ -1,21 +1,33 @@
-import { type ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ElementType } from 'react';
 
-interface ContainerProps {
-  children: ReactNode;
+type ContainerWidth = 'prose' | 'layout' | 'wide';
+
+type ContainerProps<E extends ElementType = 'div'> = {
+  as?: E;
+  width?: ContainerWidth;
   className?: string;
-  as?: 'div' | 'section' | 'main' | 'article';
-}
+} & Omit<ComponentPropsWithoutRef<E>, 'as' | 'className'>;
 
-export function Container({
-  children,
-  className,
-  as: Tag = 'div',
-}: ContainerProps) {
-  return (
-    <Tag
-      className={`mx-auto w-full max-w-5xl px-6 md:px-10${className ? ` ${className}` : ''}`}
-    >
-      {children}
-    </Tag>
-  );
+const widthClass: Record<ContainerWidth, string> = {
+  prose: 'max-w-prose',
+  layout: 'max-w-5xl',
+  wide: 'max-w-7xl',
+};
+
+export function Container<E extends ElementType = 'div'>({
+  as,
+  width = 'layout',
+  className = '',
+  ...rest
+}: ContainerProps<E>) {
+  const Tag: ElementType = as ?? 'div';
+  const merged = [
+    'mx-auto w-full',
+    widthClass[width],
+    'px-(--space-5) md:px-(--space-7)',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return <Tag className={merged} {...rest} />;
 }
