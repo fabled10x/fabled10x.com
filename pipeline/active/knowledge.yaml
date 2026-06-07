@@ -5033,3 +5033,27 @@ styling-overhaul-5.1:
         infra_tailwind4_paren_syntax checks. Whitelist sync is now manual
         cross-file edit (this section had to edit 4 sibling whitelist Sets
         + the forbidden-pattern SKIP_PATHS). Strong signal for extraction.
+
+
+styling-overhaul-5.2:
+  completed_at: "2026-06-06"
+  patterns_established:
+    - description: "variantClass + variantLabel paired Record-of-status pattern"
+      file: "src/components/build-log/StatusBadge.tsx"
+      reusable_for: "Any future status-driven badge / chip where label rename, class swap, and glyph gating are all driven by the same discriminator union. Mirrors so-5.1 Button (variantClass + sizeClass) and so-3.1 Surfaces (edgeClass)."
+    - description: "data-testid contract preservation across restyles"
+      file: "src/components/build-log/StatusBadge.tsx"
+      reusable_for: "Any component restyle where cross-consumer test files query a stable data-testid. The integration tests added (integration_jobcard_consumer_still_finds_badge + integration_jobs_rollup_consumer_renders_two_badges) lock the contract from BOTH directions — primitive owner + consumer barrel."
+  gotchas:
+    - "Word-boundary regex (\\b) does NOT bound a quoted hyphenated key like 'in-progress' — the apostrophe is non-word so the transition never happens. Use .toContain() with an explicit token table instead of regex when asserting on quoted-hyphenated keys."
+    - "Source-extraction regex like /SKIP_PATHS[^[]*=\\s*\\[/ short-circuits on the [ inside the type annotation `: string[]`. Use [^=]* (skip up to =) for type-annotated declarations."
+    - "The JobStatus union does NOT have a named alias in src/content/schemas — it is inlined as JobRollupEntry['status']. Planning docs may reference `JobStatus` but the codebase uses indexed-access. Preserve the inlined access; do NOT add a new named alias just to match planning prose."
+    - "JobsRollupTable.test.tsx + JobCard.test.tsx assert on data-testid=`status-badge-${status}` literal — restyles must preserve that exact testid format. Document with explicit cross-consumer integration tests in the primitive owner's test file so the contract is visible from both sides."
+    - "fabled10x has no /scripts directory, no docker setup, no .env files in main, no test DB. PWTC (per-worktree test container) machinery from partymasters is fully N/A here — pipeline + worktree-claim short-circuit cleanly via CLAIM-04a PWTC_DISABLED-equivalent + env-symlink loop's [[ -e ]] guard."
+  reusable_utilities:
+    - function: "rootFor(container, status) helper"
+      file: "src/components/build-log/__tests__/StatusBadge.test.tsx"
+      purpose: "Resolve the root element of a status-discriminated badge via data-testid lookup. Asserts not-null with a contextual message. Pattern is generic — copies cleanly to any badge/chip primitive test that uses a data-testid template."
+    - function: "makeRollup(over: Partial<JobRollupEntry>) fixture"
+      file: "src/components/build-log/__tests__/StatusBadge.test.tsx"
+      purpose: "Single-call rollup fixture with sensible defaults and selective override. Used by the cross-consumer integration tests to construct JobCard + JobsRollupTable inputs without verbose object literals. Replicates the pattern from JobsRollupTable.test.tsx#makeRow."

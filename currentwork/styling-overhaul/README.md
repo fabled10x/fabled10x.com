@@ -89,7 +89,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 4.3 | Footer restyle (Parchment surface, Verdigris LLL link)                                   | 4 - Logo + Chrome              | S    | Complete |
 | 4.4 | Layout primitives — `<Container>` widths, `<Section>`, `<SectionDivider>`                | 4 - Logo + Chrome              | M    | Complete |
 | 5.1 | `<Button>` primitive (Ink fill / variants / sharp corners / no shadow)                   | 5 - Component Primitives       | M    | Complete |
-| 5.2 | `<StatusBadge>` variant restyle (Oxblood / Verdigris / Ink / Bone)                       | 5 - Component Primitives       | S    | Planned |
+| 5.2 | `<StatusBadge>` variant restyle (Oxblood / Verdigris / Ink / Bone)                       | 5 - Component Primitives       | S    | Complete |
 | 5.3 | `EmailCapture` reskin (Bone input, Ink button, Verdigris success)                        | 5 - Component Primitives       | M    | Planned |
 | 5.4 | Auth + storefront button consistency (`SignInForm`, `SignOutButton`, `BuyButton`)        | 5 - Component Primitives       | S    | Planned |
 | 6.1 | `<EditorialCard>` primitive enforcing three-level hierarchy                              | 6 - Card Primitives            | L    | Planned |

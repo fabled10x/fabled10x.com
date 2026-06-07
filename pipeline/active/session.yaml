@@ -2,15 +2,103 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-5.2
+  current_section: styling-overhaul-5.3
   current_agent: pending
-  current_stage: styling-overhaul-5.1-complete
+  current_stage: styling-overhaul-5.2-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-5.2
+    name: StatusBadge variant restyle
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add StatusBadge variant restyle with 46 tests (styling-overhaul-5.2)
+    tests: 46
+    files_new: 0
+    files_modified: 2
+    pushed: false
+    notes: |
+      Second feature of styling-overhaul Phase 5 (Component Primitives). Pure
+      restyle of the existing src/components/build-log/StatusBadge.tsx — no
+      new files, no API, no DB, no auth. Single-file MODIFY replacing the
+      pre-5.2 placeholder palette (bg-mist / bg-accent / bg-signal /
+      text-foreground / text-parchment) with brand tokens, the .label
+      utility, 1px borders, sharp corners, and the planning-doc-specified
+      Verdigris ✓ glyph for status=complete.
+
+      Variant matrix (per planning doc §5.2):
+        planned     → bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle)
+        in-progress → bg-(--color-parchment) text-(--color-ink) border-(--edge-color)
+        complete    → bg-(--color-marble) text-(--color-verdigris) border-(--color-verdigris) + ✓
+        unknown     → bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle) italic
+
+      Label rename per planning doc: pre-5.2 'In progress' → 'In Progress',
+      pre-5.2 'No data' → 'Unknown'. Verified by unit_unknown_label_replaces
+      _no_data. Aria-label format `Status: ${variantLabel[status]}` added so
+      screen readers announce 'Status: Complete' etc.
+
+      Props contract additive: new optional className passthrough merged
+      into root span. Existing data-testid `status-badge-${status}` PRESERVED
+      to keep JobCard.test.tsx + JobsRollupTable.test.tsx cross-consumer
+      queries working (explicit cross-consumer integration tests added to
+      lock the contract from both sides).
+
+      Type-source-of-truth: continues importing JobRollupEntry from
+      '@/content/schemas' and uses JobRollupEntry['status'] indexed access.
+      Planning doc referenced `JobStatus` but no such named alias exists in
+      src/content/schemas — preserve the inlined access pattern.
+
+      46 tests = 21 unit + 4 integration + 4 a11y + 7 infra + 6 edge + 1 err
+      + 3 data integrity. 3 categories explicitly N/A: security/permission/
+      contract (no input/auth/IO/API surface — STRIDE n/a globally at
+      section level, interfaces.yaml#stride_section_level).
+
+      Verdigris allocation: this section uses the single reserved Verdigris
+      pairing in the build-log (Marble + Verdigris + ✓ glyph for complete).
+      Data integrity test data_verdigris_only_on_complete locks the rule
+      via source grep — Verdigris must appear on exactly ONE row of the
+      variantClass record and that row must be the complete row.
+
+      Refactor produced ZERO source-code changes — 16th consecutive zero-
+      source-change refactor section (so-1.1, 1.2, 1.3, ce-2.2, ce-1.3,
+      bpd-2.3, ce-2.1, ce-3.1, so-2.1, 2.2, 2.3, 2.4, ce-4.3, so-3.2, 4.1,
+      4.4, 5.1, now 5.2). Two cross-section DRY triggers deferred per
+      established discipline (polymorphic-primitive-factory at 4+ sites;
+      brand-sentinel-test-helpers at 8+ sites — both already tracked in
+      knowledge.yaml as their own dedicated refactor sections).
+
+      Three test edits during green — all preserve test intent: two regex
+      `\b` word-boundary bugs around quoted hyphenated keys ('in-progress')
+      switched to .toContain() with explicit token tables; one
+      `[^[]*` regex bug that short-circuited on the bracket inside
+      `: string[]` type annotation switched to `[^=]*`. ESLint cleanup
+      removed unused beforeEach/afterEach vitest imports.
+
+      Cross-consumer regression test pass: JobCard.test.tsx +
+      JobsRollupTable.test.tsx queries for `[data-testid="status-badge-
+      in-progress"]` and `[data-testid="status-badge-complete"]` continue
+      to pass — data-testid contract preserved.
+
+      All audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint
+      warnings, 0 tsc errors, production build pass (all pages render).
+      No new skipped tests; 60 skipped baseline unchanged.
+
+      Pipeline run in worktree mode (CLAIM beats 1-7 all done, slot at
+      $WORKTREES/section-styling-overhaul-5.2 on branch
+      section/styling-overhaul-5.2 from origin/main 48b8645 so-5.1). PWTC
+      N/A (fabled10x has no docker/db infra). Env-symlink loop fell through
+      silently — no .env / .env.local / .env.db in main repo (static site).
+
+      Blocker cleared: styling-overhaul Phase 5 (Component Primitives) is
+      now 2/4 complete (5.1 Button + 5.2 StatusBadge). so-5.3 (EmailCapture
+      reskin — consumes <Button> + <Bone> surface) and so-5.4 (Auth +
+      storefront button consistency — refactors SignInForm/SignOutButton/
+      BuyButton onto <Button>) can both start in parallel. so-5.3 is the
+      canonical next so section by numeric order. so-4.2 (Header restyle)
+      also remains Planned from Phase 4.
   - id: styling-overhaul-5.1
     name: Button primitive
     completed_at: '2026-06-06'

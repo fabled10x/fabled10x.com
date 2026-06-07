@@ -1,30 +1,45 @@
 import type { JobRollupEntry } from '@/content/schemas';
 
-const LABELS: Record<JobRollupEntry['status'], string> = {
-  planned: 'Planned',
-  'in-progress': 'In progress',
-  complete: 'Complete',
-  unknown: 'No data',
+type Status = JobRollupEntry['status'];
+
+const variantClass: Record<Status, string> = {
+  planned: 'bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle)',
+  'in-progress': 'bg-(--color-parchment) text-(--color-ink) border-(--edge-color)',
+  complete: 'bg-(--color-marble) text-(--color-verdigris) border-(--color-verdigris)',
+  unknown: 'bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle) italic',
 };
 
-const CLASSES: Record<JobRollupEntry['status'], string> = {
-  planned: 'bg-mist text-foreground',
-  'in-progress': 'bg-accent text-parchment',
-  complete: 'bg-signal text-ink',
-  unknown: 'bg-mist text-muted',
+const variantLabel: Record<Status, string> = {
+  planned: 'Planned',
+  'in-progress': 'In Progress',
+  complete: 'Complete',
+  unknown: 'Unknown',
 };
 
 interface StatusBadgeProps {
-  status: JobRollupEntry['status'];
+  status: Status;
+  className?: string;
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${CLASSES[status]}`}
+      className={[
+        'inline-flex items-center gap-(--space-1) label border px-(--space-2) py-px',
+        variantClass[status],
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-testid={`status-badge-${status}`}
+      aria-label={`Status: ${variantLabel[status]}`}
     >
-      {LABELS[status]}
+      {status === 'complete' && (
+        <span aria-hidden="true" className="text-(--color-verdigris)">
+          ✓
+        </span>
+      )}
+      {variantLabel[status]}
     </span>
   );
 }
