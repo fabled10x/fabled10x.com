@@ -1,12 +1,20 @@
 import type { CohortStatus } from '@/content/schemas';
 import { COHORT_STATUS_LABELS } from '@/content/schemas';
 
-const STATUS_STYLES: Record<CohortStatus, string> = {
-  announced: 'bg-signal/10 text-signal ring-signal/20',
-  open: 'bg-accent/10 text-accent ring-accent/30',
-  closed: 'bg-muted/10 text-muted ring-muted/30',
-  enrolled: 'bg-steel/10 text-steel ring-steel/30',
-  shipped: 'bg-ink/5 text-ink ring-ink/20',
+const BASE =
+  'inline-flex items-center gap-(--space-1) label border px-(--space-2) py-px';
+
+const variantClass: Record<CohortStatus, string> = {
+  announced:
+    'bg-(--color-parchment) text-(--color-ink) border-(--edge-color)',
+  open:
+    'bg-(--color-marble) text-(--color-verdigris) border-(--color-verdigris)',
+  closed:
+    'bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle)',
+  enrolled:
+    'bg-(--color-parchment) text-(--color-ink) border-(--edge-color)',
+  shipped:
+    'bg-(--color-bone) text-(--color-muted) border-(--edge-color-subtle) italic',
 };
 
 interface CohortStatusBadgeProps {
@@ -16,7 +24,8 @@ interface CohortStatusBadgeProps {
 export function CohortStatusBadge({ status }: CohortStatusBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset ${STATUS_STYLES[status]}`}
+      className={`${BASE} ${variantClass[status]}`}
+      aria-label={`Cohort status: ${COHORT_STATUS_LABELS[status]}`}
     >
       {COHORT_STATUS_LABELS[status]}
     </span>

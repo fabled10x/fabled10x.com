@@ -5662,93 +5662,6 @@ styling-overhaul-6.1:
         ProductCard (6.3), CohortCard + CohortDetailHero + CohortStatusBadge (6.4).
 
         '
-  styling-overhaul-4.2:
-    completed_at: '2026-06-07'
-    posture: zero-source-change-ratification
-    patterns_established:
-      - description: Hybrid red-phase posture extended to zero-source-change green/refactor
-        file: src/components/site/__tests__/Header.test.tsx
-        reusable_for: 'Any future section whose implementation already shipped via
-          prior-section
-
-          side effects. The discipline: write NEW ratification test pins that lock
-
-          the design-doc decisions in place; expect them to pass at red-start
-
-          (preservation + new infra-grep sentinels); Green is a no-op verification;
-
-          Refactor is no-op. The audit trail then ratifies the planning-doc
-
-          checklist row as Complete while producing zero production-source diff.
-
-          Precedents: so-5.3 partial preservation (17/38 passed at red-start);
-
-          so-4.2 (this section) FULL preservation (42/42 passed at red-start).
-
-          '
-      - description: Per-route active-state integration matrix for site Header
-        file: src/components/site/__tests__/Header.test.tsx
-        reusable_for: 'Any nav-bearing layout component. Pattern: one integration
-          test per
-
-          NAV_ITEMS entry asserting aria-current=''page'' on that route AND its
-
-          absence on a sibling — plus one nested-path test per dynamic-slug route
-
-          (/cohorts/[slug], /products/[slug], /episodes/[slug]). Cross-mutex
-
-          covered by a11y_*_exactly_one_link_aria_current_per_route plus
-
-          a11y_*_zero_aria_current_when_off_nav.
-
-          '
-      - description: Source-grep ratification sentinels for design-doc 'no-X' decisions
-        file: src/components/site/__tests__/NavLink.test.tsx
-        reusable_for: 'Lock ''no hover:underline / no hover:scale / no hover:transform
-          / no
-
-          inline style attr / no inline gradients / no UI shadows / no legacy
-
-          palette tokens'' via readFileSync + .not.toMatch regex. Pattern: one
-
-          unit/infra test per forbidden pattern. Already applied at so-3.3 (top-
-
-          level forbidden-pattern sentinel); this section embeds the same
-
-          discipline at the consumer-component level.
-
-          '
-    gotchas:
-      - When asserting screen.getByRole('banner') in a NEW test block, the test must
-        call render(<Header />) FIRST. The shared `beforeEach` only sets the usePathname
-        mock — render does NOT carry over from prior tests inside the same describe
-        block. Caught by red-phase verify when unit_header_marble_edge_uses_edge_color_token
-        threw 'Unable to find an accessible element with the role banner'. Fixed inline.
-      - 'Tailwind 4 token-class regex must match literal paren form: /text-\(--color-X\)/
-        not /text-\[var\(--color-X\)\]/. The braces inside paren tokens are stable
-        Tailwind 4 syntax; downstream tests assume this exact shape.'
-      - 'next/navigation.usePathname() in jsdom mocks: the mock must return a string
-        or null — passing undefined causes ''pathname?.startsWith'' to short-circuit
-        to undefined which then compares falsy. The current NavLink implementation
-        uses `pathname?.startsWith(`${href}/`) === true` which safely returns false
-        for null/undefined. Locked by edge_navlink_null_pathname (existing) + edge_header_active_state_with_null_pathname
-        (existing).'
-    reusable_utilities: []
-    deferred_followups:
-      - 'Cross-section brand-sentinel-test-helpers extraction (now 6+ sites: Surfaces.test,
-        BrushstrokeSeam.test, Logo.test, Button.test, Section.test, EmailCapture.test,
-        Header.test infra block). Threshold rising; revisit at so-6.x when Card primitive
-        tests would push to 8+.'
-      - NavLink focus-visible:outline-(--color-oxblood) decoration — deliberately
-        deferred to so-9.x a11y polish section per planning doc. Sentinel infra_navlink_no_focus_outline_override
-        guards against premature removal of the browser default outline.
-    chrome_status_after:
-      header: complete
-      footer: complete
-      logo: complete
-      layout_primitives: complete
-      remaining_phase_4: none
-      phase_4_status: 4/4 features shipped — Phase 4 Logo+Chrome COMPLETE
 styling-overhaul-6.2:
   completed_at: '2026-06-07'
   patterns_established:
@@ -5915,3 +5828,134 @@ styling-overhaul-6.3:
     cross-cutting refactor candidate post-Phase 6.
 
     '
+styling-overhaul-6.4:
+  completed_at: '2026-06-07'
+  patterns_established:
+    - name: cohort-status-badge-variant-record
+      description: 'Brand-token variantClass Record<CohortStatus, string> with 5 rows.
+
+        Verdigris allocated to exactly ONE row (''open'') — pinned by
+
+        data_verdigris_only_on_open source-grep (mirrors StatusBadge
+
+        so-5.2 data_verdigris_only_on_complete invariant). aria-label
+
+        format `Cohort status: ${LABELS[status]}`. shipped variant gains
+
+        italic class. BASE = ''inline-flex items-center gap-(--space-1)
+
+        label border px-(--space-2) py-px''.
+
+        '
+      file: src/components/cohorts/CohortStatusBadge.tsx
+      reusable_for: 'Future status-badge primitives for new domain enums
+
+        (ApplicationStatusBadge for admin/cohort/applications,
+
+        EpisodeReleaseBadge, etc.). When the 4-site threshold is reached
+
+        the cross-section status-badge factory tracked from so-5.2 should
+
+        be extracted.
+
+        '
+    - name: editorial-card-consumer-with-dl-footer
+      description: 'First EditorialCard consumer pattern. Footer is a single
+
+        <div class=''flex flex-wrap items-center gap-(--space-4) w-full''>
+
+        wrapping <StatusBadge /> at left + <dl> stat row at right
+
+        (ml-auto). Each <dt> uses .label utility; each <dd> uses .mono
+
+        text-(--color-ink) (spec-sheet voice for numbers). 3-column
+
+        signature: Starts (formatDate) / Seats (capacity) / Price
+
+        (formatPrice).
+
+        '
+      file: src/components/cohorts/CohortCard.tsx
+      reusable_for: 'so-6.2 JobCard (status badge + feature count footer),
+
+        so-6.3 ProductCard (category tag + price footer). Both will
+
+        consume EditorialCard with a similar footer composition pattern.
+
+        '
+    - name: editorial-detail-hero-stack
+      description: 'Detail-page hero pattern: <Marble as="header"><Section
+
+        rhythm="lg"><Container width="prose"> wrapping label-tag → h1
+
+        with DropAccent → body-1 tagline → body-3 status-aware copy →
+
+        border-t stat row with badge + mono date + dot separator + mono
+
+        duration. DropAccent glyph chosen per surface intent
+
+        (cohorts=''→'' forward-looking; episodes=''?'' curiosity;
+
+        cases=''.'' closure). Marble as="header" lets the hero BE the
+
+        page-level banner element.
+
+        '
+      file: src/components/cohorts/CohortDetailHero.tsx
+      reusable_for: 'Phase 7 page-level heroes (homepage 7.1, episodes 7.2, cases
+        7.3,
+
+        products detail). The Marble + Section + Container + DropAccent
+
+        composition is the canonical reading-page hero pattern.
+
+        '
+  gotchas:
+    - 'Intl.DateTimeFormat needs `timeZone: ''UTC''` when using `${iso}T00:00:00Z`
+      to pin the moment — the string pins the Date but the formatter still renders
+      in local TZ without an explicit timeZone option. Pre-reskin CohortCard + CohortDetailHero
+      shipped with this latent bug for months; caught by edge_temporal_start_date_iso_pinned_to_utc.
+      Now-canonical formatDate idiom: month/day/year + timeZone:''UTC''. Cross-section
+      spread: account/CohortList.tsx and account/PurchaseList.tsx still have the latent
+      bug; flagged for follow-up but predates this section.'
+    - 'fabled10x Cohort schema reality: 5 CohortStatus values (announced/open/closed/enrolled/shipped)
+      + capacity (single number, no seatsRemaining/seatsTotal split) + durationWeeks
+      + commitmentHoursPerWeek (separate numbers, no `duration` string). The styling-overhaul-6.4
+      planning doc snippet referenced an aspirational 3-status model with different
+      field names. Implementation honors the schema; tests pin schema-driven names.
+      Lesson for future schema-shaped sections: check src/content/schemas/{model}.ts
+      before believing the planning doc field names.'
+    - 'forbidden-patterns sentinel SKIP_PATHS sync for new test files that source-grep
+      FORBIDDEN regex literals: add the .test.tsx path to SKIP_PATHS but NEVER add
+      the component .tsx path. Pin the latter via an infra_forbidden_pattern_sentinel_green
+      test that asserts component paths are NOT in SKIP_PATHS — keeps the sentinel
+      scanning the component sources for drift. Precedent from so-5.1 / so-5.3 / so-6.1;
+      now also so-6.4.'
+    - Cohort components live in @/components/cohorts/* — they are NOT brand primitives.
+      The sibling brand-barrel whitelist sentinel sync that affects every new entry
+      in @/components/brand (Surfaces/BrushstrokeSeam/Logo/Button/Section/EditorialCard
+      test files) does NOT apply to non-brand-located reskins. Same exemption applies
+      to auth/, products/, build-log/, etc.
+  reusable_utilities:
+    - function: formatDate
+      file: src/components/cohorts/CohortCard.tsx + CohortDetailHero.tsx (inline)
+      purpose: 'Intl.DateTimeFormat en-US with timeZone:''UTC'' applied to ISO date
+
+        strings (`${iso}T00:00:00Z` pin). Card uses short month; hero uses
+
+        long month. 9th + 10th site of the cross-codebase pattern;
+
+        formatDate cross-section extraction tracked from ce-4.3 still
+
+        deferred — intentional format variance per surface intent.
+
+        '
+    - function: formatPrice
+      file: src/components/cohorts/CohortCard.tsx (inline)
+      purpose: 'Intl.NumberFormat en-US currency with maximumFractionDigits=0.
+
+        7th site (already tracked from so-5.4 as deferred extraction).
+
+        Currency passed lowercase normalized via .toUpperCase().
+
+        '

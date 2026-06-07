@@ -1,21 +1,16 @@
 import type { Cohort } from '@/content/schemas';
 import { COHORT_STATUS_DESCRIPTIONS } from '@/content/schemas';
+import { Marble, Section, DropAccent } from '@/components/brand';
+import { Container } from '@/components/site/Container';
 import { CohortStatusBadge } from './CohortStatusBadge';
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
     month: 'long',
     day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
   }).format(new Date(`${iso}T00:00:00Z`));
-}
-
-function formatPrice(cents: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency.toUpperCase(),
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 interface CohortDetailHeroProps {
@@ -24,40 +19,31 @@ interface CohortDetailHeroProps {
 
 export function CohortDetailHero({ cohort }: CohortDetailHeroProps) {
   return (
-    <header className="border-b border-mist pb-12">
-      <div className="flex items-center gap-4">
-        <p className="text-sm uppercase tracking-wide text-muted">{cohort.series}</p>
-        <CohortStatusBadge status={cohort.status} />
-      </div>
-      <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight md:text-5xl">
-        {cohort.title}
-      </h1>
-      <p className="mt-5 max-w-3xl text-lg text-muted">{cohort.tagline}</p>
-      <p className="mt-4 max-w-3xl text-sm text-muted">
-        {COHORT_STATUS_DESCRIPTIONS[cohort.status]}
-      </p>
-      <dl className="mt-10 grid max-w-3xl grid-cols-2 gap-6 md:grid-cols-4">
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-muted">Starts</dt>
-          <dd className="mt-1 font-semibold">{formatDate(cohort.startDate)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-muted">Ends</dt>
-          <dd className="mt-1 font-semibold">{formatDate(cohort.endDate)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-muted">Duration</dt>
-          <dd className="mt-1 font-semibold">
-            {cohort.durationWeeks} weeks · {cohort.commitmentHoursPerWeek}h/wk
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-muted">Tuition</dt>
-          <dd className="mt-1 font-semibold">
-            {formatPrice(cohort.priceCents, cohort.currency)}
-          </dd>
-        </div>
-      </dl>
-    </header>
+    <Marble as="header">
+      <Section rhythm="lg">
+        <Container width="prose">
+          <span className="label">{cohort.series}</span>
+          <h1 className="display-1 mt-(--space-3)">
+            <DropAccent glyph="→" size="large">
+              {cohort.title}
+            </DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-5) text-(--color-muted)">
+            {cohort.tagline}
+          </p>
+          <p className="body-3 mt-(--space-3) text-(--color-muted)">
+            {COHORT_STATUS_DESCRIPTIONS[cohort.status]}
+          </p>
+          <div className="mt-(--space-6) flex flex-wrap items-center gap-(--space-4) border-t border-(--edge-color) pt-(--space-4)">
+            <CohortStatusBadge status={cohort.status} />
+            <span className="mono">{formatDate(cohort.startDate)}</span>
+            <span className="mono" aria-hidden="true">·</span>
+            <span className="mono">
+              {cohort.durationWeeks} weeks · {cohort.commitmentHoursPerWeek}h/wk
+            </span>
+          </div>
+        </Container>
+      </Section>
+    </Marble>
   );
 }
