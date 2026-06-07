@@ -2,9 +2,9 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-6.3
+  current_section: styling-overhaul-6.4
   current_agent: pending
-  current_stage: styling-overhaul-6.2-complete
+  current_stage: styling-overhaul-6.3-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
@@ -47,6 +47,91 @@ completed_sections:
       mount --bind via AskUserQuestion, after which the build gate passed
       cleanly. Future sections should bind-mount from the start.
 
+  - id: styling-overhaul-6.3
+    name: ProductCard refactor
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add ProductCard refactor with 39 tests (styling-overhaul-6.3)
+    tests: 39
+    files_new: 0
+    files_modified: 4
+    pushed: false
+    notes: |
+      Third feature of styling-overhaul Phase 6 (Card Primitives). Whole-render-
+      tree refactor of src/components/products/ProductCard.tsx onto so-6.1
+      <EditorialCard>. Single-file MODIFY consuming the brand primitive with
+      tag=PRODUCT_CATEGORY_LABELS[product.category], headline=product.title,
+      subtitle=product.tagline, href=/products/{slug}, footer={mono-styled
+      price span}. RSC-pure (no 'use client'). formatPrice helper preserved
+      verbatim (Intl.NumberFormat 'en-US', currency.toUpperCase, 0 fraction
+      digits — matches so-5.4 BuyButton precedent for currency-aware
+      formatting).
+
+      Cross-cutting consequence: outer <Link href={`/products/${slug}`}
+      className="block"> wrapper dropped from src/app/products/page.tsx grid
+      <li> rendering. EditorialCard now owns the anchor via its href prop;
+      keeping the outer Link would produce nested anchors (invalid HTML +
+      accessibility violation). `import Link from 'next/link'` removed from
+      products/page.tsx (no longer used).
+
+      Heading level updated h2 → h3 (EditorialCard renders display-3 as h3).
+      Page <h1>Products + card h3 is the documented anti-skip exception (h2
+      would be an empty section heading per planning §6.1).
+
+      39 tests in ProductCard.test.tsx (file rewritten) = 15 unit + 1
+      integration + 4 a11y + 8 infra + 6 edge + 1 err + 4 data integrity.
+      3 categories N/A: security/permission/contract (pure presentational
+      reskin — no input/auth/IO/API surface, STRIDE n/a at section level per
+      interfaces.yaml#stride_section_level). Plus 3 new integration tests
+      added to src/app/products/__tests__/page.test.tsx (one-link-per-card,
+      anchor-href-by-slug, source-grep no-outer-link) and 1 modified test
+      (unit_index_card_link mock changed to anchor) for total +36 tests
+      vs preflight baseline (1982 → 2018 passing).
+
+      Hybrid red posture (so-5.3 precedent for behavior-preserving reskins):
+      red phase produced 23 failing tests (new EditorialCard contract surface)
+      AND 32 passing tests (PRESERVED behavior — Intl.NumberFormat, category
+      label lookup, no-throw render). At green-end all 55 section tests pass;
+      60 skipped baseline unchanged; 0 regressions across the full repo suite.
+
+      Refactor produced ZERO source-code changes — 19th consecutive zero-
+      source-change refactor section (so-1.1, 1.2, 1.3, ce-2.2, ce-1.3,
+      bpd-2.3, ce-2.1, ce-3.1, so-2.1, 2.2, 2.3, 2.4, ce-4.3, so-3.2, 4.1,
+      4.4, 5.1, 5.2, 5.3, 5.4, 6.1, now 6.3). Cross-section DRY: formatPrice
+      duplication now at 7 sites (ProductCard, BuyButton, PurchaseList,
+      products/[slug]/page, products/account/purchases/[id]/page,
+      CohortCard, CohortDetailHero) — re-flagged from so-5.4 knowledge,
+      deferred per established discipline (would touch 6 out-of-scope files).
+
+      All audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint
+      warnings, 0 tsc errors, production build pass (52 routes prerender
+      including /products + /products/[slug]).
+
+      Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+      provision_test_db; slot at $WORKTREES/section-styling-overhaul-6.3
+      on branch section/styling-overhaul-6.3 from origin/main f40160d).
+      PWTC N/A (fabled10x has no docker/db infra). Env-symlink loop fell
+      through silently — no .env / .env.local / .env.db in main (static
+      site). node_modules bind-mounted from main; symlinks already in place.
+
+      Process note: ProductCard does NOT live in src/components/brand/ —
+      the 6-file sibling brand-barrel whitelist sentinel sync does NOT
+      apply (mirrors so-5.3 EmailCapture precedent for non-brand-located
+      consumer components). Documented in this section's knowledge gotchas.
+
+      Process note: README.md status row for so-5.2 (StatusBadge) is still
+      'Planned' on origin/main as of this commit — first noted in so-5.3
+      knowledge as a so-5.2 /finish miss. Per section-scoped rule, NOT
+      fixed here (would be out of scope); whoever runs so-5.4 next should
+      address en passant if convenient.
+
+      Blocker cleared: styling-overhaul Phase 6 (Card Primitives) is now
+      2/4 complete (6.1 EditorialCard + 6.3 ProductCard). so-6.2 (JobCard
+      refactor — same pattern as 6.3) and so-6.4 (CohortCard + hero +
+      status reskin) remain. so-6.2 is the canonical next so section by
+      numeric order. so-4.2 (Header restyle) also remains Planned from
+      Phase 4. Audit /cases page during 6.2 discovery for outer-Link
+      pattern (same drop-outer-wrapper move so-6.3 made for /products).
   - id: styling-overhaul-6.1
     name: EditorialCard primitive
     completed_at: '2026-06-07'

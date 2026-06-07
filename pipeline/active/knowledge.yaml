@@ -5345,3 +5345,35 @@ styling-overhaul-6.2:
         percentComplete is null. Local helper, not exported. If a second
         build-log card ever needs the same string (e.g. a compact JobRow),
         promote to src/lib/build-log/format.ts.
+
+styling-overhaul-6.3:
+  completed_at: "2026-06-07"
+  scope: "ProductCard refactored onto so-6.1 <EditorialCard>. Single-file presentational refactor consuming EditorialCard primitive with tag=PRODUCT_CATEGORY_LABELS[category], headline=title, subtitle=tagline, href=/products/{slug}, footer=mono-styled price span. Also dropped outer <Link> in src/app/products/page.tsx to avoid nested anchors (EditorialCard owns the link)."
+  patterns_established:
+    - description: "Card refactor onto EditorialCard — preserve currency-aware formatPrice helper; pass PRODUCT_CATEGORY_LABELS[category] (not raw enum slug) as tag; mono-styled <span> in footer slot"
+      file: "src/components/products/ProductCard.tsx"
+      reusable_for: "Future so-6.4 CohortCard (start date + duration + seats + price all monospace per planning doc), and any future card type whose dominant numeric/spec content should render in JetBrains Mono"
+    - description: "Page-level outer Link drop when refactoring child to consume EditorialCard's href prop"
+      file: "src/app/products/page.tsx (line 35-37)"
+      reusable_for: "Anywhere a list page wraps cards in <Link>...<Card/>...</Link> — when the child gains an internal href via EditorialCard, the outer Link MUST be removed to prevent nested anchors. so-6.2 JobCard refactor and so-6.4 cohort grid pages should apply the same pattern."
+    - description: "Page test mock update — when a child component gains internal link ownership, the page test's vi.mock for that child must render an <a> instead of a <div>, and the source-grep integration test 'integration_{page}_drops_outer_link' should be added to lock the no-outer-wrapper contract."
+      file: "src/app/products/__tests__/page.test.tsx (lines 26-39, 130-160)"
+      reusable_for: "6.4 (CohortCard pages) — same mock pattern + source-grep test for any consumer page after a card refactor relocates its link inside the card."
+  gotchas:
+    - 'Planning doc §6.3 showed simplified $((cents/100).toFixed(0)) and raw product.category as the tag — but the current ProductCard contract uses Intl.NumberFormat (currency-aware) and PRODUCT_CATEGORY_LABELS lookup. PRESERVE the existing contracts; the planning doc is lossy. The cross-consumer Product test fixtures + storefront UX depend on real currency formatting (matching so-5.4 BuyButton precedent) and human labels (the enum slug ''workflow-templates'' would be a visible regression).'
+    - "EditorialCard renders the headline as h3.display-3 — not h2. Pre-6.3 ProductCard used h2. Tests that assert heading level on cards (unit_card_title) must update from level 2 to level 3. The page h1 Products + card h3 is the documented anti-skip exception (h2 would be an empty section heading)."
+    - "EditorialCard wraps inner article in a Link when href is set. If a parent page also wraps ProductCard in Link, the result is nested anchors (invalid HTML, accessibility violation). When refactoring a card to consume EditorialCard.href, ALWAYS audit parent pages for outer Link wrappers and drop them. Source-grep test integration_{page}_drops_outer_link pins this."
+    - "Refactor produced ZERO source-code changes — 19th consecutive zero-source-change refactor section. Same precedent as so-5.3, 5.4, 6.1. Cross-section formatPrice 7-site duplication (so-5.4 finding) remains deferred per established discipline; would touch 6 out-of-scope files."
+    - "Concurrent worktree merge: so-6.2 (JobCard) landed on main between so-6.3 claim and so-6.3 release. The rebase produced additive conflicts on session.yaml, knowledge.yaml, and currentwork/styling-overhaul/README.md — resolved manually by union (worktree-release resolvers not yet implemented). Future cross-section work should expect this scenario."
+  deferred_followups:
+    - "Cross-section formatPrice extraction (NOW 7 use sites: ProductCard, BuyButton, PurchaseList, products/[slug]/page, products/account/purchases/[id]/page, CohortCard, CohortDetailHero). Identical Intl.NumberFormat en-US currency 0-fraction-digits. Should extract to src/lib/format-currency.ts in a dedicated cross-cutting refactor section after Phase 6 ships. Re-flagged from so-5.4."
+  reusable_utilities: []
+  blocker_cleared: |
+    styling-overhaul Phase 6 (Card Primitives) is now 3/4 complete (6.1
+    EditorialCard + 6.2 JobCard + 6.3 ProductCard — 6.2 landed concurrently
+    in another worktree and was merged into main between 6.3 claim and 6.3
+    release, surfaced via rebase additive merge). Only 6.4 (CohortCard +
+    hero + status reskin) remains. 6.4 is the canonical next so section.
+    so-4.2 (Header restyle) also remains Planned from Phase 4. Cross-section
+    formatPrice extraction (confirmed 7-site duplication) is the strongest
+    cross-cutting refactor candidate post-Phase 6.

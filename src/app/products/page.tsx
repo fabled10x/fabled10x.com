@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Container } from '@/components/site/Container';
 import { getAllProducts } from '@/lib/content/products';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -33,9 +32,7 @@ export default async function ProductsPage() {
         <ul className="mt-12 grid gap-6 md:grid-cols-2">
           {products.map((entry) => (
             <li key={entry.meta.id}>
-              <Link href={`/products/${entry.slug}`} className="block">
-                <ProductCard product={entry.meta} />
-              </Link>
+              <ProductCard product={entry.meta} />
             </li>
           ))}
         </ul>

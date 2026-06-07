@@ -23,17 +23,34 @@ vi.mock('@/lib/content/products', () => ({
   getAllProducts: vi.fn(),
 }));
 
+// Mock ProductCard as an anchor (so-6.3): post-refactor ProductCard owns its
+// own link via EditorialCard's href prop. Page tests assert the link lives
+// inside the card, not as an outer wrapper.
 vi.mock('@/components/products/ProductCard', () => ({
   ProductCard: ({ product }: { product: Product }) => (
-    <div data-testid="product-card" data-product-id={product.id} data-product-title={product.title}>
+    <a
+      href={`/products/${product.slug}`}
+      data-testid="product-card"
+      data-product-id={product.id}
+      data-product-title={product.title}
+    >
       {product.title}
-    </div>
+    </a>
   ),
 }));
+
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { render, screen } from '@testing-library/react';
 import { getAllProducts } from '@/lib/content/products';
 import ProductsPage, { metadata } from '../page';
+
+const REPO_ROOT = join(__dirname, '..', '..', '..', '..');
+const PRODUCTS_PAGE_SOURCE = readFileSync(
+  join(REPO_ROOT, 'src/app/products/page.tsx'),
+  'utf8',
+);
 
 const mockGetAllProducts = vi.mocked(getAllProducts);
 
@@ -116,7 +133,7 @@ describe('ProductsPage (index)', () => {
     expect(cards).toHaveLength(MOCK_PRODUCTS.length);
   });
 
-  it('unit_index_card_link: each card wrapped in Link to /products/{slug}', async () => {
+  it('unit_index_card_link: each card has a link to /products/{slug} (so-6.3: link now inside ProductCard, not outer wrapper)', async () => {
     await renderProductsIndex();
     const links = screen.getAllByRole('link');
     const hrefs = links.map((l) => l.getAttribute('href'));
@@ -125,6 +142,37 @@ describe('ProductsPage (index)', () => {
   });
 
   // --- Integration ---
+
+  it('integration_card_in_products_grid_one_link_per_card: each <li> contains exactly ONE anchor (no nested anchors after outer Link drop)', async () => {
+    const { container } = await renderProductsIndex();
+    const items = container.querySelectorAll('li');
+    expect(items.length).toBeGreaterThan(0);
+    for (const li of Array.from(items)) {
+      const anchors = li.querySelectorAll('a');
+      expect(anchors.length).toBe(1);
+    }
+  });
+
+  it('integration_card_in_products_grid_links_to_slug: each grid anchor href is /products/{slug}', async () => {
+    const { container } = await renderProductsIndex();
+    const items = container.querySelectorAll('li');
+    const hrefs = Array.from(items).map(
+      (li) => li.querySelector('a')?.getAttribute('href') ?? null,
+    );
+    expect(hrefs).toContain('/products/alpha-product');
+    expect(hrefs).toContain('/products/beta-product');
+    expect(hrefs.every((h) => h?.startsWith('/products/'))).toBe(true);
+  });
+
+  it('integration_products_page_drops_outer_link: src/app/products/page.tsx no longer wraps ProductCard in an outer <Link href=/products/...>', async () => {
+    expect(PRODUCTS_PAGE_SOURCE).not.toMatch(
+      /<Link\s+href=\{`\/products\/\$\{[^}]*\.slug\}`\}/,
+    );
+    expect(PRODUCTS_PAGE_SOURCE).not.toMatch(
+      /className="block"[^>]*>\s*<ProductCard/,
+    );
+  });
+
 
   it('int_index_calls_getAllProducts: invokes loader once', async () => {
     await renderProductsIndex();
