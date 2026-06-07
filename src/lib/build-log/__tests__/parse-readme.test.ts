@@ -73,6 +73,17 @@ const FIXTURE_WHITESPACE_CELLS = `# spaced-job
 |   1.1   |   Foo with spaces   |   1 - F   |   M   |   Planned   |
 `;
 
+const FIXTURE_EXTRA_COLUMN = `# cohort-enrollment — Implementation Plan
+
+## Feature Overview
+
+| #   | Feature              | Phase           | Size | Merges Old | Status  |
+|-----|----------------------|-----------------|------|------------|---------|
+| 1.1 | First feature        | 1 - Foundation  | S    | 1.1 + 1.2  | Shipped |
+| 1.2 | Second feature       | 1 - Foundation  | M    | 1.3        | Shipped |
+| 2.1 | Third feature        | 2 - Pages       | L    | 2.1        | Planned |
+`;
+
 const FIXTURE_NO_CONTEXT = `# bare-job — Implementation Plan
 
 **Alias:** \`bj\` — invoke as ...
@@ -148,6 +159,19 @@ describe('parseReadme', () => {
   it('unit_parse_readme_no_context: returns context "" when no ## Context section', () => {
     const result = parseReadme(FIXTURE_NO_CONTEXT);
     expect(result.context).toBe('');
+  });
+
+  it('unit_parse_readme_features_extra_column: tolerates additional columns like Merges Old', () => {
+    const result = parseReadme(FIXTURE_EXTRA_COLUMN);
+    expect(result.features).toHaveLength(3);
+    expect(result.features[0]).toEqual({
+      id: '1.1',
+      name: 'First feature',
+      phase: '1 - Foundation',
+      size: 'S',
+      status: 'Shipped',
+    });
+    expect(result.features[2].status).toBe('Planned');
   });
 });
 
