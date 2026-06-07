@@ -1,6 +1,10 @@
 'use client';
 
 import { useActionState } from 'react';
+
+import { Bone } from '@/components/brand/Bone';
+import { Button } from '@/components/brand/Button';
+
 import { captureEmail, type CaptureState } from './actions';
 
 const initialState: CaptureState = { status: 'idle' };
@@ -13,47 +17,63 @@ interface EmailCaptureProps {
 
 export function EmailCapture({
   source,
-  placeholder = 'you@domain.com',
-  buttonLabel = 'Get the updates',
+  placeholder = 'you@somewhere.dev',
+  buttonLabel = 'Join the library',
 }: EmailCaptureProps) {
-  const [state, formAction, isPending] = useActionState(captureEmail, initialState);
+  const [state, formAction, pending] = useActionState(captureEmail, initialState);
 
   if (state.status === 'success') {
     return (
-      <p className="rounded-md border border-mist p-4 text-sm text-foreground">
-        You&apos;re on the list. Check your inbox.
-      </p>
+      <Bone edge="subtle" className="p-(--space-5) flex items-center gap-(--space-3)">
+        <span aria-hidden="true" className="text-(--color-verdigris) text-2xl">
+          ✓
+        </span>
+        <div>
+          <p className="label">Welcome to the library.</p>
+          <p className="body-3 mt-(--space-1)">
+            Episode notifications begin with the next release.
+          </p>
+        </div>
+      </Bone>
     );
   }
 
   const inputId = `email-${source}`;
 
   return (
-    <form action={formAction} aria-label="Email capture" className="space-y-3">
-      <input type="hidden" name="source" value={source} />
-      <div className="flex gap-2">
-        <label className="sr-only" htmlFor={inputId}>
-          Email address
-        </label>
-        <input
-          id={inputId}
-          name="email"
-          type="email"
-          required
-          placeholder={placeholder}
-          className="flex-1 rounded-md border border-mist bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-parchment hover:opacity-90 disabled:opacity-60"
+    <Bone edge="subtle" className="p-(--space-5)">
+      <form
+        action={formAction}
+        aria-label="Email capture"
+        className="flex flex-col gap-(--space-3) md:flex-row md:items-end"
+      >
+        <input type="hidden" name="source" value={source} />
+        <label
+          htmlFor={inputId}
+          className="flex-1 flex flex-col gap-(--space-1)"
         >
-          {isPending ? 'Sending…' : buttonLabel}
-        </button>
-      </div>
+          <span className="label">Email</span>
+          <input
+            id={inputId}
+            type="email"
+            name="email"
+            required
+            placeholder={placeholder}
+            className="bg-transparent border-0 border-b border-(--color-ink) focus:outline-none focus:border-(--color-oxblood) py-(--space-2) body-1 placeholder:text-(--color-muted)"
+          />
+        </label>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Sending…' : buttonLabel}
+        </Button>
+      </form>
       {state.status === 'error' && (
-        <p className="text-sm text-accent">{state.message}</p>
+        <p
+          role="alert"
+          className="body-3 mt-(--space-2) text-(--color-oxblood)"
+        >
+          {state.message}
+        </p>
       )}
-    </form>
+    </Bone>
   );
 }

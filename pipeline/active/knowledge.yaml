@@ -5057,3 +5057,111 @@ styling-overhaul-5.2:
     - function: "makeRollup(over: Partial<JobRollupEntry>) fixture"
       file: "src/components/build-log/__tests__/StatusBadge.test.tsx"
       purpose: "Single-call rollup fixture with sensible defaults and selective override. Used by the cross-consumer integration tests to construct JobCard + JobsRollupTable inputs without verbose object literals. Replicates the pattern from JobsRollupTable.test.tsx#makeRow."
+
+
+styling-overhaul-5.3:
+  completed_at: "2026-06-07"
+  patterns_established:
+    - description: "Brand-primitive-consumed presentational form pattern"
+      file: "src/components/capture/EmailCapture.tsx"
+      reusable_for: |
+        Any form that needs to read as a brand surface rather than an
+        ad-hoc UI shell. The Bone-edge-subtle outer wrapper hosts both the
+        idle/error form AND the success state — single surface, three
+        renders. Sibling reskin sections (so-5.4 SignInForm /
+        SignOutButton / BuyButton) should use the same shape: <Bone
+        edge='subtle' className='p-(--space-5)'> as the surface owner;
+        brand <Button> for the submit; .label utility for the field
+        legend; underline-only inputs (border-0 + border-b +
+        border-(--color-ink) + focus:border-(--color-oxblood)) so the
+        input reads as 'signature line' rather than 'data field'.
+    - description: "useActionState wiring preserved through visual reskin"
+      file: "src/components/capture/EmailCapture.tsx"
+      reusable_for: |
+        Reskinning a wf-4.x server-action-backed form without touching
+        actions.ts. The whole render tree is rewritten; the
+        useActionState hook + the action's CaptureState union (idle |
+        success | error+message) + the FormData payload contract are all
+        preserved verbatim. Same approach applies to so-5.4 (SignInForm
+        from auth-3.x, BuyButton from products-x.x).
+    - description: "Hybrid red-phase posture for behavior-preserving reskin"
+      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
+      reusable_for: |
+        Any reskin section where the source had a pre-existing test
+        suite (wf-N.x foundation tests). The red phase REPLACES the old
+        test file with an expanded version that PRESERVES every behavior
+        test (form landmark, action receives FormData, double-submit
+        prevention, error message rendering, etc.) AND adds brand-surface
+        tests (Bone wrapper, token pairings, brand discipline asserts,
+        sentinel SKIP_PATHS regression guard, planning-doc copy
+        pinning). The preserved tests pass at red-start (PIN behavior);
+        the new tests fail at red-start (DRIVE reskin); both halves are
+        green at green-end. Replaces the strict 'all-red-must-fail'
+        convention for behavior-preserving change sections.
+    - description: "Planning-doc copy pinning via source-grep data-integrity test"
+      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
+      reusable_for: |
+        Sections where default prop values or visible strings come
+        verbatim from the planning doc (brand voice strings, copy
+        decisions). Add a data_integrity test that source-greps for the
+        exact literal — so future ad-hoc edits surface as failures and
+        the brand voice doesn't drift silently. Pattern:
+        expect(SRC).toContain('Welcome to the library.').
+  gotchas:
+    - |
+      EmailCapture lives in src/components/capture/, NOT
+      src/components/brand/. The 5-file sibling brand-barrel whitelist
+      sentinel sync flagged in so-5.1 / so-5.2 knowledge does NOT apply
+      to this section. Future reskins of non-brand-located components
+      (auth/, products/, cohorts/, etc.) likewise skip the brand-barrel
+      sync — only sections that ADD a new export to src/components/brand/
+      need that sync.
+    - |
+      Test file for a reskin of a wf-N.x component already exists from
+      the wf-N.x section. Red phase REPLACES it whole (don't try to
+      surgically add tests around the existing ones — the new test file
+      reorganizes the suite with clearer category dividers and adds
+      brand-surface tests that need a consistent helper layout).
+    - |
+      For the input field, both border-0 AND border-b are required —
+      border-0 zeroes all four sides (kills Tailwind's default input
+      border-1) and border-b re-adds bottom only. Forgetting border-0
+      leaves a 1px ink box around the input on top of the intended
+      underline.
+    - |
+      <Button> default variant=primary + default size=md exactly matches
+      the editorial CTA spec — do NOT pass variant/size explicitly when
+      the default fits. Keeps consumer call sites terse and means future
+      Button default tweaks propagate automatically.
+    - |
+      React Testing Library's getByRole('form') only resolves when the
+      <form> has an accessible name. Preserve aria-label='Email capture'
+      (or add aria-labelledby) on the form element — without it, the
+      a11y_form_landmark test fails silently because getByRole returns
+      undefined.
+    - |
+      currentwork/{job-slug}/README.md must be edited in the WORKTREE,
+      not in the main repo. Editing /home/travis/Projects/fabled10x/
+      currentwork/... pollutes the main working tree and breaks the
+      worktree's isolated commit. Always confirm cwd is inside
+      $WORKTREES/section-{id}/ before touching files outside src/.
+    - |
+      README status field for so-5.2 (StatusBadge) is still 'Planned' on
+      origin/main as of this section — the so-5.2 /finish skipped its
+      planning-checklist update. Per section-scoped rule, did NOT fix
+      that here; flagging for whoever runs so-5.4 next.
+  reusable_utilities:
+    - function: "boneSurfaceRoot(container) helper"
+      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
+      purpose: |
+        Resolves the outermost <Bone> wrapper of a Bone-rooted
+        component for token/className assertions. Asserts not-null
+        with a contextual message. Generic across any Bone-rooted
+        component test (so-5.4 will likely reuse).
+    - function: "emailInput(container) + sourceInput(container) + formEl(container) helpers"
+      file: "src/components/capture/__tests__/EmailCapture.test.tsx"
+      purpose: |
+        Form-specific element resolvers via name-attribute querySelector
+        with contextual not-null assertions. Pattern reusable for any
+        form test that needs to grab specific named inputs without
+        relying on test IDs.

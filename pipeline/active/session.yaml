@@ -2,15 +2,131 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-5.3
+  current_section: styling-overhaul-5.4
   current_agent: pending
-  current_stage: styling-overhaul-5.2-complete
+  current_stage: styling-overhaul-5.3-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-5.3
+    name: EmailCapture reskin
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add EmailCapture reskin with 38 tests (styling-overhaul-5.3)
+    tests: 38
+    files_new: 0
+    files_modified: 2
+    pushed: false
+    notes: |
+      Third feature of styling-overhaul Phase 5 (Component Primitives).
+      Whole render-tree replacement of src/components/capture/EmailCapture.tsx
+      — single-file MODIFY consuming the brand <Bone> surface (so-3.1) and
+      brand <Button> primitive (so-5.1). useActionState + captureEmail
+      server-action wiring (website-foundation-4.1) preserved verbatim;
+      EmailCaptureProps + CaptureState type contracts unchanged.
+
+      Surface: <Bone edge="subtle" className="p-(--space-5)"> hosts both the
+      idle/error form AND the success state — same primitive, three renders.
+      Input: borderless with 1px Ink under-rule (border-0 + border-b +
+      border-(--color-ink)); on focus the underline flips to Oxblood
+      (focus:outline-none + focus:border-(--color-oxblood)). Visible .label
+      "Email" replaces the prior sr-only "Email address" label (sign-the-
+      guest-book metaphor per planning doc). Submit: <Button type="submit"
+      disabled={pending}> at default variant=primary size=md — no explicit
+      variant/size args needed.
+
+      Defaults flipped per planning doc: placeholder = 'you@somewhere.dev'
+      (was 'you@domain.com'); buttonLabel = 'Join the library' (was 'Get
+      the updates'). Success-state copy is 'Welcome to the library.' +
+      sub-line 'Episode notifications begin with the next release.' Both
+      pinned by data_button_label_default_constants_match_planning_doc
+      source-grep so future ad-hoc copy edits surface as test failures.
+
+      Success state composition: <Bone edge="subtle" p-(--space-5) flex
+      items-center gap-(--space-3)> + <span aria-hidden text-(--color-
+      verdigris) text-2xl>✓</span> + <div> with .label headline +
+      .body-3 sub-line. The verdigris ✓ is the single permitted Verdigris-
+      as-success placement here (mirrors so-5.2 StatusBadge complete
+      glyph rule).
+
+      Error state: <p role="alert" className="body-3 mt-(--space-2)
+      text-(--color-oxblood)"> for screen-reader announcement (WCAG 4.1.3
+      Status Messages). Oxblood — the brand's only saturated color — used
+      consistently for input focus underline + error message, never for
+      background fills.
+
+      38 tests = 12 unit + 5 integration + 5 a11y + 8 infra + 4 edge + 2
+      err + 2 data. 3 categories N/A: security (pure visual reskin —
+      validation/secret handling lives in actions.ts covered by wf-4.1's
+      actions.test.ts), contract (no HTTP endpoints — React-internal
+      CaptureState contract), permission (public form, no auth/roles/
+      ownership). 100% coverage matrix.
+
+      Hybrid red-phase posture (new pattern for behavior-preserving
+      reskins): replaced the wf-4.1 9-test suite with the 5.3 38-test
+      suite that PRESERVES every wf-4.1 behavior test (form landmark,
+      action receives FormData, double-submit prevention, error message
+      rendering, button-label override, placeholder override, email
+      input attrs, label-input association) AND adds brand-surface
+      tests (Bone wrapper pairing, input underline/focus, brand
+      <Button> identity by class, visible .label, role=alert error,
+      aria-hidden ✓ glyph), infrastructure tests (no rounded / no
+      shadow / no gradient / no placeholder palette names / tokens
+      resolve in globals.css / brand-barrel import discipline / SKIP_
+      PATHS regression guard / use-client directive), and planning-
+      doc copy pinning. At red-start 17/38 passed (PRESERVED-behavior
+      pins), 21/38 failed (NEW brand-surface work). At green-end all
+      38 passing.
+
+      Sentinel regression guard: infra_forbidden_pattern_sentinel_clean
+      asserts EmailCapture.tsx is NOT added to SKIP_PATHS in src/
+      __tests__/brand/forbidden-patterns.test.ts — the cross-cutting
+      so-3.3 sentinel must keep scanning this file post-reskin so future
+      drift back to placeholder palette aliases surfaces immediately.
+
+      EmailCapture lives in src/components/capture/ NOT src/components/
+      brand/ — the 5-file sibling brand-barrel whitelist sentinel sync
+      flagged in so-5.1 / so-5.2 knowledge does NOT apply. Captured in
+      knowledge.yaml gotchas: future non-brand-located component reskins
+      (auth/, products/, cohorts/) likewise skip the brand-barrel sync.
+
+      Refactor produced ZERO source-code changes — 17th consecutive zero-
+      source-change refactor section (so-1.1, 1.2, 1.3, ce-2.2, ce-1.3,
+      bpd-2.3, ce-2.1, ce-3.1, so-2.1, 2.2, 2.3, 2.4, ce-4.3, so-3.2, 4.1,
+      4.4, 5.1, 5.2, now 5.3). Cross-section DRY: grep confirms
+      EmailCapture.tsx is the ONLY consumer of underline-input pattern
+      AND the only consumer of <Bone>+<Button> submit form pattern —
+      premature extraction avoided; documented for re-evaluation at
+      so-5.4 (auth/storefront button consistency) and so-6.x (form-
+      bearing cards).
+
+      All audits clean: 0 any/as/@ts-ignore, 0 ESLint warnings, 0 tsc
+      errors, production build passes. Full suite: 1886 passed / 60
+      skipped (unchanged from preflight) / 0 regressions.
+
+      Pipeline run in worktree mode (CLAIM beats 1-7 done, slot at
+      $WORKTREES/section-styling-overhaul-5.3 on branch
+      section/styling-overhaul-5.3 from origin/main e10e344 so-5.2).
+      PWTC N/A (fabled10x has no docker/db infra). Env-symlink loop
+      fell through silently — no .env / .env.local / .env.db in main
+      (static site).
+
+      Process note: README.md status row for so-5.2 (StatusBadge) is
+      still 'Planned' on origin/main as of this commit — the so-5.2
+      /finish skipped its planning-checklist update. Per section-
+      scoped rule, NOT fixed here (would be out of scope); flagged in
+      this section's knowledge.yaml gotchas for whoever runs so-5.4 to
+      address en passant if convenient.
+
+      Blocker cleared: styling-overhaul Phase 5 (Component Primitives)
+      is now 3/4 complete (5.1 Button, 5.2 StatusBadge, 5.3 EmailCapture).
+      Only so-5.4 (Auth + storefront button consistency — refactors
+      SignInForm / SignOutButton / BuyButton onto <Button>) remains in
+      Phase 5. so-4.2 (Header restyle) also remains Planned from
+      Phase 4.
   - id: styling-overhaul-5.2
     name: StatusBadge variant restyle
     completed_at: '2026-06-06'
