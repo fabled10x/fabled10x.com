@@ -283,6 +283,7 @@ describe('Logo', () => {
       'Bone',
       'Shadow',
       'BrushstrokeSeam',
+      'HeroBackdrop',
       'Logo',
       'Section',
       'SectionDivider',

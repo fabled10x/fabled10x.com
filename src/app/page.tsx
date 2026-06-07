@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { HeroBackdrop } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { EmailCapture } from '@/components/capture/EmailCapture';
 import { getLatestEpisode } from '@/lib/content/episodes';
@@ -14,7 +16,17 @@ export default async function Home() {
 
   return (
     <>
-      <section className="border-b border-mist">
+      <section className="relative isolate overflow-hidden border-b border-mist">
+        <Image
+          src="/hero/floatbg.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          aria-hidden="true"
+          className="-z-10 object-cover object-right opacity-35 mix-blend-multiply pointer-events-none select-none"
+        />
+        <HeroBackdrop />
         <Container as="div" className="py-24 md:py-32">
           <p className="text-sm uppercase tracking-wide text-accent">
             The Fabled 10X Developer

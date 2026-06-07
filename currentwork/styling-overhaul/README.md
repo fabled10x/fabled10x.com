@@ -18,7 +18,8 @@ against that identity.
 
 The end-state: `npm run build` produces a one-mode (light) marble-and-ink
 site with Cinzel display + Inter body, an editorial card system, a homepage
-hero using the brushstroke-seam composition, a dynamic `opengraph-image`
+hero composed under a full-bleed illuminated-manuscript photograph, a
+dynamic `opengraph-image`
 pipeline that ships the brand to social-share previews, a dev-only
 `/thumb-preview` route for capturing 1280×720 YouTube thumbnails, contrast +
 forbidden-pattern sentinels locking the system against future drift, and
@@ -89,14 +90,14 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 4.3 | Footer restyle (Parchment surface, Verdigris LLL link)                                   | 4 - Logo + Chrome              | S    | Complete |
 | 4.4 | Layout primitives — `<Container>` widths, `<Section>`, `<SectionDivider>`                | 4 - Logo + Chrome              | M    | Complete |
 | 5.1 | `<Button>` primitive (Ink fill / variants / sharp corners / no shadow)                   | 5 - Component Primitives       | M    | Complete |
-| 5.2 | `<StatusBadge>` variant restyle (Oxblood / Verdigris / Ink / Bone)                       | 5 - Component Primitives       | S    | Complete |
+| 5.2 | `<StatusBadge>` variant restyle (Oxblood / Verdigris / Ink / Bone)                       | 5 - Component Primitives       | S    | Planned |
 | 5.3 | `EmailCapture` reskin (Bone input, Ink button, Verdigris success)                        | 5 - Component Primitives       | M    | Planned |
 | 5.4 | Auth + storefront button consistency (`SignInForm`, `SignOutButton`, `BuyButton`)        | 5 - Component Primitives       | S    | Planned |
 | 6.1 | `<EditorialCard>` primitive enforcing three-level hierarchy                              | 6 - Card Primitives            | L    | Planned |
 | 6.2 | `JobCard` refactored onto `<EditorialCard>`                                              | 6 - Card Primitives            | S    | Planned |
 | 6.3 | `ProductCard` refactored onto `<EditorialCard>` (price in monospace)                     | 6 - Card Primitives            | S    | Planned |
 | 6.4 | `CohortCard` + `CohortDetailHero` + `CohortStatusBadge` reskin                           | 6 - Card Primitives            | M    | Planned |
-| 7.1 | `/` homepage hero — brushstroke-seam composition                                         | 7 - Page Surfaces              | L    | Planned |
+| 7.1 | `/` homepage hero — full-bleed illuminated-manuscript photograph                         | 7 - Page Surfaces              | L    | Planned |
 | 7.2 | `/episodes` + `/episodes/[slug]` editorial manuscript treatment                          | 7 - Page Surfaces              | M    | Planned |
 | 7.3 | `/cases` + `/cases/[slug]` editorial + spec-sheet sidebar                                | 7 - Page Surfaces              | M    | Planned |
 | 7.4 | `/build-log/*` Bone surfaces, Parchment inner panels                                     | 7 - Page Surfaces              | L    | Planned |
@@ -171,6 +172,7 @@ None. This job is chrome and assets. Content schemas (`Episode`,
 | `src/components/brand/Logo.tsx` | NEW — Cinzel "FABLED" + JetBrains `{10x}` lockup |
 | `src/components/brand/Marble.tsx`, `Parchment.tsx`, `Bone.tsx`, `Shadow.tsx` | NEW — surface primitives |
 | `src/components/brand/BrushstrokeSeam.tsx` | NEW — painted-edge SVG mask + texture overlay |
+| `src/components/brand/HeroBackdrop.tsx` | NEW — mask-gradient cream overlay for the homepage hero photograph (sentinel-exempt mask, like BrushstrokeSeam) |
 | `src/components/brand/DropAccent.tsx` | NEW — oversized Oxblood end-of-headline punctuation |
 | `src/components/brand/Button.tsx` | NEW — Ink-fill primitive replacing ad-hoc button classes |
 | `src/components/brand/EditorialCard.tsx` | NEW — three-level hierarchy card; base for JobCard / ProductCard / CohortCard |
@@ -186,7 +188,7 @@ None. This job is chrome and assets. Content schemas (`Episode`,
 | `src/components/cohorts/CohortCard.tsx`, `CohortDetailHero.tsx`, `CohortStatusBadge.tsx` | MODIFY — editorial reskin |
 | `src/components/auth/SignInForm.tsx` | MODIFY — Button + form chrome consistent |
 | `src/components/account/SignOutButton.tsx` | MODIFY — Button primitive |
-| `src/app/page.tsx` | MODIFY — brushstroke-seam hero composition |
+| `src/app/page.tsx` | MODIFY — full-bleed illuminated-manuscript hero composition + below-fold restructure onto EditorialCard / SectionDivider / Bone |
 | `src/app/episodes/page.tsx`, `episodes/[slug]/page.tsx` | MODIFY — EditorialCard grid + manuscript detail |
 | `src/app/cases/page.tsx`, `cases/[slug]/page.tsx` | MODIFY — editorial + spec-sheet sidebar |
 | `src/app/build-log/page.tsx`, `build-log/jobs/[slug]/page.tsx`, `build-log/jobs/[slug]/[phase]/page.tsx`, `build-log/status/page.tsx` | MODIFY — Bone + Parchment surfaces |
@@ -216,7 +218,7 @@ None. This job is chrome and assets. Content schemas (`Episode`,
 | 4     | `<Logo>` renders in Header at all sizes; `public/logo.svg` reachable. Header active-state visible (Oxblood on current route). Footer LLL link Verdigris-on-Bone. `<Section>` / `<SectionDivider>` render. Container widths feel editorial (max-w-prose for text-heavy pages). |
 | 5     | `<Button>` variants render in a sandbox. `<StatusBadge>` variants restyled (visual check on `/build-log`). `EmailCapture` submits cleanly with the new look; success state shows Verdigris check. Auth + Buy buttons consistent. |
 | 6     | `<EditorialCard>` enforces three-level hierarchy (accent tag → Cinzel headline → Inter subtitle). `JobCard`, `ProductCard`, `CohortCard` all refactor onto it without behavior regression. `CohortDetailHero` + `CohortStatusBadge` brand-consistent. |
-| 7     | Every page in the route inventory renders against the new system. Homepage hero shows the brushstroke-seam composition with headline crossing the seam. `/build-log` Bone surfaces with Parchment inner panels. `/about`, `/login`, `not-found`, `error` quiet marble (no brushstroke). |
+| 7     | Every page in the route inventory renders against the new system. Homepage hero shows the full-bleed illuminated-manuscript photograph with the Cinzel headline + Inter subtitle + EmailCapture stack legible over a left-protective cream overlay. `/build-log` Bone surfaces with Parchment inner panels. `/about`, `/login`, `not-found`, `error` quiet marble (no brushstroke). |
 | 8     | `og-image` API: visit `/opengraph-image`, `/episodes/<slug>/opengraph-image`, `/cases/<slug>/opengraph-image` — 1200×630 brand-consistent PNGs. `/thumb-preview?title=...&accent=?` renders 1280×720 thumbnail in dev only (404 in prod). `docs/fabled10x-design-system.md` fully populated with final values. |
 | 9     | `npm test` — legibility + contrast + forbidden-pattern sentinels all green. Lighthouse a11y ≥ 95, perf ≥ 90 on `/`, `/episodes`, `/build-log`. Reduce-motion disables brushstroke texture. forced-colors mode legible. 320px reflow + 200% zoom both clean. |
 | All   | `npm run lint` clean. `npx tsc --noEmit` clean. `npm test` green. `npm run build` clean (standalone output). Manual page walk: `/`, `/episodes`, `/episodes/<slug>`, `/cases`, `/cases/<slug>`, `/build-log`, `/build-log/jobs/website-foundation`, `/products`, `/products/<slug>`, `/cohorts`, `/cohorts/<slug>`, `/about`, `/login`, `/login/verify`, `/products/account`, `/sitemap.xml`, `/robots.txt`. |
@@ -244,11 +246,11 @@ npm dependency.
 
 ## Open Items (Resolve During Implementation)
 
-- **Photo / texture for hero brushstroke-zone** — the right half of the
-  homepage hero composition needs an atmospheric image (column, marble
-  texture, manuscript page). User to provide or Phase 7.1 picks a stock
-  marble texture from a license-clean source and commits it to
-  `public/hero/`. Plan defaults to a marble texture if no image is supplied.
+- **Photo / texture for hero** — RESOLVED. `public/hero/floatbg.png`
+  (illuminated capital flanked by source-code fragments on aged paper)
+  landed alongside the initial 7.1 hero spike and is the canonical hero
+  background. See Phase 7.1 for the full-bleed composition that replaced
+  the earlier brushstroke-seam draft.
 - **Logo SVG master** — Phase 4.1 ships the lockup as inline JSX rendered to
   `public/logo.svg`. If the user has a hand-illustrated wordmark, swap it in;
   otherwise the type-set Cinzel + JetBrains version is canonical.

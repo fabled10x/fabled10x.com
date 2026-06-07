@@ -203,7 +203,7 @@ describe('Button primitive', () => {
   });
 
   it('integration_brand_barrel_still_exports_predecessors', () => {
-    const expected = ['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'Logo', 'Section', 'SectionDivider'];
+    const expected = ['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'HeroBackdrop', 'Logo', 'Section', 'SectionDivider'];
     for (const name of expected) {
       expect(brandBarrel, `barrel missing predecessor ${name}`).toHaveProperty(name);
     }
@@ -294,6 +294,7 @@ describe('Button primitive', () => {
       'Bone',
       'Shadow',
       'BrushstrokeSeam',
+      'HeroBackdrop',
       'Logo',
       'Section',
       'SectionDivider',

@@ -7,83 +7,98 @@
 
 Phase 7 reskins every public page surface against the new brand. Sections
 7.2 through 7.6 can all run in parallel — they depend only on Phases 3–6
-and don't share files. Section 7.1 owns the homepage hero, the brand's
-single brushstroke-seam composition, and is the most visible page so
-should land first.
+and don't share files. Section 7.1 owns the homepage hero — a full-bleed
+illuminated-manuscript photograph composed under the Cinzel headline — and
+is the most visible page so should land first.
 
 ---
 
 ## Feature 7.1: Homepage hero
 
-**Complexity: L** — Rebuild `src/app/page.tsx` around the brand's
-brushstroke-seam composition: marble overlay on the left containing the
-series tag, Cinzel headline crossing into the photo zone, Inter subtitle,
-EmailCapture, and DropAccent at the end of the headline. Below the fold,
-section entries gated by `<SectionDivider>`.
+**Complexity: L** — Rebuild `src/app/page.tsx` around a full-bleed
+illuminated-manuscript photograph (`public/hero/floatbg.png`), composed
+under the Cinzel headline + Inter subtitle + EmailCapture stack via a
+left-protective cream gradient. Below the fold, restructure latest-episode
+and section entries onto the `<EditorialCard>` / `<SectionDivider>` /
+`<Bone>` primitives shipped in Phases 4–6.
 
 ### Problem
 
 The homepage is the brand's single highest-stakes surface. The current
-`/` is a placeholder that lays out latest episode + section entries in
-plain editorial cards. The brand spec defines the homepage hero as the
-canonical brushstroke-seam composition — implementing it here makes the
-brand legible from the first scroll.
+`/` lays out latest episode + section entries in placeholder cards with
+no hero composition. The hero must carry the brand's thesis on first
+scroll: ancient typography + living code, same artifact. A photograph of
+an illuminated capital flanked by source-code fragments encodes that
+thesis directly, and gives the marble-and-ink palette a focal point
+without competing with the Cinzel headline.
+
+### Background — why full-bleed image, not brushstroke-seam
+
+Earlier drafts of 7.1 wrapped the hero in `<BrushstrokeSeam>` with a
+marble-column photo on the right and a solid marble overlay on the left
+holding the text. That treatment was prototyped in browser against the
+candidate `floatbg.png` image and rejected: the hard painted seam fought
+the image's natural left/right asymmetry (illuminated capital on the
+left of the source, code on the right) and the cropped photo-zone made
+the brand thesis less legible at hero scale. The full-bleed approach
+lets both halves of the source artifact read across the full hero width;
+text legibility is solved by a cream gradient that fades the marble
+background over the headline zone rather than by clipping the image.
+
+`<BrushstrokeSeam>` remains the brand primitive for `<SectionDivider>`
+transitions and the OG-image composition (Phase 8.2). It just isn't the
+homepage hero's structural device anymore.
 
 ### Implementation
 
 **MODIFY** `src/app/page.tsx`:
 
 ```tsx
-import { Marble } from '@/components/brand/Marble';
+import Image from 'next/image';
 import { Bone } from '@/components/brand/Bone';
-import { BrushstrokeSeam } from '@/components/brand/BrushstrokeSeam';
+import { DropAccent } from '@/components/brand/DropAccent';
+import { EditorialCard } from '@/components/brand/EditorialCard';
+import { HeroBackdrop } from '@/components/brand/HeroBackdrop';
 import { Section } from '@/components/brand/Section';
 import { SectionDivider } from '@/components/brand/SectionDivider';
 import { Container } from '@/components/site/Container';
-import { DropAccent } from '@/components/brand/DropAccent';
-import { EditorialCard } from '@/components/brand/EditorialCard';
 import { EmailCapture } from '@/components/capture/EmailCapture';
 import { getLatestEpisode } from '@/lib/content/episodes';
-import Image from 'next/image';
 
 export default async function HomePage() {
   const latest = await getLatestEpisode();
 
   return (
     <>
-      {/* Hero — brushstroke-seam composition */}
-      <BrushstrokeSeam
-        direction="left"
-        feather="10rem"
-        foreground="var(--color-marble)"
-        background="var(--color-shadow)"
-        backgroundContent={
-          <Image
-            src="/hero/marble-column.jpg"
-            alt=""
-            fill
-            priority
-            className="object-cover opacity-90"
-          />
-        }
-      >
+      {/* Hero — full-bleed illuminated-manuscript photograph */}
+      <section className="relative isolate overflow-hidden border-b border-(--edge-color-subtle)">
+        <Image
+          src="/hero/floatbg.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          aria-hidden="true"
+          className="-z-10 object-cover object-right opacity-35 mix-blend-multiply pointer-events-none select-none"
+        />
+        <HeroBackdrop />
         <Section rhythm="lg">
-          <Container className="grid grid-cols-1 md:grid-cols-2 gap-(--space-7)">
-            <div className="md:max-w-prose flex flex-col gap-(--space-5)">
-              <span className="label">The Fabled 10X Developer</span>
-              <h1 className="display-1">
-                <DropAccent glyph="?" size="large">Build the whole thing alone</DropAccent>
-              </h1>
-              <p className="body-1 text-(--color-muted)">
-                One person. An agent team. Full SaaS delivery — episodes,
-                playbooks, and the open library of how it's done.
-              </p>
-              <EmailCapture source="home-hero" buttonLabel="Join the library" />
-            </div>
-            {/* Right column is the visible photo zone — intentionally empty for composition */}
+          <Container className="flex flex-col gap-(--space-5) md:max-w-prose">
+            <span className="label">The Fabled 10X Developer</span>
+            <h1 className="display-1">
+              One person.<br />
+              An agent team.<br />
+              Full SaaS delivery.
+            </h1>
+            <p className="body-1 text-(--color-muted)">
+              A documented real-world case study of using AI agent teams
+              to run a legitimate software consulting business. Real
+              clients, real money, real deliverables.
+            </p>
+            <EmailCapture source="homepage-hero" />
           </Container>
         </Section>
-      </BrushstrokeSeam>
+      </section>
 
       <SectionDivider top="var(--color-marble)" bottom="var(--color-parchment)" />
 
@@ -180,36 +195,85 @@ export default async function HomePage() {
 
 ### Design Decisions
 
-- **Headline crosses the seam.** The right edge of the headline visually
-  extends past the marble overlay into the photo zone. The brushstroke
-  feather is `10rem`, sized to let "alone" cross the seam on desktop
-  while remaining contained on mobile.
-- **`marble-column.jpg` as the default background.** A marble-column /
-  manuscript-page texture is brand-correct. If the user provides a
-  custom photo, swap the `src`. Defaults defined per the open item in
-  the README.
-- **Hero label is the channel name, not a series tag.** The hero
-  introduces the brand; the rest of the homepage introduces sections.
-  Label hierarchy: channel name → section name → category.
-- **DropAccent uses `?`.** The brand's opening question — "can you
-  actually build the whole thing alone?" — encoded in the punctuation.
-- **Three SectionDividers.** One between hero and latest-episode, one
-  between latest and section entries, one between section entries and
-  sister-project. Each is a brushstroke transition; the rhythm carries
-  the brand's signature throughout the page without overloading any
-  single seam.
+- **Full-bleed image, not bounded zone.** The photograph fills the whole
+  hero section. The brand thesis (ancient typography + living code) reads
+  across the full width, not just a right column.
+- **`object-cover object-right`.** Anchors the source image's right side
+  to the section's right edge, which places the illuminated capital
+  roughly behind the right half of the headline area on desktop. The
+  capital reads as decoration without becoming a focal element competing
+  with the Cinzel headline.
+- **`opacity-35` + `mix-blend-multiply`.** Multiply lets the cream paper
+  of the source photograph integrate with the marble background while
+  preserving the dark ink-illustration pixels. `0.35` is the
+  iteration-validated band; raising it past `0.5` makes the code
+  fragments on the right shout louder than the headline.
+- **Cream overlay via `<HeroBackdrop>` (mask-image, not background-
+  gradient).** A solid `var(--color-marble)` div sitting above the image
+  and below the content, masked by a horizontal alpha gradient
+  (mask alpha 1.0 → 0.45 → 0.10 left-to-right). Heaviest at the left
+  edge to protect the headline / EmailCapture stack; nearly transparent
+  at the right edge so the illuminated capital and code fragments come
+  through. The brand sentinel forbids `bg-gradient-*` utilities; mask
+  gradients are exempt because they define a shape, not a color blend
+  (same pattern as `<BrushstrokeSeam>`). `<HeroBackdrop>` is in the
+  sentinel's `SKIP_PATHS` allow-list alongside `<BrushstrokeSeam>`.
+- **No `<BrushstrokeSeam>` on the hero.** The primitive stays in the
+  brand kit for `<SectionDivider>` and OG-image use, where its hard
+  painted edge reads correctly against solid surfaces. For a
+  photographic background, a soft gradient overlay carries the same
+  "edge of an old painted surface" feeling without fighting the
+  photograph's natural composition.
+- **Headline copy stays literal.** `One person. / An agent team. /
+  Full SaaS delivery.` — three declaratives, no DropAccent on the hero.
+  The hero's atmospheric layer is the photograph; the headline is plain
+  Cinzel. DropAccent is reserved for the sister-project block below the
+  fold so the page's one accent flourish lands at the close, not at the
+  top.
+- **EmailCapture default button label.** `source="homepage-hero"`,
+  button label inherited from the primitive's default ("Get the updates").
+  No bespoke copy here; the hero's invitation is the headline, not the
+  CTA button.
+- **`border-b` uses `--edge-color-subtle`.** Carries the 1px-edge brand
+  signal between the hero and the first SectionDivider without a
+  competing hard line at the marble/parchment transition.
+- **Three SectionDividers below the fold.** Hero → latest, latest →
+  library, library → sister-project. The brushstroke transitions still
+  carry the brand's signature; the hero just doesn't host one.
 - **Section entries as `<ul>` / `<li>` of EditorialCards.** Semantic
   list of navigational targets.
-- **Sister-project section on Bone.** Differentiates it from the rest of
-  the page; positions it as the "completion" footnote (Verdigris-on-Bone,
-  same treatment as the Footer's LLL link).
+- **Sister-project section on Bone.** Differentiates it from the rest
+  of the page; positions it as the "completion" footnote
+  (Verdigris-on-Bone, same treatment as the Footer's LLL link).
 
 ### Files
 
 | Action | File |
 |--------|------|
 | MODIFY | `src/app/page.tsx` |
-| NEW    | `public/hero/marble-column.jpg` (or whatever texture lands) |
+| NEW    | `src/components/brand/HeroBackdrop.tsx` (mask-gradient cream overlay primitive) |
+| NEW    | `src/components/brand/__tests__/HeroBackdrop.test.tsx` |
+| MODIFY | `src/components/brand/index.ts` (barrel export `HeroBackdrop`) |
+| MODIFY | `src/__tests__/brand/forbidden-patterns.test.ts` (`SKIP_PATHS` entry for `HeroBackdrop.tsx` + its test) |
+| NEW    | `public/hero/floatbg.png` (illuminated-manuscript photograph; landed alongside the initial hero spike) |
+
+### Status notes (carried over from initial spike)
+
+- The hero `<section>` + `<Image>` + `<HeroBackdrop>` overlay are
+  already live on `main` from the initial experiment that produced this
+  revision. Phase 7.1's remaining work is (a) swap the raw section /
+  Container for the `<Section>` primitive, (b) restructure
+  below-the-fold onto `<EditorialCard>` + `<SectionDivider>` +
+  `<Bone>`, (c) confirm mobile (≤640px) legibility — the mask gradient
+  inside `<HeroBackdrop>` may need a `md:` breakpoint variant that
+  increases left-edge opacity on narrow viewports where the image
+  right-anchor pushes content under the visible illuminated capital
+  (extend `<HeroBackdrop>` with a `viewport`/`strength` prop only if
+  this test actually fails).
+- Source asset (`floatbg.png`) is 436×236, 8-bit RGBA, ~128 KB. At hero
+  render width it upscales ~4.4×; softness reads as photographic
+  atmosphere under multiply + 0.35 opacity. If a higher-resolution
+  original surfaces, swap in place — no code change required.
 
 ---
 
@@ -825,8 +889,9 @@ Same pattern as not-found, with the error message + a retry CTA via
 ### Design Decisions
 
 - **No brushstroke on these pages.** Per locked decision — brushstroke
-  is reserved for the homepage hero and the SectionDivider primitive.
-  Quiet pages stay quiet.
+  is reserved for the `<SectionDivider>` primitive and the OG-image
+  composition (Phase 8.2). The homepage hero uses a full-bleed photograph
+  with a cream gradient overlay (see 7.1); quiet pages stay quiet.
 - **DropAccent vocabulary per page.** About uses `.` (this is who we are,
   full stop). Login-verify uses `✓` (action completed). Not-found uses
   `✕` (gentle refusal). Error uses `✕` or `?` depending on context.
@@ -849,8 +914,9 @@ Same pattern as not-found, with the error message + a retry CTA via
 
 - Every public route renders against the brand. No placeholder palette
   anywhere in the page tree.
-- Homepage hero shows the brushstroke-seam composition with the headline
-  crossing the seam and DropAccent at the end.
+- Homepage hero shows the full-bleed illuminated-manuscript photograph
+  composed under a left-protective cream gradient, with the Cinzel
+  headline + Inter subtitle + EmailCapture stack reading cleanly on top.
 - Episodes / cases detail pages render as marble manuscript pages with
   Roman numerals, Cinzel headings, Inter body via `.build-log-prose`.
 - Build-log surfaces use Bone backgrounds with Parchment inner panels.

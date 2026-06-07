@@ -115,6 +115,13 @@ const SKIP_PATHS: string[] = [
   // it's a mask shape, not a visual gradient. Documented in §3.2 planning doc.
   'src/components/brand/BrushstrokeSeam.tsx',
 
+  // HeroBackdrop's intentional `linear-gradient(...)` in maskImage — same
+  // exemption as BrushstrokeSeam: a mask shape, not a visual gradient. The
+  // homepage hero overlay fades the marble surface over a photographic
+  // background. Documented in §7.1 planning doc.
+  'src/components/brand/HeroBackdrop.tsx',
+  'src/components/brand/__tests__/HeroBackdrop.test.tsx',
+
   // Email HTML templates: pure white #ffffff is required for broad email
   // client compatibility (some clients drop CSS custom properties).
   'src/lib/email/cohort-waitlist-confirmation.ts',

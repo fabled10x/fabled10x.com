@@ -4,6 +4,7 @@ export { Parchment } from './Parchment';
 export { Bone } from './Bone';
 export { Shadow } from './Shadow';
 export { BrushstrokeSeam, type BrushstrokeDirection } from './BrushstrokeSeam';
+export { HeroBackdrop } from './HeroBackdrop';
 export { Logo } from './Logo';
 export { Section } from './Section';
 export { SectionDivider } from './SectionDivider';

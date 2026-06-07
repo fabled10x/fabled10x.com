@@ -139,6 +139,7 @@ describe('Section — polymorphic vertical-rhythm primitive', () => {
       'Bone',
       'Shadow',
       'BrushstrokeSeam',
+      'HeroBackdrop',
       'Logo',
       'Section',
       'SectionDivider',
