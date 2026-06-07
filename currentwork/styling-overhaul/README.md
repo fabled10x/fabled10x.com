@@ -98,7 +98,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 6.3 | `ProductCard` refactored onto `<EditorialCard>` (price in monospace)                     | 6 - Card Primitives            | S    | Complete |
 | 6.4 | `CohortCard` + `CohortDetailHero` + `CohortStatusBadge` reskin                           | 6 - Card Primitives            | M    | Complete |
 | 7.1 | `/` homepage hero — full-bleed illuminated-manuscript photograph                         | 7 - Page Surfaces              | L    | Complete |
-| 7.2 | `/episodes` + `/episodes/[slug]` editorial manuscript treatment                          | 7 - Page Surfaces              | M    | Planned |
+| 7.2 | `/episodes` + `/episodes/[slug]` editorial manuscript treatment                          | 7 - Page Surfaces              | M    | Complete |
 | 7.3 | `/cases` + `/cases/[slug]` editorial + spec-sheet sidebar                                | 7 - Page Surfaces              | M    | Planned |
 | 7.4 | `/build-log/*` Bone surfaces, Parchment inner panels                                     | 7 - Page Surfaces              | L    | Planned |
 | 7.5 | Storefront — `/products`, `/cohorts`, `/products/account` editorial reskin               | 7 - Page Surfaces              | M    | Planned |

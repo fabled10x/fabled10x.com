@@ -1,8 +1,8 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
+import { EditorialCard, Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { getAllEpisodes } from '@/lib/content/episodes';
-import { CONTENT_PILLAR_QUESTIONS, CONTENT_TIER_LABELS } from '@/content/schemas';
+import { toRoman } from '@/lib/format/roman';
 
 export const metadata: Metadata = {
   title: 'Episodes',
@@ -14,34 +14,36 @@ export default async function EpisodesIndex() {
   const episodes = await getAllEpisodes();
 
   return (
-    <Container as="section" className="py-16">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">Episodes</h1>
-      <p className="mt-4 max-w-2xl text-muted">
-        Every episode from the channel, with full show notes, source materials,
-        and outbound crosslinks to structured knowledge entries in The Large
-        Language Library.
-      </p>
-      <ul className="mt-12 grid gap-6 md:grid-cols-2">
-        {episodes.map((episode) => (
-          <li key={episode.meta.id}>
-            <Link
-              href={`/episodes/${episode.slug}`}
-              className="block rounded-lg border border-mist p-6 hover:border-accent"
-            >
-              <p className="text-xs uppercase tracking-wide text-muted">
-                {CONTENT_TIER_LABELS[episode.meta.tier]}
-              </p>
-              <h2 className="mt-2 font-display text-xl font-semibold">
-                {episode.meta.title}
-              </h2>
-              <p className="mt-3 text-sm text-muted">{episode.meta.summary}</p>
-              <p className="mt-4 text-xs text-accent">
-                {CONTENT_PILLAR_QUESTIONS[episode.meta.pillar]}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Container>
+    <Marble>
+      <Section rhythm="md">
+        <Container>
+          <span className="label">Catalog</span>
+          <h1 className="display-1 mt-(--space-3)">Episodes</h1>
+          <p className="body-1 mt-(--space-4) text-(--color-muted) max-w-prose">
+            Every episode from the channel, with full show notes, source
+            materials, and outbound crosslinks to structured knowledge entries
+            in The Large Language Library.
+          </p>
+          <ul className="mt-(--space-7) grid grid-cols-1 md:grid-cols-2 gap-(--space-4)">
+            {episodes.map((episode) => {
+              const actRoman = toRoman(episode.meta.act);
+              const epRoman = toRoman(episode.meta.episodeNumber);
+              const tag = `${episode.meta.series} · ${actRoman}.${epRoman}`;
+              return (
+                <li key={episode.meta.id}>
+                  <EditorialCard
+                    tag={tag}
+                    headline={episode.meta.title}
+                    subtitle={episode.meta.summary}
+                    accent="?"
+                    href={`/episodes/${episode.slug}`}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </Container>
+      </Section>
+    </Marble>
   );
 }

@@ -5978,3 +5978,26 @@ styling-overhaul-7.1:
     - 'The brand forbidden-patterns sentinel (src/__tests__/brand/forbidden-patterns.test.ts) only forbids gradients/shadows/pure-black-white-red/forbidden-palette utilities. It does NOT forbid font-display, text-Nxl, text-muted, border-mist, etc. — those are "placeholder utilities to remove" per the page reskin spec, enforced by per-section source-level sentinels (see infra_brand_sentinel_passes_on_page_tsx pattern above), not by the brand-wide sentinel.'
     - 'getLatestEpisode returns a LoadedEntry<Episode>, not a raw Episode. Fields live under .meta.* (latest.meta.title, latest.meta.summary, latest.meta.series, latest.meta.act, latest.meta.episodeNumber). The .slug field is on the LoadedEntry wrapper, not under .meta. Tests must construct fixtures matching the wrapped shape.'
   reusable_utilities: []
+
+styling-overhaul-7.2:
+  completed_at: '2026-06-07'
+  patterns_established:
+    - description: 'Roman-numeral helper for editorial numerals — pure module @/lib/format/roman with toRoman(n: number | undefined): string, defensive against undefined/zero/negative/non-integer/out-of-range (returns empty string)'
+      file: src/lib/format/roman.ts
+      reusable_for: 'Any Phase 7 page that wants the editorial Roman vocabulary on numbered metadata. so-7.3 cases detail page (Act/Episode-style numerals if applicable to client engagements); so-7.4 build-log phase numerals; any future case-study or build-log surface that wants Roman act/phase rendering. Pattern: import { toRoman } from "@/lib/format/roman"; const actR = toRoman(meta.act); const epR = toRoman(meta.episodeNumber); — undefined-act inputs collapse cleanly to "" without NaN/undefined leak.'
+    - description: 'Page-level reskin pattern continues — second consumer of the so-7.1 page-reskin sequence (Marble → Section rhythm → Container width → .label/.display-1/.body-1 → brand primitives), now with width=prose on the detail page for long-form reading'
+      file: src/app/episodes/[slug]/page.tsx
+      reusable_for: 'Detail/reading-heavy pages in Phase 7. Sequence: <Marble><Section rhythm=lg><Container as=article width=prose><span className=label>{kicker}</span><h1 className=display-1><DropAccent glyph=? size=large>{title}</DropAccent></h1><p className=body-1 text-muted>{summary}</p>{cta link as .label text-(--color-oxblood) border-b inline-block}<div className=build-log-prose mt-... border-t pt-...><Component /></div>{trailing sections each with border-t pt-... + .label kicker + .display-3 h2}</Container></Section></Marble>'
+    - description: 'Editorial CTA-inline-anchor pattern — non-button calls-to-action on reading surfaces use .label text-(--color-oxblood) border-b border-(--color-oxblood) inline-block; the single permitted Oxblood inline-anchor pairing on Marble (matches the so-7.1 LLL sister-project link''s Verdigris-on-Bone analogue)'
+      file: src/app/episodes/[slug]/page.tsx
+      reusable_for: 'YouTube link, external case-study links, "View archive" navigation. Distinct from <Button> primitive: this is a brand-typography anchor, not a button. Pair with <Button> only for primary CTAs (sign-up, buy, submit).'
+  gotchas:
+    - 'Episode schema has act?: number (OPTIONAL) but episodeNumber: number (REQUIRED). toRoman handles undefined cleanly (returns "") — the tag string `${actRoman}.${epRoman}` collapses to ".I" or similar when act is undefined, without NaN/undefined leak. Tests must cover the missing-act case.'
+    - 'Existing test files for pages being reskinned typically pin pre-reskin selectors like .mx-auto.max-w-5xl (Container default width=layout) and uppercase tracking-wide kickers. Rewriting those test files with the hybrid posture (preserve behavior pins, replace chrome pins) is the canonical path — DO NOT try to preserve old tests via {string} concat; replace the file content with the new brand-aware suite. See so-7.1/7.2 precedent.'
+    - 'Roman-numeral vocabulary is intentionally editorial-only. The homepage hero (so-7.1) uses raw arabic numerals on the latest-episode kicker ("Act ${meta.act}" not "Act ${toRoman(meta.act)}") because the hero''s register is conversational. The /episodes detail and index use Roman because those surfaces are formal editorial metadata. Don''t "normalize" — the divergence is the design.'
+    - 'MarkdownDocument component takes body: string (for build-log readme strings) but episodes ship as compiled MDX <Component />. The episode detail page renders <Component /> directly inside a <div className="build-log-prose"> rather than passing through MarkdownDocument — the prose chrome retrofits the styles either way, but the MDX bypass keeps next-mdx compilation in the loader path.'
+    - 'src/lib/format/ follows the same no-barrel convention as src/lib/email/ — direct path imports from @/lib/format/roman (and any future @/lib/format/date.ts) rather than @/lib/format. If a third helper lands, revisit the barrel decision then.'
+  reusable_utilities:
+    - function: toRoman
+      file: src/lib/format/roman.ts
+      purpose: 'Convert an integer (or undefined) in [1..3999] to a Roman-numeral string; returns empty string for undefined / NaN / non-integer / out-of-range. Mathematical canonical NUMERAL_MAP (13 entries M..I with subtractive pairs CM/CD/XC/XL/IX/IV).'

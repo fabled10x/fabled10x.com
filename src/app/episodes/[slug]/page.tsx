@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { DropAccent, Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { EmailCapture } from '@/components/capture/EmailCapture';
 import { LllCrosslinks } from '@/components/crosslinks/LllCrosslinks';
 import { getAllEpisodes, getEpisodeBySlug } from '@/lib/content/episodes';
-import { CONTENT_PILLAR_QUESTIONS, CONTENT_TIER_LABELS } from '@/content/schemas';
+import { toRoman } from '@/lib/format/roman';
 
 export const dynamicParams = false;
 
@@ -54,6 +55,8 @@ export default async function EpisodeDetail({
   }
 
   const { meta, Component } = entry;
+  const actRoman = toRoman(meta.act);
+  const epRoman = toRoman(meta.episodeNumber);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -66,64 +69,70 @@ export default async function EpisodeDetail({
   };
 
   return (
-    <Container as="article" className="py-16">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <p className="text-xs uppercase tracking-wide text-muted">
-        {CONTENT_TIER_LABELS[meta.tier]} · {meta.series}
-      </p>
-      <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight">
-        {meta.title}
-      </h1>
-      <p className="mt-4 max-w-2xl text-muted">{meta.summary}</p>
-      <p className="mt-4 text-sm text-accent">
-        {CONTENT_PILLAR_QUESTIONS[meta.pillar]}
-      </p>
-
-      {meta.youtubeUrl && (
-        <div className="mt-8">
-          <Link
-            href={meta.youtubeUrl}
-            className="inline-block rounded-md bg-accent px-5 py-3 text-sm font-medium text-parchment hover:opacity-90"
-          >
-            Watch on YouTube
-          </Link>
-        </div>
-      )}
-
-      <div className="mt-12 prose-style">
-        <Component />
-      </div>
-
-      {meta.sourceMaterialIds.length > 0 && (
-        <section className="mt-12 rounded-lg border border-mist p-6">
-          <h2 className="font-display text-xl font-semibold">Source materials</h2>
-          <ul className="mt-4 space-y-2 text-sm text-muted">
-            {meta.sourceMaterialIds.map((id) => (
-              <li key={id}>{id}</li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs text-muted">
-            Full source-material rendering ships in a future update.
+    <Marble>
+      <Section rhythm="lg">
+        <Container as="article" width="prose">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+          <span className="label">
+            {meta.series} · Act {actRoman} · Episode {epRoman}
+          </span>
+          <h1 className="display-1 mt-(--space-3)">
+            <DropAccent glyph="?" size="large">
+              {meta.title}
+            </DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-5) text-(--color-muted)">
+            {meta.summary}
           </p>
-        </section>
-      )}
 
-      {meta.lllEntryUrls.length > 0 && (
-        <LllCrosslinks urls={meta.lllEntryUrls} className="mt-12" />
-      )}
+          {meta.youtubeUrl && (
+            <div className="mt-(--space-7)">
+              <Link
+                href={meta.youtubeUrl}
+                className="label inline-block border-b border-(--color-oxblood) pb-(--space-1) text-(--color-oxblood)"
+              >
+                Watch on YouTube
+              </Link>
+            </div>
+          )}
 
-      <section className="mt-16 border-t border-mist pt-12">
-        <p className="text-sm uppercase tracking-wide text-muted">Stay in the loop</p>
-        <h2 className="mt-3 font-display text-2xl font-semibold">
-          New episodes, no spam.
-        </h2>
-        <div className="mt-6 max-w-md">
-          <EmailCapture source={`episode-${meta.slug}`} />
-        </div>
-      </section>
-    </Container>
+          <div className="build-log-prose mt-(--space-7) border-t border-(--edge-color) pt-(--space-7)">
+            <Component />
+          </div>
+
+          {meta.sourceMaterialIds.length > 0 && (
+            <section className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)">
+              <h2 className="display-3">Source materials</h2>
+              <ul className="body-2 mt-(--space-4) text-(--color-muted)">
+                {meta.sourceMaterialIds.map((id) => (
+                  <li key={id}>{id}</li>
+                ))}
+              </ul>
+              <p className="body-3 mt-(--space-4) text-(--color-muted)">
+                Full source-material rendering ships in a future update.
+              </p>
+            </section>
+          )}
+
+          {meta.lllEntryUrls.length > 0 && (
+            <LllCrosslinks
+              urls={meta.lllEntryUrls}
+              className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)"
+            />
+          )}
+
+          <section className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)">
+            <span className="label">Stay in the loop</span>
+            <h2 className="display-3 mt-(--space-3)">New episodes, no spam.</h2>
+            <div className="mt-(--space-5)">
+              <EmailCapture source={`episode-${meta.slug}`} />
+            </div>
+          </section>
+        </Container>
+      </Section>
+    </Marble>
   );
 }
