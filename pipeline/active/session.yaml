@@ -2,24 +2,24 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-4.4
-  current_agent: finish
-  current_stage: styling-overhaul-4.4-complete
+  current_section: styling-overhaul-5.1
+  current_agent: green
+  current_stage: styling-overhaul-5.1-red-complete
   concurrent_jobs: []
 context_window:
-  iteration: 0
-  total_items: 0
+  iteration: 1
+  total_items: 20
   completed_items: 0
 completed_sections:
   - id: styling-overhaul-4.4
     name: Layout primitives
     completed_at: '2026-06-06'
-    commit_hash: pending
+    commit_hash: 69301f9
     commit_message: Add layout primitives with 47 tests (styling-overhaul-4.4)
     tests: 47
     files_new: 2
     files_modified: 4
-    pushed: false
+    pushed: true
     notes: |
       Fourth feature of styling-overhaul Phase 4 (Logo + Chrome). Three
       polymorphic presentational primitives — Container (refresh), Section
@@ -859,6 +859,28 @@ completed_sections:
       so-2.4 (.build-log-prose retrofit) sequences AFTER so-2.2.
 
       '
+  - id: cohort-enrollment-4.1
+    name: Admin Layout + Applications List/Detail + decideApplication
+    completed_at: '2026-06-06'
+    commit_hash: 53004a6
+    commit_message: Add admin layout + applications list + detail + decideApplication
+      with 68 tests (cohort-enrollment-4.1)
+    tests: 68
+    pushed: false
+    notes: Backfilled into completed_sections after-the-fact — commit landed via
+      /git, not /finish, so the worktree-release additive merge never appended this
+      entry. Source of truth is git history (commit 53004a6).
+  - id: cohort-enrollment-3.2
+    name: Apply Page + Form + submitApplication + Applicant Confirmation Email
+    completed_at: '2026-06-06'
+    commit_hash: fee758a
+    commit_message: Add cohort apply page + form + submitApplication + email with
+      117 tests (cohort-enrollment-3.2)
+    tests: 117
+    pushed: false
+    notes: Backfilled into completed_sections after-the-fact — commit landed via
+      /git, not /finish, so the worktree-release additive merge never appended this
+      entry. Source of truth is git history (commit fee758a).
   - id: cohort-enrollment-3.1
     name: CohortApplicationInput Schema + Validator
     completed_at: '2026-06-06'
