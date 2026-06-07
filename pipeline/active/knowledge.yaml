@@ -4980,3 +4980,56 @@ styling-overhaul-4.4:
         Executed identically to so-3.2 and so-4.1 — see the sibling-
         sentinel pattern in patterns_established. Test intent (closed-
         set invariant) preserved.
+
+styling-overhaul-5.1:
+  completed_at: '2026-06-06'
+  patterns_established:
+    - description: 'Polymorphic Button primitive with variant + size Records'
+      file: src/components/brand/Button.tsx
+      reusable_for: |
+        Any future interactive primitive needing (variant × size) class swap with a
+        polymorphic root element. Mirrors so-3.1 Surfaces pattern (Variant union +
+        Record<Variant, string>) extended with a second orthogonal axis (size).
+        Two-Record composition pattern: variantClass[variant] + sizeClass[size]
+        merged via [BASE, ...records, className].filter(Boolean).join(' ').
+        BASE constant houses cross-variant shared classes (focus-visible ring,
+        disabled state, layout, transitions). E extends ElementType = 'button'
+        default so consumers can render as <a>, <span>, etc. without losing
+        button semantics. Direct precedent for the next interactive primitives
+        in Phase 5 (StatusBadge variant restyle 5.2, EmailCapture input 5.3)
+        and Phase 6 (EditorialCard 6.1).
+  gotchas:
+    - |
+      Sibling-sentinel sync grew to 5 brand-barrel test files: Surfaces,
+      BrushstrokeSeam, Logo, Section, AND the implicit one in Section.test
+      (infra_brand_barrel_export_set_includes_section_and_divider line 135).
+      Discovery only flagged 3; Section.test was discovered in the full-suite
+      green run. ALWAYS grep '__tests__/.*\\.test\\.tsx' for new Set(\\[
+      to find every brand-barrel whitelist before red phase.
+    - |
+      forbidden-patterns sentinel (so-3.3) scans for shadow-md|... regex
+      literals. Brand-sibling test files that legitimately include this
+      regex (to source-grep their own components for it) MUST be added to
+      SKIP_PATHS at line 110-111. Button.test.tsx joined Surfaces.test.tsx
+      and BrushstrokeSeam.test.tsx in this allow-list. Pattern is now
+      well-established — any future brand-primitive test that source-greps
+      for forbidden patterns needs the same addition.
+    - |
+      The polymorphic-primitive boilerplate is now duplicated across 9
+      brand primitives (Marble/Parchment/Bone/Shadow/Container/Section/
+      SectionDivider/Logo-non-polymorphic/Button). The 8+ call-site
+      threshold flagged in so-3.2 + so-4.4 is now firmly exceeded.
+      Deferred to so-9.x brand-primitive-factory section, as established.
+      Continuing per established defer pattern; do NOT extract mid-Phase-5.
+  reusable_utilities: []
+  deferred_followups:
+    - cross_section_dry_brand_primitive_factory: |
+        9 brand primitives share polymorphic generic + Tag fallback +
+        rest-prop spread + .filter(Boolean).join(' ') className pattern.
+        Defer to dedicated so-9.x section.
+    - cross_section_brand_sentinel_test_helpers: |
+        5 sibling test files share readFileSync REPO_ROOT pattern +
+        whitelist Set + infra_no_use_client + infra_no_forbidden_shadow +
+        infra_tailwind4_paren_syntax checks. Whitelist sync is now manual
+        cross-file edit (this section had to edit 4 sibling whitelist Sets
+        + the forbidden-pattern SKIP_PATHS). Strong signal for extraction.

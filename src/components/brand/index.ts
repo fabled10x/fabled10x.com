@@ -7,3 +7,4 @@ export { BrushstrokeSeam, type BrushstrokeDirection } from './BrushstrokeSeam';
 export { Logo } from './Logo';
 export { Section } from './Section';
 export { SectionDivider } from './SectionDivider';
+export { Button } from './Button';

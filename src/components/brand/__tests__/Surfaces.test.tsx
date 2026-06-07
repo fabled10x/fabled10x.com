@@ -321,7 +321,7 @@ describe('Surface primitives — Marble / Parchment / Bone / Shadow', () => {
 
   it('infra_surface_barrel_export_count', () => {
     // Whitelist of expected named exports after this section ships.
-    const expected = new Set(['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'Logo', 'Section', 'SectionDivider']);
+    const expected = new Set(['DropAccent', 'Marble', 'Parchment', 'Bone', 'Shadow', 'BrushstrokeSeam', 'Logo', 'Section', 'SectionDivider', 'Button']);
     const actual = new Set(
       Object.keys(brandBarrel).filter(k => k !== 'default' && typeof (brandBarrel as Record<string, unknown>)[k] !== 'undefined')
     );

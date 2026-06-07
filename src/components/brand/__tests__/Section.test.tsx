@@ -142,6 +142,7 @@ describe('Section — polymorphic vertical-rhythm primitive', () => {
       'Logo',
       'Section',
       'SectionDivider',
+      'Button',
     ]);
     const actual = new Set(
       Object.keys(brandBarrel).filter(

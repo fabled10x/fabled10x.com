@@ -109,6 +109,7 @@ const SKIP_PATHS: string[] = [
   'src/__tests__/brand/spacing.test.ts',
   'src/components/brand/__tests__/BrushstrokeSeam.test.tsx',
   'src/components/brand/__tests__/Surfaces.test.tsx',
+  'src/components/brand/__tests__/Button.test.tsx',
 
   // BrushstrokeSeam's intentional `linear-gradient(...)` in maskImage —
   // it's a mask shape, not a visual gradient. Documented in §3.2 planning doc.

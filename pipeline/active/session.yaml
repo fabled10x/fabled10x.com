@@ -2,15 +2,89 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-5.1
-  current_agent: green
-  current_stage: styling-overhaul-5.1-red-complete
+  current_section: styling-overhaul-5.2
+  current_agent: pending
+  current_stage: styling-overhaul-5.1-complete
   concurrent_jobs: []
 context_window:
-  iteration: 1
-  total_items: 20
+  iteration: 0
+  total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-5.1
+    name: Button primitive
+    completed_at: '2026-06-06'
+    commit_hash: pending
+    commit_message: Add Button primitive with 46 tests (styling-overhaul-5.1)
+    tests: 46
+    files_new: 2
+    files_modified: 6
+    pushed: false
+    notes: |
+      First feature of styling-overhaul Phase 5 (Component Primitives). New
+      polymorphic <Button> primitive — first interactive presentational RSC
+      in the brand directory. Variant × size matrix (primary/ghost/quiet ×
+      sm/md/lg = 9 combinations). All variants share a BASE constant with
+      focus-visible:outline-(--color-oxblood) WCAG focus indicator,
+      disabled:opacity-50 + disabled:cursor-not-allowed, transition-colors
+      duration-150, cursor-pointer, gap-(--space-2), inline-flex layout.
+      Polymorphic <E extends ElementType = 'button'> so consumers can render
+      as <a href> / <span> / etc. without losing button semantics. Default
+      variant=primary, size=md.
+
+      Tokens consumed: --color-ink (line 7), --color-marble (line 5),
+      --color-oxblood (line 8), --edge-color-subtle (line 62), --space-1
+      through --space-5 (lines 39-43), .label utility (line 142). All
+      verified by infra_tokens_resolve_in_globals_css.
+
+      46 tests = 20 unit + 4 integration + 4 a11y + 8 infra + 6 edge +
+      1 err + 3 data. 3 categories explicitly N/A: security/permission/
+      contract (no input/auth/IO/API — STRIDE recorded section-level all
+      n/a in interfaces.yaml#stride_section_level). 100% coverage matrix.
+
+      Cross-section sentinel sync extended to FIVE sibling test files
+      (Surfaces.test.tsx, BrushstrokeSeam.test.tsx, Logo.test.tsx, AND
+      Section.test.tsx — the 5th was discovered in green full-suite, not
+      flagged by Discovery). All 5 had hard-coded brand-barrel whitelist
+      Sets extended with 'Button'. Pattern is now well-established —
+      knowledge.yaml gotcha added flagging the grep pattern for future
+      sections to find every whitelist.
+
+      forbidden-patterns sentinel (so-3.3) SKIP_PATHS extended at line
+      111 to include Button.test.tsx — joins Surfaces.test.tsx and
+      BrushstrokeSeam.test.tsx in the allow-list. Button.test contains
+      the same shadow-md|lg|xl|2xl|drop-shadow|box-shadow regex literal
+      they do (intentional source-grep against its own component).
+
+      Refactor produced ZERO source-code changes — 15th consecutive zero-
+      source-change refactor section. Implementation already idiomatic
+      against the polymorphic-primitive precedent. Two cross-section DRY
+      triggers deferred per established pattern (polymorphic-primitive
+      factory across 9 brand components; brand-sentinel-test-helpers
+      across 5 sibling test files — both already tracked in
+      knowledge.yaml from prior sections).
+
+      Pipeline run in --no-worktree LEGACY single-branch mode (per so-4.4
+      precedent — EnterWorktree harness tool rejects sibling slot paths).
+      All 7 CLAIM beats N/A. Commit explicitly stages ONLY this section's
+      files (2 new + 6 modified) plus shared state (session.yaml,
+      knowledge.yaml, currentwork/styling-overhaul/README.md, pipeline/
+      active/styling-overhaul-5.1/* working files which are then deleted
+      by FIN-16).
+
+      Concurrent runs: working tree has prior modifications from earlier
+      session work (CLAUDE.md M, currentwork/website-foundation/* M,
+      multiple deleted pipeline/active/* working dirs, untracked
+      currentwork/ docs). Commit explicitly stages ONLY this section's
+      files.
+
+      Blocker cleared: styling-overhaul Phase 5 (Component Primitives) is
+      now 1/4 complete. so-5.2 (StatusBadge variant restyle), so-5.3
+      (EmailCapture reskin — consumes <Button>), and so-5.4 (Auth +
+      storefront button consistency — refactors SignInForm/SignOutButton/
+      BuyButton onto <Button>) can all start in parallel now. so-5.2 is
+      the canonical next so section by numeric order. so-4.2 (Header
+      restyle) also remains Planned from Phase 4.
   - id: styling-overhaul-4.4
     name: Layout primitives
     completed_at: '2026-06-06'
