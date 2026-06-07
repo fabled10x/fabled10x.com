@@ -2,26 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
-export interface NavLinkProps {
+interface NavLinkProps {
   href: string;
-  label: string;
-  activePrefix?: string;
+  className?: string;
+  children: ReactNode;
 }
 
-export function NavLink({ href, label, activePrefix }: NavLinkProps) {
+export function NavLink({ href, className = '', children }: NavLinkProps) {
   const pathname = usePathname();
-  const prefix = activePrefix ?? href;
-  const isActive = pathname?.startsWith(prefix) ?? false;
-  const base = 'text-sm text-muted hover:text-foreground';
-  const active = 'text-accent';
+  const active =
+    pathname === href || pathname?.startsWith(`${href}/`) === true;
   return (
     <Link
       href={href}
-      className={isActive ? `${base} ${active}` : base}
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={active ? 'page' : undefined}
+      className={`${className} transition-colors duration-150 ${
+        active
+          ? 'text-(--color-oxblood)'
+          : 'text-(--pair-text-on-marble) hover:text-(--color-oxblood)'
+      }`}
     >
-      {label}
+      {children}
     </Link>
   );
 }

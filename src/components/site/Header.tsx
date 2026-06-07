@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { Marble, Logo } from '@/components/brand';
 import { Container } from './Container';
 import { NavLink } from './NavLink';
 
 const NAV_ITEMS = [
   { href: '/episodes', label: 'Episodes' },
   { href: '/cases', label: 'Cases' },
-  { href: '/build-log', label: 'Build log' },
+  { href: '/build-log', label: 'Build Log' },
   { href: '/cohorts', label: 'Cohorts' },
   { href: '/products', label: 'Products' },
   { href: '/about', label: 'About' },
@@ -13,24 +14,27 @@ const NAV_ITEMS = [
 
 export function Header() {
   return (
-    <header className="border-b border-mist">
-      <Container className="flex h-16 items-center justify-between">
-        <Link
-          href="/"
-          className="font-display text-xl font-semibold tracking-tight"
-        >
-          fabled<span className="text-accent">10x</span>
+    <Marble
+      as="header"
+      edge="none"
+      className="border-b border-(--edge-color)"
+    >
+      <Container className="flex items-center justify-between py-(--space-4)">
+        <Link href="/" className="inline-flex">
+          <Logo size="md" />
         </Link>
         <nav aria-label="Primary">
-          <ul className="flex gap-8">
+          <ul className="flex items-center gap-(--space-5)">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <NavLink href={item.href} label={item.label} />
+                <NavLink href={item.href} className="label">
+                  {item.label}
+                </NavLink>
               </li>
             ))}
           </ul>
         </nav>
       </Container>
-    </header>
+    </Marble>
   );
 }
