@@ -2,21 +2,35 @@
 
 import { useState, useTransition } from 'react';
 import { createCheckoutSession } from '@/lib/stripe/checkout';
+import { Button } from '@/components/brand/Button';
 
 interface BuyButtonProps {
   productSlug: string;
+  priceCents: number;
+  currency: string;
 }
 
-export function BuyButton({ productSlug }: BuyButtonProps) {
+function formatPrice(cents: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+export function BuyButton({ productSlug, priceCents, currency }: BuyButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const idleLabel = `Buy — ${formatPrice(priceCents, currency)}`;
+
   return (
     <div>
-      <button
+      <Button
         type="button"
+        size="lg"
         disabled={isPending}
-        className="rounded-md bg-accent px-6 py-3 text-sm font-semibold text-parchment hover:bg-accent/90 disabled:opacity-60"
         onClick={() => {
           setError(null);
           startTransition(async () => {
@@ -30,10 +44,10 @@ export function BuyButton({ productSlug }: BuyButtonProps) {
           });
         }}
       >
-        {isPending ? 'Preparing checkout\u2026' : 'Buy now'}
-      </button>
+        {isPending ? 'Preparing checkout…' : idleLabel}
+      </Button>
       {error ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-(--space-2) body-3 text-(--color-oxblood)" role="alert">
           {error}
         </p>
       ) : null}

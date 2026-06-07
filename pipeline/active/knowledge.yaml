@@ -5165,3 +5165,61 @@ styling-overhaul-5.3:
         with contextual not-null assertions. Pattern reusable for any
         form test that needs to grab specific named inputs without
         relying on test IDs.
+
+styling-overhaul-5.4:
+  completed_at: "2026-06-07"
+  scope: "Auth + storefront button consistency — SignInForm, SignOutButton, BuyButton adopt Button primitive"
+  patterns_established:
+    - description: "Behavior-preserving chrome swap on existing client components"
+      file: "src/components/products/BuyButton.tsx"
+      reusable_for: |
+        Future styling-overhaul sections that must adopt the Button primitive on
+        components with existing useActionState / useTransition / form-action wiring.
+        The pattern: import {Button}, replace <button>...</button> with
+        <Button type='submit' variant='...' size='...' disabled={pending}>...</Button>
+        and otherwise leave the component shell, mocks, and side effects intact.
+        Existing behavior tests pass through unchanged.
+    - description: "Underline-only input chrome (post-EmailCapture)"
+      file: "src/components/auth/SignInForm.tsx"
+      reusable_for: |
+        Any auth or capture-style form input that wants the brand's underline-on-Ink
+        / focus-on-Oxblood treatment. Class string:
+        bg-transparent border-0 border-b border-(--color-ink)
+        focus:outline-none focus:border-(--color-oxblood)
+        py-(--space-2) body-1 placeholder:text-(--color-muted)
+    - description: "Embedded-price CTA label"
+      file: "src/components/products/BuyButton.tsx"
+      reusable_for: |
+        Storefront CTAs that want price-in-button affordance. Accept priceCents+currency
+        as props (not the full Product), format via Intl.NumberFormat('en-US', currency,
+        0/0 fraction digits) to match ProductCard, and embed as 'Buy — $XX'.
+  gotchas:
+    - |
+      The phase-5 plan suggests using `signOut` from 'next-auth/react' in SignOutButton
+      and replacing the SignInForm label to 'Send sign-in link'. The actually-shipped
+      components diverged from the plan before 5.4: SignOutButton uses a server action
+      (signOutAction) and SignInForm's label is 'Send me a sign-in link'. Decision:
+      preserve the existing behavior + label so the 60+ existing behavior tests keep
+      passing without rewrites. This is purely a chrome swap.
+    - |
+      BuyButton signature changed: from `{ productSlug }` to `{ productSlug, priceCents,
+      currency }`. Every consumer (currently only products/[slug]/page.tsx) and every
+      mocked Component in tests (products/[slug]/__tests__/page.test.tsx) had to be
+      updated. If a future section adds another BuyButton consumer, it must thread the
+      same props.
+  reusable_utilities:
+    - function: "formatPrice (Intl.NumberFormat en-US / currency / 0-0 fraction digits)"
+      file: |
+        Currently duplicated in 7 sites:
+          src/components/account/PurchaseList.tsx
+          src/app/products/[slug]/page.tsx
+          src/app/products/account/purchases/[id]/page.tsx
+          src/components/cohorts/CohortDetailHero.tsx
+          src/components/products/BuyButton.tsx (added this section)
+          src/components/products/ProductCard.tsx
+          src/components/cohorts/CohortCard.tsx
+      purpose: |
+        Format priceCents → '$49' (whole dollars). Identified for cross-section DRY
+        extraction in refactor-progress.yaml but deferred — predates 5.4 and would
+        touch 6 out-of-scope files. Candidate for a /full-refactor or shared-utilities
+        job (extract to src/lib/currency/format-price.ts).

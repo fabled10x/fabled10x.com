@@ -101,7 +101,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mt-6">
-        <BuyButton productSlug={meta.slug} />
+        <BuyButton
+          productSlug={meta.slug}
+          priceCents={meta.priceCents}
+          currency={meta.currency}
+        />
       </div>
 
       <section className="mt-16 prose-style max-w-2xl">

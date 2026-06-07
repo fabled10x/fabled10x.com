@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react';
 import { signOutAction } from '@/lib/actions/auth';
+import { Button } from '@/components/brand/Button';
 
 export function SignOutButton() {
   const [isPending, startTransition] = useTransition();
@@ -14,13 +15,9 @@ export function SignOutButton() {
         });
       }}
     >
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md border border-mist px-4 py-2 text-sm text-muted hover:border-accent hover:text-accent disabled:opacity-60"
-      >
-        {isPending ? 'Signing out\u2026' : 'Sign out'}
-      </button>
+      <Button type="submit" variant="ghost" size="sm" disabled={isPending}>
+        {isPending ? 'Signing out…' : 'Sign out'}
+      </Button>
     </form>
   );
 }

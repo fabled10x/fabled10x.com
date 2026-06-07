@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { signInAction, type SignInState } from '@/lib/actions/auth';
+import { Button } from '@/components/brand/Button';
 
 interface SignInFormProps {
   callbackUrl: string;
@@ -14,30 +15,29 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-(--space-4)">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
-      <label className="flex flex-col gap-2 text-sm">
-        <span className="font-semibold">Email</span>
+      <label className="flex flex-col gap-(--space-1)">
+        <span className="label">Email</span>
         <input
           type="email"
           name="email"
           required
           autoComplete="email"
-          className="rounded-md border border-mist bg-background px-4 py-3 text-foreground"
+          className="bg-transparent border-0 border-b border-(--color-ink) focus:outline-none focus:border-(--color-oxblood) py-(--space-2) body-1 placeholder:text-(--color-muted)"
         />
       </label>
       {state.status === 'error' ? (
-        <p className="text-sm text-red-600" role="alert">
+        <p
+          role="alert"
+          className="body-3 text-(--color-oxblood)"
+        >
           {state.message}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-accent px-6 py-3 text-sm font-semibold text-parchment hover:bg-accent/90 disabled:opacity-60"
-      >
-        {isPending ? 'Sending link\u2026' : 'Send me a sign-in link'}
-      </button>
+      <Button type="submit" disabled={isPending} className="w-full">
+        {isPending ? 'Sending link…' : 'Send me a sign-in link'}
+      </Button>
     </form>
   );
 }

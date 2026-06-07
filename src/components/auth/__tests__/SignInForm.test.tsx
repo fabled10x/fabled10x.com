@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 const signInMock = vi.fn();
 
@@ -213,5 +215,154 @@ describe('SignInForm', () => {
     await waitFor(() => expect(signInMock).toHaveBeenCalled());
     const args = signInMock.mock.calls[0] as [string, Record<string, string>];
     expect(args[1].redirectTo).toBe(trickyCallback);
+  });
+
+  // --- styling-overhaul-5.4: Button primitive adoption + underline input ---
+
+  it('unit_signinform_uses_button_primitive_classes', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const btn = container.querySelector('button') as HTMLElement;
+    expect(btn).not.toBeNull();
+    expect(btn.className).toMatch(/bg-\(--color-ink\)/);
+    expect(btn.className).toMatch(/text-\(--color-marble\)/);
+    expect(btn.className).toMatch(/hover:bg-\(--color-oxblood\)/);
+  });
+
+  it('unit_signinform_button_is_full_width', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const btn = container.querySelector('button') as HTMLElement;
+    expect(btn.className).toMatch(/\bw-full\b/);
+  });
+
+  it('unit_signinform_email_input_underline_only', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const input = container.querySelector(
+      'input[type="email"]',
+    ) as HTMLElement;
+    expect(input).not.toBeNull();
+    expect(input.className).toMatch(/\bbg-transparent\b/);
+    expect(input.className).toMatch(/\bborder-0\b/);
+    expect(input.className).toMatch(/\bborder-b\b/);
+    expect(input.className).toMatch(/border-\(--color-ink\)/);
+  });
+
+  it('unit_signinform_email_input_focus_oxblood', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const input = container.querySelector(
+      'input[type="email"]',
+    ) as HTMLElement;
+    expect(input.className).toMatch(/focus:border-\(--color-oxblood\)/);
+  });
+
+  it('unit_signinform_no_legacy_button_box_classes', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const btn = container.querySelector('button') as HTMLElement;
+    expect(btn.className).not.toMatch(/\brounded-md\b/);
+    expect(btn.className).not.toMatch(/\bbg-accent\b/);
+    expect(btn.className).not.toMatch(/\btext-parchment\b/);
+  });
+
+  it('integration_signinform_submit_still_calls_action', async () => {
+    const user = userEvent.setup();
+    render(<SignInForm callbackUrl="/products/account" />);
+    await user.type(screen.getByRole('textbox'), 'user@example.com');
+    await user.click(screen.getByRole('button'));
+    await waitFor(() => expect(signInMock).toHaveBeenCalled());
+    const args = signInMock.mock.calls[0] as [string, Record<string, string>];
+    expect(args[1]).toEqual(
+      expect.objectContaining({
+        email: 'user@example.com',
+        redirectTo: '/products/account',
+      }),
+    );
+  });
+
+  it('a11y_signinform_label_still_associated', () => {
+    render(<SignInForm callbackUrl="/products/account" />);
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+  });
+
+  it('a11y_signinform_focus_visible_ring_oxblood', () => {
+    const { container } = render(<SignInForm callbackUrl="/products/account" />);
+    const btn = container.querySelector('button') as HTMLElement;
+    expect(btn.className).toMatch(/focus-visible:outline-\(--color-oxblood\)/);
+  });
+
+  it('a11y_signinform_keyboard_submit_preserved', async () => {
+    const user = userEvent.setup();
+    render(<SignInForm callbackUrl="/products/account" />);
+    const email = screen.getByRole('textbox');
+    await user.click(email);
+    await user.type(email, 'user@example.com');
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(signInMock).toHaveBeenCalled());
+  });
+
+  it('edge_signinform_pending_disables_button', async () => {
+    let resolveSignIn: () => void = () => {};
+    signInMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSignIn = () => resolve(undefined);
+        }),
+    );
+    const user = userEvent.setup();
+    render(<SignInForm callbackUrl="/products/account" />);
+    await user.type(screen.getByRole('textbox'), 'user@example.com');
+    const btn = screen.getByRole('button') as HTMLButtonElement;
+    await user.click(btn);
+    expect(btn.disabled).toBe(true);
+    resolveSignIn();
+    await waitFor(() => expect(btn.disabled).toBe(false));
+  });
+
+  it('err_signinform_error_alert_preserved', async () => {
+    signInMock.mockImplementationOnce(async () => {
+      throw new Error('Resend API down');
+    });
+    const user = userEvent.setup();
+    render(<SignInForm callbackUrl="/products/account" />);
+    await user.type(screen.getByRole('textbox'), 'user@example.com');
+    await user.click(screen.getByRole('button'));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    const btn = screen.getByRole('button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('err_signinform_double_submit_blocked', async () => {
+    let resolveSignIn: () => void = () => {};
+    signInMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSignIn = () => resolve(undefined);
+        }),
+    );
+    const user = userEvent.setup();
+    render(<SignInForm callbackUrl="/products/account" />);
+    await user.type(screen.getByRole('textbox'), 'user@example.com');
+    const btn = screen.getByRole('button') as HTMLButtonElement;
+    await user.click(btn);
+    await user.click(btn);
+    await user.click(btn);
+    expect(signInMock).toHaveBeenCalledTimes(1);
+    resolveSignIn();
+    await waitFor(() => expect(btn.disabled).toBe(false));
+  });
+
+  it('infra_signinform_imports_button_primitive', () => {
+    const src = readFileSync(
+      path.resolve(process.cwd(), 'src/components/auth/SignInForm.tsx'),
+      'utf-8',
+    );
+    expect(src).toMatch(/from\s+['"]@\/components\/brand\/Button['"]/);
+  });
+
+  it('infra_signinform_no_legacy_classes_in_source', () => {
+    const src = readFileSync(
+      path.resolve(process.cwd(), 'src/components/auth/SignInForm.tsx'),
+      'utf-8',
+    );
+    expect(src).not.toMatch(/bg-accent\s+px-/);
+    expect(src).not.toMatch(/text-parchment/);
   });
 });

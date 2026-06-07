@@ -19,8 +19,21 @@ vi.mock('@/lib/content/products', () => ({
 }));
 
 vi.mock('@/components/products/BuyButton', () => ({
-  BuyButton: ({ productSlug }: { productSlug: string }) => (
-    <div data-testid="buy-button" data-product-slug={productSlug} />
+  BuyButton: ({
+    productSlug,
+    priceCents,
+    currency,
+  }: {
+    productSlug: string;
+    priceCents?: number;
+    currency?: string;
+  }) => (
+    <div
+      data-testid="buy-button"
+      data-product-slug={productSlug}
+      data-price-cents={priceCents}
+      data-currency={currency}
+    />
   ),
 }));
 
@@ -140,6 +153,13 @@ describe('ProductDetailPage', () => {
     await renderDetail();
     const buy = screen.getByTestId('buy-button');
     expect(buy).toHaveAttribute('data-product-slug', 'workflow-templates');
+  });
+
+  it('integration_product_page_passes_price_to_buybutton: priceCents and currency forwarded from product meta', async () => {
+    await renderDetail();
+    const buy = screen.getByTestId('buy-button');
+    expect(buy).toHaveAttribute('data-price-cents', '4900');
+    expect(buy).toHaveAttribute('data-currency', 'usd');
   });
 
   // --- Integration ---

@@ -2,15 +2,43 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-5.4
+  current_section: styling-overhaul-6.1
   current_agent: pending
-  current_stage: styling-overhaul-5.3-complete
+  current_stage: styling-overhaul-5.4-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-5.4
+    name: Auth + storefront button consistency
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add auth + storefront button consistency with 40 tests (styling-overhaul-5.4)
+    tests: 40
+    files_new: 0
+    files_modified: 4
+    pushed: false
+    notes: |
+      Fourth feature of styling-overhaul Phase 5 (Component Primitives).
+      Chrome-swap on three existing client components: SignInForm,
+      SignOutButton, BuyButton — all now consume the brand <Button>
+      primitive (so-5.1). Behavior preserved: useActionState (sign-in),
+      useTransition (sign-out, checkout), server-action wiring, and
+      error/pending state surfaces all unchanged.
+      Variant choices: SignInForm full-width primary; SignOutButton
+      ghost/sm; BuyButton primary/lg. SignInForm email input restyled
+      to the underline-only chrome (post-5.3 EmailCapture pattern):
+      bg-transparent border-0 border-b border-(--color-ink)
+      focus:border-(--color-oxblood). BuyButton extended with
+      priceCents + currency props so its label can read
+      "Buy — $49" via the same Intl.NumberFormat helper used in
+      ProductCard. products/[slug]/page.tsx wires the new props from
+      meta.priceCents / meta.currency.
+      DRY: identified 7-site formatPrice duplication codebase-wide
+      (knowledge.yaml#styling-overhaul-5.4); deferred — predates this
+      section and would touch 6 out-of-scope files.
   - id: styling-overhaul-5.3
     name: EmailCapture reskin
     completed_at: '2026-06-07'
