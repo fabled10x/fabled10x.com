@@ -7,15 +7,18 @@ interface JobCardProps {
   excerpt: string;
 }
 
+const IMPLEMENTATION_PLAN_SUFFIX = / — Implementation Plan$/i;
+
 export function JobCard({ rollup, excerpt }: JobCardProps) {
   const href = `/build-log/jobs/${rollup.slug}`;
+  const displayTitle = rollup.title.replace(IMPLEMENTATION_PLAN_SUFFIX, '');
   return (
     <article className="border border-mist rounded-lg p-6 hover:border-accent transition-colors">
       <header className="flex items-start justify-between gap-4 mb-3">
         <div>
           <h3 className="text-xl font-display">
             <Link href={href} className="text-foreground hover:text-accent">
-              {rollup.title}
+              {displayTitle}
             </Link>
           </h3>
           {rollup.alias && (

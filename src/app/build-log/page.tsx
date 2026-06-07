@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { Job, JobRollupEntry } from '@/content/schemas';
 import { Container } from '@/components/site/Container';
 import { JobCard } from '@/components/build-log/JobCard';
 import { getAllJobs } from '@/lib/build-log/jobs';
@@ -47,10 +48,60 @@ function firstParagraph(context: string): string {
   return para.replace(/\s+/g, ' ').trim();
 }
 
+interface JobWithRollup {
+  job: Job;
+  rollup: JobRollupEntry;
+  excerpt: string;
+}
+
+interface JobGroup {
+  id: string;
+  heading: string;
+  blurb: string;
+  items: JobWithRollup[];
+}
+
+function groupJobs(jobs: readonly Job[], rollup: readonly JobRollupEntry[]): JobGroup[] {
+  const rollupBySlug = new Map(rollup.map((r) => [r.slug, r]));
+  const withRollup: JobWithRollup[] = jobs
+    .map((job) => {
+      const r = rollupBySlug.get(job.slug);
+      if (!r) return null;
+      return { job, rollup: r, excerpt: firstParagraph(job.context) };
+    })
+    .filter((x): x is JobWithRollup => x !== null);
+
+  const inProgress = withRollup.filter((x) => x.rollup.status === 'in-progress');
+  const planned = withRollup.filter(
+    (x) => x.rollup.status === 'planned' || x.rollup.status === 'unknown',
+  );
+  const complete = withRollup.filter((x) => x.rollup.status === 'complete');
+
+  return [
+    {
+      id: 'in-progress',
+      heading: 'In progress',
+      blurb: 'Jobs the TDD pipeline is actively shipping features for.',
+      items: inProgress,
+    },
+    {
+      id: 'planned',
+      heading: 'Planned',
+      blurb: 'Jobs with a plan but no shipped features yet.',
+      items: planned,
+    },
+    {
+      id: 'complete',
+      heading: 'Complete',
+      blurb: 'Jobs whose features have all shipped to main.',
+      items: complete,
+    },
+  ].filter((g) => g.items.length > 0);
+}
+
 export default async function BuildLogIndexPage() {
   const [jobs, rollup] = await Promise.all([getAllJobs(), getJobsRollup()]);
-
-  const rollupBySlug = new Map(rollup.map((r) => [r.slug, r]));
+  const groups = groupJobs(jobs, rollup);
 
   return (
     <>
@@ -73,24 +124,33 @@ export default async function BuildLogIndexPage() {
           </p>
         </header>
 
-        {jobs.length === 0 ? (
+        {groups.length === 0 ? (
           <p className="text-muted italic">
             No jobs have been planned yet. Initializing…
           </p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {jobs.map((job) => {
-              const r = rollupBySlug.get(job.slug);
-              if (!r) return null;
-              return (
-                <JobCard
-                  key={job.slug}
-                  rollup={r}
-                  excerpt={firstParagraph(job.context)}
-                />
-              );
-            })}
-          </div>
+          groups.map((group) => (
+            <section
+              key={group.id}
+              aria-labelledby={`group-${group.id}`}
+              className="mb-12 last:mb-0"
+            >
+              <header className="mb-5 border-b border-mist pb-2 flex items-baseline justify-between gap-4">
+                <h2 id={`group-${group.id}`} className="text-2xl font-display">
+                  {group.heading}
+                </h2>
+                <span className="text-xs text-muted tabular-nums">
+                  {group.items.length} {group.items.length === 1 ? 'job' : 'jobs'}
+                </span>
+              </header>
+              <p className="text-sm text-muted mb-5">{group.blurb}</p>
+              <div className="grid gap-6 md:grid-cols-2">
+                {group.items.map(({ job, rollup, excerpt }) => (
+                  <JobCard key={job.slug} rollup={rollup} excerpt={excerpt} />
+                ))}
+              </div>
+            </section>
+          ))
         )}
       </Container>
     </>
