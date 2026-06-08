@@ -6294,3 +6294,31 @@ build_log_overhaul_1_1:
       together (the unit_order_label_keys_match test enforces this). The fallback
       in phaseLabel means the build log won't crash if you forget, but the new phase
       will render its raw name instead of the friendly label.
+
+styling-overhaul-7.4:
+  completed_at: '2026-06-07'
+  patterns_established:
+    - description: "Build-log surfaces reskin — all four /build-log/* pages on Bone primary surface; detail pages (jobs/[slug] + [phase]) add Parchment edge=strong p-(--space-6) inner panel wrapping MarkdownDocument; index + status use Container width='wide' for table room"
+      file: 'src/app/build-log/page.tsx + src/app/build-log/jobs/[slug]/page.tsx + src/app/build-log/jobs/[slug]/[phase]/page.tsx + src/app/build-log/status/page.tsx'
+      reusable_for: 'so-7.5 storefront account pages (Bone workspace + Parchment receipt panel), any future workspace/dashboard surface'
+    - description: "Editorial table treatment — Marble edge='strong' className='overflow-hidden' wrapping table; thead bg-(--color-bone) with .label utility for th text; tbody tr border-t border-(--edge-color-subtle) hover:bg-(--color-parchment); numeric cols use font-mono tabular-nums; progressbar bg-(--color-bone) track + bg-(--color-oxblood) fill"
+      file: 'src/components/build-log/JobsRollupTable.tsx'
+      reusable_for: 'any future table surface (account purchases list, cohort enrollment list, future analytics tables)'
+    - description: "Chip-rail nav primitive — <nav aria-label='X'> + .label outer hint + <ol inline-flex flex-wrap gap-(--space-3)>; active chip: aria-current='page' + border-b-2 border-(--color-oxblood) text-(--color-ink); inactive: text-(--color-muted) hover:text-(--color-oxblood); empty list returns null"
+      file: 'src/components/build-log/PhaseNav.tsx'
+      reusable_for: 'future tab/section navigation surfaces (account section nav, cohort phase nav, episode series nav)'
+    - description: "Build-log voice = documentary (no DropAccent on titles, no Roman numerals, no editorial glyph). Distinguishes documentary surfaces from editorial surfaces (episodes/cases) which use accent glyphs (?, .) via DropAccent."
+      file: 'src/app/build-log/*/page.tsx'
+      reusable_for: 'any future documentary/admin surface — distinguish quiet display-1 from editorial display-1 + DropAccent'
+    - description: "Hybrid red posture (so-5.3 precedent) extended to 6-file section. Preserved tests cover data flow, JSON-LD, metadata, generateMetadata, generateStaticParams, dynamicParams, notFound, prop contracts (rows / jobSlug / phases / activePhaseSlug / rollup / excerpt), aria-current contract, StatusBadge data-testid cross-consumer pin. New brand-aware tests cover Bone/Marble/Parchment mounts, Section, Container width, .label/.display-N/.body-N utility adoption, source-grep sentinels, forbidden-pattern re-check."
+      file: 'src/app/build-log/__tests__/page.test.tsx + src/app/build-log/jobs/[slug]/__tests__/page.test.tsx + src/app/build-log/jobs/[slug]/[phase]/__tests__/page.test.tsx + src/app/build-log/status/__tests__/page.test.tsx + src/components/build-log/__tests__/JobsRollupTable.test.tsx + src/components/build-log/__tests__/PhaseNav.test.tsx'
+      reusable_for: 'all remaining so-7.x page reskins (so-7.5 storefront, so-7.6 about/auth/error) and any future component reskin batches'
+  gotchas:
+    - 'JobsRollupTable rows prop name PRESERVED — planning doc snippet writes <JobsRollupTable jobs={jobs} /> informally but the existing /build-log/status consumer uses rows={rollup}; renaming would cascade to 2 consumers + the test. Preserve prop contracts unless planning explicitly mandates the rename.'
+    - 'PhaseNav planning doc references 3-state chip rail (current/completed/upcoming with Verdigris ✓) — JobPhase has NO completion field. Per-phase completion data is not surfaced by the build-log loaders. Implemented 2-state (active aria-current=page / inactive). Deferred to a future section if/when phase completion data surfaces.'
+    - 'Existing PhaseNav test asserted active link className matches /bg-accent/ — placeholder-palette assertion. Rewrote during red as data_phase_nav_one_active_when_active_slug_provided: still asserts exactly one active link, but className check is now /oxblood/. Test INTENT preserved; assertion updated to match brand chrome (precedent for rewriting placeholder-class assertions during brand reskins).'
+    - 'Cross-cutting brand forbidden-patterns sentinel (so-3.3) does NOT trip on regex literals embedded in section test source. No SKIP_PATHS extension required. Same pattern as so-7.1/7.2/7.3.'
+    - 'Back-link className composition `label text-(--color-oxblood) hover:underline` appears at 4 sites within section. Single-line className strings are NOT extracted per 24-section refactor precedent (only JSX-block duplication justifies extraction). Re-evaluate at so-7.5.'
+    - 'NO outer Link wrapper anywhere in /build-log surfaces. Different from so-6.3 ProductCard precedent where outer Link had to be dropped. JobCard (so-6.2) is wrapped in plain <li>, not <Link><li>. No regression.'
+    - 'Pipeline run in WORKTREE mode. Slot at $WORKTREES/section-styling-overhaul-7.4 on branch section/styling-overhaul-7.4 from origin/main d9096eb. PWTC N/A. node_modules bind-mounted from main. Rebased THREE times during release as concurrent peers landed (email-funnel-1.1 + email-funnel-1.5 + build-log-overhaul-1.1). Final rebase done via reset-to-main + checkout-section-files-from-section-branch + manual append to session.yaml/knowledge.yaml — the resolver scripts cannot handle the prepend-to-completed-sections shape AND get confused by replaying fixup commits, so manual finalization beats automated resolution for this scenario.'
+  reusable_utilities: []

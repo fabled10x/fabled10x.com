@@ -1,8 +1,34 @@
+// /build-log/jobs/[slug]/[phase] detail tests (styling-overhaul-7.4 hybrid red).
+//
+// Preserves all behavior pins (h1 = phase title, breadcrumb, phase
+// header dl, PhaseNav with active slug, MarkdownDocument mount,
+// generateStaticParams cross-product, generateMetadata, dynamicParams,
+// JSON-LD TechArticle with isPartOf job, notFound) and adds brand-aware
+// assertions per phase-7-pages.md Feature 7.4:
+//   - <Bone> surface + <Section rhythm="lg"> + <Container width="prose">
+//   - <Parchment edge="strong"> inner panel wraps MarkdownDocument
+//   - .label kicker + .display-1 title; no placeholder utility tokens
+//
+// Source-level sentinels enforce the brand-utility adoption.
+
 import { vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    className,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   ),
 }));
 
@@ -57,6 +83,39 @@ const mockGetJobBySlug = vi.mocked(getJobBySlug);
 const mockGetJobPhase = vi.mocked(getJobPhase);
 const mockNotFound = vi.mocked(notFound);
 
+const __filename_compat = fileURLToPath(import.meta.url);
+const __dirname_compat = dirname(__filename_compat);
+const PAGE_SOURCE_PATH = join(__dirname_compat, '..', 'page.tsx');
+const PAGE_SOURCE = readFileSync(PAGE_SOURCE_PATH, 'utf8');
+
+const BANNED_PLACEHOLDER_UTILITIES = [
+  'text-accent',
+  'text-muted',
+  'text-link',
+  'text-foreground',
+  'text-parchment',
+  'font-display',
+  'text-4xl',
+  'text-3xl',
+  'text-2xl',
+  'text-xl',
+  'text-lg',
+  'text-sm',
+  'text-xs',
+  'uppercase',
+  'tracking-wide',
+  'tracking-tight',
+  'rounded-lg',
+  'rounded-md',
+  'border-mist',
+  'bg-mist',
+  'hover:border-accent',
+  'hover:opacity-90',
+  'bg-accent',
+  'font-semibold',
+  'font-medium',
+];
+
 const fixturePhases: readonly JobPhase[] = [
   {
     slug: 'phase-1-foundation',
@@ -95,7 +154,9 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     vi.clearAllMocks();
   });
 
-  it('unit_phase_page_renders_phase_title_h1', async () => {
+  // ─── Preserved behavior pins ───
+
+  it('unit_phase_detail_h1_renders_phase_title_format', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
     await renderPage('demo-job', 'phase-1-foundation');
@@ -103,25 +164,38 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     expect(h1).toHaveTextContent('Phase 1: Foundation');
   });
 
-  it('unit_phase_page_renders_breadcrumb', async () => {
+  it('unit_phase_detail_h1_falls_back_to_slug', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue({
+      slug: 'phase-3-untitled',
+      filename: 'phase-3-untitled.md',
+      header: {},
+      body: '# body',
+    });
+    await renderPage('demo-job', 'phase-3-untitled');
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent('phase-3-untitled');
+  });
+
+  it('unit_phase_detail_renders_breadcrumb', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
     await renderPage('demo-job', 'phase-1-foundation');
-    const back = screen.getByRole('link', { name: /Build log/i });
+    const back = screen.getByRole('link', { name: /^Build log$/i });
     expect(back).toHaveAttribute('href', '/build-log');
     const jobLink = screen.getByRole('link', { name: 'Demo Job' });
     expect(jobLink).toHaveAttribute('href', '/build-log/jobs/demo-job');
   });
 
-  it('unit_phase_page_metadata_strip_when_total_size_present', async () => {
+  it('unit_phase_detail_dl_renders_totalSize_when_present', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
     const { container } = await renderPage('demo-job', 'phase-1-foundation');
-    expect(container.textContent).toContain('Total size:');
+    expect(container.textContent).toContain('Total size');
     expect(container.textContent).toContain('4 features');
   });
 
-  it('unit_phase_page_metadata_strip_omitted_when_header_empty', async () => {
+  it('unit_phase_detail_dl_omitted_when_both_absent', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue({
       slug: 'phase-3-untitled',
@@ -130,12 +204,39 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
       body: '# body',
     });
     const { container } = await renderPage('demo-job', 'phase-3-untitled');
-    expect(container.textContent).not.toContain('Total size:');
-    expect(container.textContent).not.toContain('Prerequisites:');
+    expect(container.textContent).not.toContain('Total size');
+    expect(container.textContent).not.toContain('Prerequisites');
     expect(container.querySelector('dl')).toBeNull();
   });
 
-  it('integration_phase_page_mounts_phase_nav_with_active_slug', async () => {
+  it('unit_phase_detail_dl_renders_prerequisites_when_present', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue({
+      slug: 'phase-2-pages',
+      filename: 'phase-2-pages.md',
+      header: { phaseNumber: 2, title: 'Pages', prerequisites: 'Phase 1' },
+      body: '# body',
+    });
+    const { container } = await renderPage('demo-job', 'phase-2-pages');
+    expect(container.textContent).toContain('Prerequisites');
+    expect(container.textContent).toContain('Phase 1');
+  });
+
+  it('edge_phase_detail_only_totalSize', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue({
+      slug: 'phase-x',
+      filename: 'phase-x.md',
+      header: { phaseNumber: 9, title: 'X', totalSize: 'tiny', prerequisites: undefined },
+      body: '# x',
+    });
+    const { container } = await renderPage('demo-job', 'phase-x');
+    expect(container.textContent).toContain('Total size');
+    expect(container.textContent).toContain('tiny');
+    expect(container.textContent).not.toContain('Prerequisites');
+  });
+
+  it('integration_phase_detail_mounts_phase_nav_with_active_slug', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue(fixturePhases[1]);
     await renderPage('demo-job', 'phase-2-pages');
@@ -144,7 +245,7 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     expect(nav.getAttribute('data-phase-count')).toBe('2');
   });
 
-  it('integration_phase_page_mounts_markdown_document_with_body', async () => {
+  it('integration_phase_detail_mounts_markdown_document', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue({
       ...fixturePhases[0],
@@ -169,7 +270,7 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     expect(params).toContainEqual({ slug: 'c', phase: 'phase-2-pages' });
   });
 
-  it('integration_generate_metadata_phase_returns_phase_format', async () => {
+  it('integration_generate_metadata_returns_phase_title_format', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob({ title: 'Demo Job' }));
     const meta = await generateMetadata({
       params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }),
@@ -177,21 +278,7 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     expect(meta.title).toBe('Phase 1: Foundation · Demo Job');
   });
 
-  it('edge_state_phase_page_header_partial_only_total_size', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    mockGetJobPhase.mockResolvedValue({
-      slug: 'phase-x',
-      filename: 'phase-x.md',
-      header: { phaseNumber: 9, title: 'X', totalSize: 'tiny', prerequisites: undefined },
-      body: '# x',
-    });
-    const { container } = await renderPage('demo-job', 'phase-x');
-    expect(container.textContent).toContain('Total size:');
-    expect(container.textContent).toContain('tiny');
-    expect(container.textContent).not.toContain('Prerequisites:');
-  });
-
-  it('err_phase_page_unknown_slug_calls_not_found', async () => {
+  it('err_phase_detail_unknown_calls_not_found', async () => {
     mockGetJobBySlug.mockResolvedValue(undefined);
     mockGetJobPhase.mockResolvedValue(undefined);
     await PhasePage({ params: Promise.resolve({ slug: 'bogus', phase: 'bogus' }) });
@@ -204,7 +291,82 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     expect(mockNotFound).toHaveBeenCalled();
   });
 
-  it('sec_information_disclosure_phase_body_inherits_rehype_raw_omission', async () => {
+  it('err_phase_detail_metadata_returns_empty_unknown_phase', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'bogus-phase' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('err_phase_detail_metadata_returns_empty_unknown_job', async () => {
+    mockGetJobBySlug.mockResolvedValue(undefined);
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'bogus', phase: 'any' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('unit_phase_detail_dynamic_params_false', () => {
+    expect(dynamicParams).toBe(false);
+  });
+
+  // ─── Metadata + JSON-LD (preserved) ───
+
+  it('unit_phase_detail_metadata_openGraph_type', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect((meta.openGraph as { type?: string } | undefined)?.type).toBe('article');
+  });
+
+  it('unit_phase_detail_metadata_openGraph_url_matches_phase', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect(meta.openGraph?.url).toBe('/build-log/jobs/demo-job/phase-1-foundation');
+  });
+
+  it('unit_phase_detail_metadata_twitter_card', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
+    expect((meta.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
+  });
+
+  it('integration_phase_detail_json_ld_techarticle', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload['@type']).toBe('TechArticle');
+    expect(payload.headline).toContain('Phase 1: Foundation');
+    expect(payload.headline).toContain('Demo Job');
+  });
+
+  it('integration_phase_detail_json_ld_isPartOf_job', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.isPartOf?.['@type']).toBe('TechArticle');
+    expect(payload.isPartOf?.url).toBe('https://fabled10x.com/build-log/jobs/demo-job');
+  });
+
+  it('infra_phase_detail_json_ld_valid_json', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
+  });
+
+  it('data_phase_detail_json_ld_isPartOf_url_absolute', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const payload = JSON.parse(script!.innerHTML);
+    expect(payload.isPartOf?.url).toMatch(/^https:\/\/fabled10x\.com\//);
+  });
+
+  it('sec_information_disclosure_phase_body_no_executable_script', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue({
       slug: 'phase-evil',
@@ -215,96 +377,79 @@ describe('/build-log/jobs/[slug]/[phase] page', () => {
     const { container } = await renderPage('demo-job', 'phase-evil');
     const md = screen.getByTestId('markdown-document');
     expect(md.getAttribute('data-body')).toBe('<script>alert(1)</script>');
-    // Narrow to executable scripts — JSON-LD is data, not executable
     expect(container.querySelector('script:not([type="application/ld+json"])')).toBeNull();
   });
 
-  it('infra_dynamic_params_false_exported', () => {
-    expect(dynamicParams).toBe(false);
-  });
+  // ─── Brand-aware reskin assertions ───
 
-  // --- Phase 3.1: Metadata + JSON-LD ---
-
-  it('unit_phase_metadata_openGraph_type', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
-    expect((meta.openGraph as { type?: string } | undefined)?.type).toBe('article');
-  });
-
-  it('unit_phase_metadata_openGraph_url_matches_phase', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
-    expect(meta.openGraph?.url).toBe('/build-log/jobs/demo-job/phase-1-foundation');
-  });
-
-  it('unit_phase_metadata_twitter_card', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'phase-1-foundation' }) });
-    expect((meta.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
-  });
-
-  it('int_phase_renders_json_ld_tech_article', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
-    const { container } = await renderPage('demo-job', 'phase-1-foundation');
-    const script = container.querySelector('script[type="application/ld+json"]');
-    expect(script).not.toBeNull();
-    const payload = JSON.parse(script!.innerHTML);
-    expect(payload['@type']).toBe('TechArticle');
-  });
-
-  it('int_phase_json_ld_headline_contains_phase', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob({ title: 'Demo Job' }));
-    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
-    const { container } = await renderPage('demo-job', 'phase-1-foundation');
-    const script = container.querySelector('script[type="application/ld+json"]');
-    const payload = JSON.parse(script!.innerHTML);
-    expect(payload.headline).toContain('Phase 1: Foundation');
-    expect(payload.headline).toContain('Demo Job');
-  });
-
-  it('int_phase_json_ld_isPartOf_job', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
-    const { container } = await renderPage('demo-job', 'phase-1-foundation');
-    const script = container.querySelector('script[type="application/ld+json"]');
-    const payload = JSON.parse(script!.innerHTML);
-    expect(payload.isPartOf?.['@type']).toBe('TechArticle');
-    expect(payload.isPartOf?.url).toBe('https://fabled10x.com/build-log/jobs/demo-job');
-  });
-
-  it('infra_phase_json_ld_valid_json', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
-    const { container } = await renderPage('demo-job', 'phase-1-foundation');
-    const script = container.querySelector('script[type="application/ld+json"]');
-    expect(() => JSON.parse(script!.innerHTML)).not.toThrow();
-  });
-
-  it('edge_phase_generateMetadata_unknown_phase_returns_empty', async () => {
-    mockGetJobBySlug.mockResolvedValue(makeJob());
-    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'demo-job', phase: 'bogus-phase' }) });
-    expect(meta).toEqual({});
-  });
-
-  it('edge_phase_generateMetadata_unknown_job_returns_empty', async () => {
-    mockGetJobBySlug.mockResolvedValue(undefined);
-    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'bogus', phase: 'any' }) });
-    expect(meta).toEqual({});
-  });
-
-  it('err_phase_page_still_calls_notFound_when_missing', async () => {
-    mockGetJobBySlug.mockResolvedValue(undefined);
-    mockGetJobPhase.mockResolvedValue(undefined);
-    await PhasePage({ params: Promise.resolve({ slug: 'bogus', phase: 'bogus' }) });
-    expect(mockNotFound).toHaveBeenCalled();
-  });
-
-  it('a11y_phase_page_single_h1_after_metadata', async () => {
+  it('a11y_phase_detail_single_h1', async () => {
     mockGetJobBySlug.mockResolvedValue(makeJob());
     mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
     const { container } = await renderPage('demo-job', 'phase-1-foundation');
     const h1s = container.querySelectorAll('h1');
     expect(h1s).toHaveLength(1);
+  });
+
+  it('a11y_phase_detail_dl_semantic_pairs', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const dl = container.querySelector('dl');
+    expect(dl).not.toBeNull();
+    expect(dl!.querySelectorAll('dt').length).toBeGreaterThan(0);
+    expect(dl!.querySelectorAll('dd').length).toBeGreaterThan(0);
+  });
+
+  it('integration_phase_detail_parchment_panel_wraps_markdown', async () => {
+    mockGetJobBySlug.mockResolvedValue(makeJob());
+    mockGetJobPhase.mockResolvedValue(fixturePhases[0]);
+    const { container } = await renderPage('demo-job', 'phase-1-foundation');
+    const md = container.querySelector('[data-testid="markdown-document"]');
+    expect(md).not.toBeNull();
+    const parchmentAncestor = md!.closest('[class*="bg-(--color-parchment)"]');
+    expect(parchmentAncestor).not.toBeNull();
+  });
+
+  // ─── Source-grep sentinels ───
+
+  it('infra_phase_detail_no_banned_placeholder_utilities: page source contains ZERO banned tokens', () => {
+    const hits: string[] = [];
+    for (const token of BANNED_PLACEHOLDER_UTILITIES) {
+      const re = new RegExp(
+        `(?:^|[\\s"'\`])${token.replace(/[-./\\^$*+?.()|[\]{}]/g, '\\$&')}(?:[\\s"'\`]|$)`,
+      );
+      if (re.test(PAGE_SOURCE)) hits.push(token);
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it('infra_phase_detail_adopts_brand_utilities: page source contains .label AND .display-1', () => {
+    expect(PAGE_SOURCE).toMatch(/\blabel\b/);
+    expect(PAGE_SOURCE).toMatch(/\bdisplay-1\b/);
+  });
+
+  it('infra_phase_detail_imports_brand_primitives: page imports Bone + Section + Parchment from @/components/brand', () => {
+    expect(PAGE_SOURCE).toMatch(/from\s+['"]@\/components\/brand['"]/);
+    expect(PAGE_SOURCE).toMatch(/\bBone\b/);
+    expect(PAGE_SOURCE).toMatch(/\bSection\b/);
+    expect(PAGE_SOURCE).toMatch(/\bParchment\b/);
+  });
+
+  it('infra_phase_detail_forbidden_pattern_sentinel_clean: page source contains no gradient/UI-shadow/pure-color/forbidden-palette tokens', () => {
+    const checks: Array<[string, RegExp]> = [
+      ['linear-gradient', /\blinear-gradient\s*\(/i],
+      ['radial-gradient', /\bradial-gradient\s*\(/i],
+      ['bg-gradient util', /\bbg-gradient-(to-[a-z]+|conic|radial)\b/],
+      ['Tailwind UI shadow', /\bshadow-(md|lg|xl|2xl|inner)\b/],
+      ['pure black hex', /#0{3}(?:0{3})?\b/],
+      ['pure white hex', /#f{3}(?:f{3})?\b/i],
+      ['pure red hex', /#(?:f00|ff0000)\b/i],
+      [
+        'forbidden palette utility',
+        /\b(?:bg|text|border|ring|from|to|via)-(?:red|orange|yellow|blue|indigo|purple|pink|fuchsia|rose|sky|cyan|teal|green|emerald|lime)-\d{2,3}\b/,
+      ],
+    ];
+    const hits = checks.filter(([, re]) => re.test(PAGE_SOURCE)).map(([n]) => n);
+    expect(hits).toEqual([]);
   });
 });

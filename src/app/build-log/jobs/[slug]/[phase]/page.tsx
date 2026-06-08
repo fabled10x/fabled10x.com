@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { Bone, Section, Parchment } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { MarkdownDocument } from '@/components/build-log/MarkdownDocument';
 import { PhaseNav } from '@/components/build-log/PhaseNav';
@@ -101,50 +102,64 @@ export default async function PhasePage({
   };
 
   return (
-    <>
+    <Bone>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Container as="main" className="py-12">
-        <nav className="mb-6 text-sm">
-          <Link href="/build-log" className="text-link hover:text-accent">
-            ← Build log
-          </Link>
-          {' · '}
-          <Link
-            href={`/build-log/jobs/${job.slug}`}
-            className="text-link hover:text-accent"
-          >
-            {job.title}
-          </Link>
-        </nav>
-        <header className="mb-6">
-          <h1 className="text-3xl font-display">{phaseTitle}</h1>
-          {(ph.header.totalSize || ph.header.prerequisites) && (
-            <dl className="mt-3 text-sm text-muted space-y-1">
-              {ph.header.totalSize && (
-                <div>
-                  <dt className="inline font-medium">Total size: </dt>
-                  <dd className="inline">{ph.header.totalSize}</dd>
-                </div>
-              )}
-              {ph.header.prerequisites && (
-                <div>
-                  <dt className="inline font-medium">Prerequisites: </dt>
-                  <dd className="inline">{ph.header.prerequisites}</dd>
-                </div>
-              )}
-            </dl>
-          )}
-        </header>
-        <PhaseNav
-          jobSlug={job.slug}
-          phases={job.phases}
-          activePhaseSlug={ph.slug}
-        />
-        <MarkdownDocument body={ph.body} />
-      </Container>
-    </>
+      <Section rhythm="lg" as="main">
+        <Container width="prose">
+          <nav className="mb-(--space-5)">
+            <Link
+              href="/build-log"
+              className="label text-(--color-oxblood) hover:underline"
+            >
+              Build log
+            </Link>
+            {' · '}
+            <Link
+              href={`/build-log/jobs/${job.slug}`}
+              className="label text-(--color-oxblood) hover:underline"
+            >
+              {job.title}
+            </Link>
+          </nav>
+          <header>
+            <span className="label">Phase</span>
+            <h1 className="display-1 mt-(--space-3)">{phaseTitle}</h1>
+            {(ph.header.totalSize || ph.header.prerequisites) && (
+              <dl className="body-2 mt-(--space-4) text-(--color-muted) space-y-(--space-1)">
+                {ph.header.totalSize && (
+                  <div>
+                    <dt className="inline label text-(--color-ink)">
+                      Total size{' '}
+                    </dt>
+                    <dd className="inline">{ph.header.totalSize}</dd>
+                  </div>
+                )}
+                {ph.header.prerequisites && (
+                  <div>
+                    <dt className="inline label text-(--color-ink)">
+                      Prerequisites{' '}
+                    </dt>
+                    <dd className="inline">{ph.header.prerequisites}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+          </header>
+          <div className="mt-(--space-7)">
+            <PhaseNav
+              jobSlug={job.slug}
+              phases={job.phases}
+              activePhaseSlug={ph.slug}
+            />
+          </div>
+          <Parchment edge="strong" className="mt-(--space-7) p-(--space-6)">
+            <MarkdownDocument body={ph.body} />
+          </Parchment>
+        </Container>
+      </Section>
+    </Bone>
   );
 }

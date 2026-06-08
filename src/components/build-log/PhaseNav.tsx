@@ -10,11 +10,9 @@ interface PhaseNavProps {
 export function PhaseNav({ jobSlug, phases, activePhaseSlug }: PhaseNavProps) {
   if (phases.length === 0) return null;
   return (
-    <nav aria-label="Phases" className="border border-mist rounded-lg p-4 mb-8">
-      <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-        Phases
-      </h2>
-      <ol className="flex flex-wrap gap-2">
+    <nav aria-label="Phases" className="mb-(--space-7)">
+      <span className="label">Phases</span>
+      <ol className="mt-(--space-3) inline-flex flex-wrap gap-(--space-3)">
         {phases.map((phase) => {
           const href = `/build-log/jobs/${jobSlug}/${phase.slug}`;
           const isActive = phase.slug === activePhaseSlug;
@@ -28,10 +26,10 @@ export function PhaseNav({ jobSlug, phases, activePhaseSlug }: PhaseNavProps) {
                 href={href}
                 aria-current={isActive ? 'page' : undefined}
                 className={[
-                  'inline-block px-3 py-1.5 rounded text-sm border',
+                  'inline-block px-(--space-3) py-(--space-1)',
                   isActive
-                    ? 'bg-accent text-parchment border-accent'
-                    : 'border-mist text-foreground hover:border-accent',
+                    ? 'text-(--color-ink) border-b-2 border-(--color-oxblood)'
+                    : 'text-(--color-muted) hover:text-(--color-oxblood)',
                 ].join(' ')}
               >
                 {label}

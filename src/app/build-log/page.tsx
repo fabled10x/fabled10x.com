@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import type { Job, JobRollupEntry } from '@/content/schemas';
+import { Bone, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { JobCard } from '@/components/build-log/JobCard';
+import { JobsRollupTable } from '@/components/build-log/JobsRollupTable';
 import { getAllJobs } from '@/lib/build-log/jobs';
 import { getJobsRollup } from '@/lib/build-log/pipeline-state';
 
@@ -10,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Build log',
   description:
-    'A live view of the agent-driven build process behind fabled10x.com — every job plan, every phase, every section the TDD pipeline has shipped or is about to ship.',
+    "A live view of the agent-driven build process behind fabled10x.com — every job plan, every phase, every section the TDD pipeline has shipped or is about to ship.",
   openGraph: {
     title: 'Build log · fabled10x',
     description:
@@ -104,55 +106,71 @@ export default async function BuildLogIndexPage() {
   const groups = groupJobs(jobs, rollup);
 
   return (
-    <>
+    <Bone>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Container as="main" className="py-12">
-        <header className="mb-10">
-          <h1 className="text-4xl font-display mb-3">Build log</h1>
-          <p className="text-lg text-muted max-w-2xl">
-            The agent-driven build process behind fabled10x.com, rendered as
-            published content. Every job has a plan, every plan has phases,
-            every phase has features the TDD pipeline ships through.
-          </p>
-          <p className="mt-4">
-            <a href="/build-log/status" className="text-link hover:text-accent">
-              See live pipeline status →
-            </a>
-          </p>
-        </header>
+      <Section rhythm="md" as="main">
+        <Container width="wide">
+          <header>
+            <span className="label">Build Log</span>
+            <h1 className="display-1 mt-(--space-3)">Build log</h1>
+            <p className="body-1 mt-(--space-4) max-w-prose text-(--color-muted)">
+              The agent-driven build process behind fabled10x.com, rendered as
+              published content. Every job has a plan, every plan has phases,
+              every phase has features the TDD pipeline ships through.
+            </p>
+            <p className="mt-(--space-4)">
+              <a
+                href="/build-log/status"
+                className="text-(--color-oxblood) underline"
+              >
+                See live pipeline status →
+              </a>
+            </p>
+          </header>
 
-        {groups.length === 0 ? (
-          <p className="text-muted italic">
-            No jobs have been planned yet. Initializing…
-          </p>
-        ) : (
-          groups.map((group) => (
-            <section
-              key={group.id}
-              aria-labelledby={`group-${group.id}`}
-              className="mb-12 last:mb-0"
-            >
-              <header className="mb-5 border-b border-mist pb-2 flex items-baseline justify-between gap-4">
-                <h2 id={`group-${group.id}`} className="text-2xl font-display">
-                  {group.heading}
-                </h2>
-                <span className="text-xs text-muted tabular-nums">
-                  {group.items.length} {group.items.length === 1 ? 'job' : 'jobs'}
-                </span>
-              </header>
-              <p className="text-sm text-muted mb-5">{group.blurb}</p>
-              <div className="grid gap-6 md:grid-cols-2">
-                {group.items.map(({ job, rollup, excerpt }) => (
-                  <JobCard key={job.slug} rollup={rollup} excerpt={excerpt} />
-                ))}
-              </div>
-            </section>
-          ))
-        )}
-      </Container>
-    </>
+          {rollup.length > 0 && (
+            <div className="mt-(--space-7)">
+              <JobsRollupTable rows={rollup} />
+            </div>
+          )}
+
+          {groups.length === 0 ? (
+            <p className="body-2 mt-(--space-7) italic text-(--color-muted)">
+              No jobs have been planned yet. Initializing…
+            </p>
+          ) : (
+            groups.map((group) => (
+              <section
+                key={group.id}
+                aria-labelledby={`group-${group.id}`}
+                className="mt-(--space-8)"
+              >
+                <header className="flex items-baseline justify-between gap-(--space-4) border-b border-(--edge-color) pb-(--space-2)">
+                  <h2 id={`group-${group.id}`} className="display-2">
+                    {group.heading}
+                  </h2>
+                  <span className="label tabular-nums text-(--color-muted)">
+                    {group.items.length} {group.items.length === 1 ? 'job' : 'jobs'}
+                  </span>
+                </header>
+                <p className="body-2 mt-(--space-3) text-(--color-muted)">
+                  {group.blurb}
+                </p>
+                <ul className="mt-(--space-5) grid grid-cols-1 md:grid-cols-2 gap-(--space-4)">
+                  {group.items.map(({ job, rollup, excerpt }) => (
+                    <li key={job.slug}>
+                      <JobCard rollup={rollup} excerpt={excerpt} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </Container>
+      </Section>
+    </Bone>
   );
 }
