@@ -1,4 +1,23 @@
+// AccountPage (styling-overhaul-7.5) — Storefront reskin hybrid red.
+//
+// Preserves behavior pins: auth redirect, status-banner branches
+// (purchased / canceled), CohortList only when hasCohortActivity,
+// "View all" link, PurchaseList mount, SignOutButton mount, metadata
+// noindex. Adds brand-aware assertions per phase-7-pages.md Feature 7.5:
+//   - <Bone> surface wraps the page
+//   - <Section> + <Container width="layout">
+//   - .label kicker reads "Your Account"
+//   - h1 has .display-2 class and text === session.user.email
+//   - status banners use brand chrome (no rounded-md/bg-accent/5/border-mist
+//     placeholders) but keep role="status"
+//
+// Source-level sentinels (infra_*) read src/app/products/account/page.tsx
+// via readFileSync to assert no banned placeholder utility names remain.
+
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { ComponentType } from 'react';
 import type { LoadedEntry } from '@/lib/content/loader';
 import type { Product } from '@/content/schemas';
@@ -39,15 +58,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-// Mock the db chain: select → from → where → orderBy
-// After ce-4.3 added cohort queries, the page now does:
-//   .from(purchases).where(...).orderBy(...)
-//   .from(cohortApplications).where(...)
-//   .from(cohortEnrollments).where(...)
-// We dispatch by table marker so each chain resolves from its own mock.
+// db chain mock: route by table marker
 const mockOrderBy = vi.fn();
-const mockCohortAppWhere = vi.fn(async () => []);
-const mockCohortEnrWhere = vi.fn(async () => []);
+const mockCohortAppWhere = vi.fn<() => Promise<unknown[]>>(async () => []);
+const mockCohortEnrWhere = vi.fn<() => Promise<unknown[]>>(async () => []);
 const purchasesMarker = {
   __table: 'purchases',
   userId: 'purchases.userId',
@@ -96,12 +110,34 @@ vi.mock('@/lib/content/cohorts', () => ({
 }));
 
 vi.mock('@/components/account/CohortList', () => ({
-  CohortList: () => null,
+  CohortList: ({
+    applications,
+    enrollments,
+  }: {
+    applications: unknown[];
+    enrollments: unknown[];
+  }) => (
+    <div
+      data-testid="cohort-list"
+      data-applications={applications.length}
+      data-enrollments={enrollments.length}
+    />
+  ),
 }));
 
 vi.mock('@/components/account/PurchaseList', () => ({
-  PurchaseList: ({ purchases }: { purchases: unknown[] }) => (
-    <div data-testid="purchase-list" data-count={purchases.length}>
+  PurchaseList: ({
+    purchases,
+    productsBySlug,
+  }: {
+    purchases: unknown[];
+    productsBySlug: Map<string, unknown>;
+  }) => (
+    <div
+      data-testid="purchase-list"
+      data-count={purchases.length}
+      data-product-map-size={productsBySlug.size}
+    >
       {purchases.length === 0 ? 'No purchases' : `${purchases.length} purchases`}
     </div>
   ),
@@ -112,6 +148,31 @@ vi.mock('@/components/account/SignOutButton', () => ({
 }));
 
 import { render, screen } from '@testing-library/react';
+
+const __filename_compat = fileURLToPath(import.meta.url);
+const __dirname_compat = dirname(__filename_compat);
+const PAGE_SOURCE_PATH = join(__dirname_compat, '..', 'page.tsx');
+const PAGE_SOURCE = readFileSync(PAGE_SOURCE_PATH, 'utf8');
+
+const BANNED_PLACEHOLDER_UTILITIES = [
+  'text-muted',
+  'font-display',
+  'text-4xl',
+  'text-3xl',
+  'text-2xl',
+  'text-xl',
+  'text-lg',
+  'text-sm',
+  'bg-marble-texture',
+  'border-mist',
+  'rounded-md',
+  'rounded-lg',
+  'text-link',
+  'text-accent',
+  'bg-accent',
+  'divide-mist',
+  'prose-style',
+];
 
 const mockComponent: ComponentType = () => null;
 
@@ -169,7 +230,7 @@ async function renderAccountPage(params: Record<string, string> = {}) {
   return render(jsx);
 }
 
-describe('AccountPage', () => {
+describe('AccountPage (styling-overhaul-7.5) — brand reskin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({
@@ -177,42 +238,75 @@ describe('AccountPage', () => {
     });
     mockOrderBy.mockResolvedValue(MOCK_PURCHASES);
     mockGetAllProducts.mockResolvedValue([MOCK_PRODUCT]);
+    mockCohortAppWhere.mockResolvedValue([]);
+    mockCohortEnrWhere.mockResolvedValue([]);
   });
 
-  // --- Batch 1: Functional (unit) ---
+  // ─────────────────────────────────────────────────────────────
+  // Unit — brand chrome
+  // ─────────────────────────────────────────────────────────────
 
-  it('unit_account_empty: authenticated user with zero purchases sees empty state', async () => {
-    mockOrderBy.mockResolvedValue([]);
-    await renderAccountPage();
-    expect(screen.getByTestId('purchase-list')).toHaveAttribute('data-count', '0');
+  it('unit_account_bone_mount: page renders within a Bone surface (bg-(--color-bone))', async () => {
+    const { container } = await renderAccountPage();
+    expect(container.querySelector('.bg-\\(--color-bone\\)')).toBeInTheDocument();
   });
 
-  it('unit_account_list: authenticated user with two purchases renders list', async () => {
-    await renderAccountPage();
-    expect(screen.getByTestId('purchase-list')).toHaveAttribute('data-count', '2');
-  });
-
-  it('unit_account_purchased_banner: searchParams.purchased shows success banner', async () => {
-    await renderAccountPage({ purchased: 'workflow-templates' });
-    expect(screen.getByRole('status')).toHaveTextContent(/confirmed/i);
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Agent Workflow Templates',
+  it('unit_account_label_kicker_your_account: a .label element reads "Your Account"', async () => {
+    const { container } = await renderAccountPage();
+    const labels = Array.from(container.querySelectorAll('.label'));
+    const kicker = labels.find((el) =>
+      /^Your Account$/i.test((el.textContent ?? '').trim()),
     );
+    expect(kicker).toBeDefined();
   });
 
-  it('unit_account_canceled_banner: searchParams.canceled shows cancellation notice', async () => {
-    await renderAccountPage({ canceled: '1' });
-    expect(screen.getByRole('status')).toHaveTextContent(/canceled/i);
+  it('unit_account_display_2_email_h1: h1 has .display-2 class and text === session.user.email', async () => {
+    await renderAccountPage();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.className).toMatch(/\bdisplay-2\b/);
+    expect((h1.textContent ?? '').trim()).toBe('test@example.com');
   });
 
-  it('unit_account_metadata: page metadata excludes from indexing', async () => {
-    const { metadata } = await import('../page');
-    expect(metadata.robots).toEqual({ index: false, follow: false });
+  it('unit_account_signout_button_preserved: SignOutButton renders (preserved)', async () => {
+    await renderAccountPage();
+    expect(screen.getByTestId('sign-out-button')).toBeInTheDocument();
   });
 
-  // --- Batch 2: Security ---
+  it('unit_account_purchase_list_preserved: PurchaseList renders with purchases + productsBySlug props', async () => {
+    await renderAccountPage();
+    const list = screen.getByTestId('purchase-list');
+    expect(list).toBeInTheDocument();
+    expect(list).toHaveAttribute('data-count', '2');
+    expect(list).toHaveAttribute('data-product-map-size', '1');
+  });
 
-  it('sec_spoofing_account_anon: anonymous request redirects to login', async () => {
+  it('unit_account_cohort_list_when_activity: CohortList renders only when applications.length OR enrollments.length > 0', async () => {
+    // No activity → CohortList absent
+    await renderAccountPage();
+    expect(screen.queryByTestId('cohort-list')).not.toBeInTheDocument();
+
+    // Applications > 0 → CohortList present
+    mockCohortAppWhere.mockResolvedValue([
+      { id: 'app-1', userId: 'user-1', cohortSlug: 'c1' },
+    ]);
+    await renderAccountPage();
+    expect(screen.getByTestId('cohort-list')).toBeInTheDocument();
+  });
+
+  it('unit_account_view_all_cohorts_link_preserved: Link to /products/account/cohorts present when cohort activity exists', async () => {
+    mockCohortEnrWhere.mockResolvedValue([
+      { id: 'enr-1', userId: 'user-1', cohortSlug: 'c1' },
+    ]);
+    await renderAccountPage();
+    const viewAll = screen.getByRole('link', { name: /view all/i });
+    expect(viewAll).toHaveAttribute('href', '/products/account/cohorts');
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // Integration — preserved auth + status branches
+  // ─────────────────────────────────────────────────────────────
+
+  it('int_account_auth_redirect_preserved: null session redirects to /login?callbackUrl=%2Fproducts%2Faccount', async () => {
     mockAuth.mockResolvedValue(null);
     await renderAccountPage();
     expect(mockRedirect).toHaveBeenCalledWith(
@@ -220,10 +314,86 @@ describe('AccountPage', () => {
     );
   });
 
-  // --- Batch 6: Accessibility ---
-
-  it('a11y_status_banners: success banner has role="status"', async () => {
+  it('int_account_purchased_status_banner_preserved: ?purchased renders role=status banner with product title and no placeholder utilities', async () => {
     await renderAccountPage({ purchased: 'workflow-templates' });
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveTextContent('Agent Workflow Templates');
+    expect(banner.className).not.toMatch(/bg-accent\/5/);
+    expect(banner.className).not.toMatch(/border-accent\/40/);
+    expect(banner.className).not.toMatch(/rounded-md/);
+  });
+
+  it('int_account_canceled_status_banner_preserved: ?canceled renders role=status banner with brand chrome (no bg-mist/30 border-mist)', async () => {
+    await renderAccountPage({ canceled: 'true' });
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveTextContent(/canceled/i);
+    expect(banner.className).not.toMatch(/bg-mist\/30/);
+    expect(banner.className).not.toMatch(/border-mist\b/);
+    expect(banner.className).not.toMatch(/rounded-md/);
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // Accessibility
+  // ─────────────────────────────────────────────────────────────
+
+  it('a11y_account_heading_landmark: h1 visible with name === session.user.email', async () => {
+    await renderAccountPage();
+    const h1 = screen.getByRole('heading', { level: 1, name: 'test@example.com' });
+    expect(h1).toBeInTheDocument();
+  });
+
+  it('a11y_account_status_banners_role: both purchased + canceled banners use role="status" (WCAG 4.1.3)', async () => {
+    const { unmount } = await renderAccountPage({ purchased: 'workflow-templates' });
     expect(screen.getByRole('status')).toBeInTheDocument();
+    unmount();
+
+    await renderAccountPage({ canceled: 'true' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // Edge cases
+  // ─────────────────────────────────────────────────────────────
+
+  it('edge_account_no_cohort_activity: applications=[] + enrollments=[] hides "My cohorts" h2', async () => {
+    await renderAccountPage();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: /my cohorts/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('edge_account_no_purchases: purchases=[] still mounts PurchaseList (empty state delegated)', async () => {
+    mockOrderBy.mockResolvedValue([]);
+    await renderAccountPage();
+    const list = screen.getByTestId('purchase-list');
+    expect(list).toHaveAttribute('data-count', '0');
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // Infrastructure — source-level sentinels
+  // ─────────────────────────────────────────────────────────────
+
+  it('infra_account_no_placeholder_tokens: page source contains ZERO banned placeholder utility tokens', () => {
+    const hits: string[] = [];
+    for (const token of BANNED_PLACEHOLDER_UTILITIES) {
+      const re = new RegExp(
+        `(?:^|[\\s"'\`])${token.replace(/[-./\\^$*+?.()|[\]{}]/g, '\\$&')}(?:[\\s"'\`]|$)`,
+      );
+      if (re.test(PAGE_SOURCE)) hits.push(token);
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it('infra_account_adopts_brand_utilities: page source contains Bone AND Section AND .display-2 AND .label', () => {
+    expect(PAGE_SOURCE).toMatch(/\bBone\b/);
+    expect(PAGE_SOURCE).toMatch(/\bSection\b/);
+    expect(PAGE_SOURCE).toMatch(/\bdisplay-2\b/);
+    expect(PAGE_SOURCE).toMatch(/\blabel\b/);
+  });
+
+  it('infra_account_brand_imports: page imports Bone + Section from @/components/brand', () => {
+    expect(PAGE_SOURCE).toMatch(/from\s+['"]@\/components\/brand['"]/);
+    expect(PAGE_SOURCE).toMatch(/\bBone\b/);
+    expect(PAGE_SOURCE).toMatch(/\bSection\b/);
   });
 });

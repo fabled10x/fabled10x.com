@@ -147,9 +147,6 @@ describe('JobsRollupTable', () => {
   it('unit_table_rows_prop_name_preserved', () => {
     // Compile-time + runtime contract: prop must be called `rows`.
     const rows: readonly JobRollupEntry[] = [makeRow()];
-    // @ts-expect-error - intentionally probing that wrong prop name fails
-    const wrongProps = { jobs: rows };
-    void wrongProps;
     const { container } = render(<JobsRollupTable rows={rows} />);
     expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
   });

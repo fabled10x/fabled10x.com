@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { getAllProducts } from '@/lib/content/products';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -13,30 +14,32 @@ export default async function ProductsPage() {
   const products = await getAllProducts();
 
   return (
-    <Container as="section" className="py-16">
-      <header className="max-w-2xl">
-        <p className="text-sm uppercase tracking-wide text-muted">Storefront</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">
-          Products
-        </h1>
-        <p className="mt-4 text-lg text-muted">
-          Every asset the Fabled10X channel and case studies are built with —
-          bundled, documented, and licensed for solo consultants and agencies.
-        </p>
-      </header>
-      {products.length === 0 ? (
-        <p className="mt-12 text-muted">
-          No products yet — check back soon.
-        </p>
-      ) : (
-        <ul className="mt-12 grid gap-6 md:grid-cols-2">
-          {products.map((entry) => (
-            <li key={entry.meta.id}>
-              <ProductCard product={entry.meta} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Container>
+    <Marble as="main">
+      <Section rhythm="md">
+        <Container>
+          <header className="max-w-prose">
+            <span className="label">Storefront</span>
+            <h1 className="display-1 mt-(--space-3)">Products</h1>
+            <p className="body-1 mt-(--space-5) text-(--color-muted)">
+              Every asset the Fabled10X channel and case studies are built with —
+              bundled, documented, and licensed for solo consultants and agencies.
+            </p>
+          </header>
+          {products.length === 0 ? (
+            <p className="body-2 mt-(--space-7) text-(--color-muted)">
+              No products yet — check back soon.
+            </p>
+          ) : (
+            <ul className="mt-(--space-7) grid gap-(--space-4) md:grid-cols-2">
+              {products.map((entry) => (
+                <li key={entry.meta.id}>
+                  <ProductCard product={entry.meta} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Container>
+      </Section>
+    </Marble>
   );
 }

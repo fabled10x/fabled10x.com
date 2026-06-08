@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { BuyButton } from '@/components/products/BuyButton';
 import { getAllProducts, getProductBySlug } from '@/lib/content/products';
@@ -80,38 +81,39 @@ export default async function ProductDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Container as="article" className="py-16">
-      <header className="max-w-2xl">
-        <p className="text-sm uppercase tracking-wide text-muted">
-          {PRODUCT_CATEGORY_LABELS[meta.category]}
-        </p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">
-          {meta.title}
-        </h1>
-        <p className="mt-4 text-lg text-muted">{meta.tagline}</p>
-      </header>
+      <Marble as="main">
+        <Section rhythm="lg">
+          <Container as="article" width="prose">
+            <span className="label">
+              {PRODUCT_CATEGORY_LABELS[meta.category]}
+            </span>
+            <h1 className="display-1 mt-(--space-3)">{meta.title}</h1>
+            <p className="body-1 mt-(--space-5) text-(--color-muted)">
+              {meta.tagline}
+            </p>
 
-      <div className="mt-12 flex items-center gap-6">
-        <p className="font-display text-3xl font-semibold">
-          {formatPrice(meta.priceCents, meta.currency)}
-        </p>
-        <p className="text-sm text-muted">
-          {PRODUCT_LICENSE_LABELS[meta.licenseType]}
-        </p>
-      </div>
+            <div className="mt-(--space-7) flex flex-wrap items-center justify-between gap-(--space-4) border-t border-b border-(--edge-color) py-(--space-4)">
+              <div className="flex items-baseline gap-(--space-3)">
+                <span className="mono text-2xl">
+                  {formatPrice(meta.priceCents, meta.currency)}
+                </span>
+                <span className="label">
+                  {PRODUCT_LICENSE_LABELS[meta.licenseType]}
+                </span>
+              </div>
+              <BuyButton
+                productSlug={meta.slug}
+                priceCents={meta.priceCents}
+                currency={meta.currency}
+              />
+            </div>
 
-      <div className="mt-6">
-        <BuyButton
-          productSlug={meta.slug}
-          priceCents={meta.priceCents}
-          currency={meta.currency}
-        />
-      </div>
-
-      <section className="mt-16 prose-style max-w-2xl">
-        <Component />
-      </section>
-    </Container>
+            <div className="build-log-prose mt-(--space-7)">
+              <Component />
+            </div>
+          </Container>
+        </Section>
+      </Marble>
     </>
   );
 }

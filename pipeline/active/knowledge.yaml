@@ -6235,55 +6235,96 @@ email-funnel-1.6:
   completed_at: '2026-06-08'
   posture: zero-source-change-implementation
   patterns_established:
-    - description: |
-        docs-as-test-target pattern — when a section's only change is prose in
+    - description: 'docs-as-test-target pattern — when a section''s only change is
+        prose in
+
         docs/*.md, the failing-test surface is a top-level
+
         src/__tests__/{doc-slug}-doc.test.ts that readFileSync()s the doc,
+
         regex-extracts the affected heading-anchored section once at module
+
         scope, then asserts on heading subtitle, body content, anti-regression
+
         strings (negative toMatch assertions), and a body-line-count shrink
+
         guard when the rewrite shortens the section. Mirrors
+
         src/__tests__/brand/docs.test.ts and src/__tests__/env-example.test.ts;
+
         lives at top-level src/__tests__/ because docs/ has no colocated
+
         __tests__/ folder.
+
+        '
       file: src/__tests__/future-jobs-doc.test.ts
-      reusable_for: |
-        Any future section whose deliverable is a docs/*.md rewrite — for
+      reusable_for: 'Any future section whose deliverable is a docs/*.md rewrite —
+        for
+
         example, when a job from docs/future-jobs.md is later planned or
+
         shipped, the same one-test-file pattern locks the section rewrite
+
         (subtitle, scope, anti-regression, body shrink) and any sizing-table
+
         row update via cell-by-cell pipe-split assertions.
-    - description: |
-        Sizing-table-row assertion via pipe-split — for a markdown table row,
+
+        '
+    - description: 'Sizing-table-row assertion via pipe-split — for a markdown table
+        row,
+
         split the line by the pipe character, trim each cell, and assert by
+
         zero-indexed cell position (cell 3 alias, cell 4 size, cell 6 ordering).
+
         Avoids brittle regex against the whole row, survives column-padding
+
         edits, and pinpoints which cell drifted in failure messages.
+
+        '
       file: src/__tests__/future-jobs-doc.test.ts
-      reusable_for: |
-        Any future test that needs to lock a single row of a markdown table
+      reusable_for: 'Any future test that needs to lock a single row of a markdown
+        table
+
         (sizing tables, status tables, ordering tables) without binding to
+
         whitespace.
+
+        '
   gotchas:
-    - |
-      The section-4 extraction regex uses a non-capturing lookahead for the
-      next heading-2 OR the special 'Things explicitly NOT on this list'
+    - 'The section-4 extraction regex uses a non-capturing lookahead for the
+
+      next heading-2 OR the special ''Things explicitly NOT on this list''
+
       meta-heading at the end. If a future contributor adds a job section
-      11..N AFTER the 'Things' section, update the lookahead — the test would
+
+      11..N AFTER the ''Things'' section, update the lookahead — the test would
+
       otherwise capture the entire tail of the doc into section4 and the
+
       body-shrink edge_case test would fail.
-    - |
-      The body-shrink guard (less than 35 non-blank lines) is intentionally
+
+      '
+    - 'The body-shrink guard (less than 35 non-blank lines) is intentionally
+
       loose. The rewrite landed at about 18 non-blank lines, leaving roughly
+
       17 lines of headroom for future small edits. Tighten only if the
+
       section-4 body grows back toward the original 40-line footprint.
+
+      '
   reusable_utilities: []
   deferred_followups:
-    - |
-      Knowledge.yaml hygiene (carried over from ef-1.5): email-funnel-1.1
-      entry is still nested under styling-overhaul-7.3's reusable_utilities.
+    - 'Knowledge.yaml hygiene (carried over from ef-1.5): email-funnel-1.1
+
+      entry is still nested under styling-overhaul-7.3''s reusable_utilities.
+
       Not fixed here either (section-scoped rule). Future operator can
+
       promote it en passant.
+
+      '
 build_log_overhaul_1_1:
   completed_at: '2026-06-08'
   patterns_established:
@@ -6473,3 +6514,89 @@ build_log_overhaul_1_2:
       — the threshold is on days, not weeks. If the brand copy later wants "1 week
       ago" to appear at 7d (not 14d), drop the floor of the lower bound. Both unit_weeks_2
       (14d=2w) and unit_days_13_boundary (13d=13d) lock the current behavior.
+styling-overhaul-7.5:
+  completed_at: '2026-06-08'
+  patterns_established:
+    - description: Storefront editorial reskin — Marble shells for public browse pages
+        (/products, /products/[slug], /cohorts) + Bone shells for private workspace
+        (/products/account, /products/account/purchases/[id]). Detail pages use Section
+        rhythm=lg + Container width=prose; index pages use Section rhythm=md + Container
+        default layout.
+      file: src/app/products/page.tsx + src/app/cohorts/page.tsx + src/app/products/[slug]/page.tsx
+        + src/app/products/account/page.tsx + src/app/products/account/purchases/[id]/page.tsx
+      reusable_for: so-7.6 about/auth/error reskin can lean on the Marble-vs-Bone
+        surface-as-affordance distinction (public surface vs private workspace)
+    - description: Horizontal price-bar pattern — border-t border-b border-(--edge-color)
+        wrapper with flex justify-between, mono price + label license on left, BuyButton
+        (or CTA) on right. Reusable for any "decision moment" between marketing copy
+        and product body.
+      file: src/app/products/[slug]/page.tsx
+      reusable_for: any product/service/course detail page with a price + CTA decision
+        point
+    - description: Receipt spec-sheet pattern — <dl class="grid sm:grid-cols-2 gap-(--space-5)
+        border-t border-b border-(--edge-color) py-(--space-5)"> with .label <dt>
+        + .mono <dd> rows. Reuses the so-7.3 cases spec-sheet pattern but vertical
+        orientation (grid-cols-2 instead of grid-cols-3) for narrower receipt context.
+      file: src/app/products/account/purchases/[id]/page.tsx
+      reusable_for: invoice / order-confirmation / metadata-summary panels
+    - description: Brand-styled action anchor (NOT button) — inline-flex items-center
+        gap-(--space-2) bg-(--color-oxblood) text-(--color-bone) px-(--space-N) py-(--space-N)
+        border border-(--color-oxblood) hover:bg-(--color-ink) hover:border-(--color-ink)
+        transition-colors. Used for Download anchor + cohort Apply link where the
+        action is a navigation rather than a form submit (avoids the Button primitive
+        which is button-only).
+      file: src/app/products/account/purchases/[id]/page.tsx + src/app/cohorts/[slug]/page.tsx
+      reusable_for: any link-as-action surface (download, apply, external CTA) where
+        Button primitive does not fit
+    - description: Status banner via brand surface — <Bone edge="subtle" role="status"
+        className="mt-(--space-6) p-(--space-4) body-2"> for purchased/canceled banners.
+        Bone primitive spreads ...rest props so role/aria-* pass through to the underlying
+        element. Confirmed pattern for WCAG 4.1.3 Status Messages.
+      file: src/app/products/account/page.tsx
+      reusable_for: any inline acknowledgement banner (toast-equivalent in SSR) —
+        replaces rounded-md bg-X/5 border-X/40 placeholder utilities
+    - description: PurchaseList row separator pattern — drop divide-y divide-mist
+        in favor of border-t border-(--edge-color) on each <li>. First row gets a
+        top border that doubles as the list top edge; visually clean within a brand-surface
+        container.
+      file: src/components/account/PurchaseList.tsx
+      reusable_for: any list/feed component where items are visually separated (purchase
+        history, audit log, activity feed)
+  gotchas:
+    - Cohort detail test regex `\bprose\b(?!-)` incorrectly matched `prose` inside
+      `build-log-prose` AND inside `Container width="prose"` prop. JS word-boundary
+      `\b` matches between `-` and `p` so the prose token boundary is real, and the
+      negative lookahead only checks the right side. Fixed during green by tightening
+      the regex to `(?<!-)\bprose\s+[a-z]` — only flags the legacy `prose mt-N max-w-N`
+      className anti-pattern, exempts both `build-log-prose` (preceded by `-`) and
+      `width="prose"` (followed by `"`). When writing source-grep regexes for tailwind
+      utility names that have hyphenated extensions in the same codebase, ALWAYS use
+      lookbehind+lookahead OR require the surrounding tailwind-utility-sibling context.
+    - Account page h1 BECAME session.user.email per planning doc spec (was "Your account"
+      before). Existing test pinned h1=/Your account/i; rewrite during red was necessary
+      to assert the new intent. Future consumers of /products/account that care about
+      h1 text should know it is user-specific.
+    - Bone primitive spreads `...rest` to the underlying element — passing role="status"
+      / aria-labelledby / data-testid all work without explicit prop plumbing. Same
+      applies to Marble + Parchment + Section. Confirmed via the so-7.5 status banner
+      pattern.
+    - PWTC N/A confirmed for fabled10x (no docker/db infra). Env-symlink loop fell
+      through silently — no .env / .env.local / .env.db in main. node_modules bind-mounted
+      from main.
+    - Cross-section formatPrice duplication now at 7+ sites (was 6 at so-6.3), formatDate
+      at 7+ sites. Per established discipline (so-5.4/6.3/7.4 precedent), defer cross-section
+      extraction — touches email templates + auth/admin pages outside any single section
+      scope. Knowledge re-flag persists; reconsider when a section explicitly scopes
+      "price/date formatter consolidation" or when an 8th site lands.
+    - Forbidden-pattern sentinel SKIP_PATHS still contains src/components/products/BuyButton.tsx
+      + WaitlistForm.tsx + ApplicationForm.tsx + admin/cohorts/applications/[id]/page.tsx.
+      so-7.5 did NOT remove these — BuyButton is consumed but not reskinned this section
+      (so-5.4 chrome-swap shipped it, but it still uses some placeholder utilities).
+      WaitlistForm + ApplicationForm + admin pages are outside so-7.5 scope. Likely
+      to be addressed in a dedicated forms reskin or so-7.6 (about/auth/error) sweep.
+    - Pipeline run in WORKTREE mode. Slot at $WORKTREES/section-styling-overhaul-7.5
+      on branch section/styling-overhaul-7.5 from origin/main 2c07e22. PRE-03 (tsc)
+      failed on baseline with 1 unused @ts-expect-error in JobsRollupTable.test.tsx
+      (stale from so-7.4 commit 28b718d). Cleaned up inline as preflight remediation.
+      Test file 1 line modified beyond the 7.5 scope.
+  reusable_utilities: []

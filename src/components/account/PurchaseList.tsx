@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Bone } from '@/components/brand';
 import type { Product } from '@/content/schemas';
 import type { Purchase } from '@/db/schema';
 
@@ -29,44 +30,54 @@ export function PurchaseList({
 }: PurchaseListProps) {
   if (purchases.length === 0) {
     return (
-      <div className="rounded-md border border-mist p-6 text-sm text-muted">
-        <p>You don&rsquo;t have any purchases yet.</p>
-        <p className="mt-2">
+      <Bone edge="subtle" className="p-(--space-5)">
+        <p className="body-2 text-(--color-muted)">
+          You don&rsquo;t have any purchases yet.
+        </p>
+        <p className="body-2 text-(--color-muted) mt-(--space-2)">
           Browse the{' '}
-          <Link href="/products" className="text-link underline-offset-2 hover:underline">
+          <Link
+            href="/products"
+            className="underline underline-offset-2 hover:text-(--color-oxblood)"
+          >
             storefront
           </Link>{' '}
           to find workflow templates, toolkits, and more.
         </p>
-      </div>
+      </Bone>
     );
   }
 
   return (
-    <ul className="divide-y divide-mist">
+    <ul>
       {purchases.map((purchase) => {
         const product = productsBySlug.get(purchase.productSlug);
         return (
-          <li key={purchase.id} className="flex items-center justify-between gap-4 py-4">
+          <li
+            key={purchase.id}
+            className="border-t border-(--edge-color) py-(--space-4) flex items-center justify-between gap-(--space-4)"
+          >
             <div>
-              <p className="font-semibold">
+              <span className="body-2 text-(--color-ink)">
                 {product?.title ?? purchase.productSlug}
-              </p>
-              <p className="mt-1 text-sm text-muted">
+              </span>
+              <p className="body-3 text-(--color-muted) mt-(--space-1)">
                 Purchased {formatDate(purchase.purchasedAt)} ·{' '}
-                {formatPrice(purchase.amountCents, purchase.currency)}
+                <span className="mono">
+                  {formatPrice(purchase.amountCents, purchase.currency)}
+                </span>
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-(--space-3)">
               <Link
                 href={`/products/account/purchases/${purchase.id}`}
-                className="text-sm text-link underline-offset-2 hover:underline"
+                className="label hover:text-(--color-oxblood) underline-offset-2"
               >
                 Details
               </Link>
               <a
                 href={`/api/products/downloads/${purchase.id}`}
-                className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-parchment hover:bg-accent/90"
+                className="inline-flex items-center gap-(--space-2) bg-(--color-oxblood) text-(--color-bone) px-(--space-3) py-(--space-2) border border-(--color-oxblood) hover:bg-(--color-ink) hover:border-(--color-ink) transition-colors"
               >
                 Download
               </a>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Bone, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { getAllCohorts, getCohortBySlug } from '@/lib/content/cohorts';
 import { CohortDetailHero } from '@/components/cohorts/CohortDetailHero';
@@ -73,48 +74,51 @@ export default async function CohortDetailPage({ params }: RouteParams) {
   };
 
   return (
-    <Container as="main" className="py-16">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <CohortDetailHero cohort={meta} />
+      <Section rhythm="lg" as="main">
+        <Container width="prose">
+          <article className="build-log-prose">
+            <MdxBody />
+          </article>
 
-      <article className="prose mt-16 max-w-2xl">
-        <MdxBody />
-      </article>
-
-      <section className="mt-16" aria-labelledby="cta-heading">
-        <h2 id="cta-heading" className="font-display text-2xl font-semibold">
-          Next step
-        </h2>
-        <div className="mt-6 rounded-md border border-mist p-6 text-sm text-muted">
-          {meta.status === 'announced' ? (
-            <WaitlistForm cohortSlug={meta.slug} sourceTag="cohort-detail" />
-          ) : meta.status === 'open' ? (
-            <div>
-              <p>
-                Applications are open. Review the cohort details above, then
-                submit yours.
-              </p>
-              <p className="mt-4">
-                <Link
-                  href={`/cohorts/${meta.slug}/apply`}
-                  className="inline-flex items-center rounded-md bg-accent px-5 py-3 text-sm font-semibold text-parchment hover:bg-accent/90"
-                >
-                  Apply to this cohort
-                </Link>
-              </p>
-            </div>
-          ) : meta.status === 'closed' ? (
-            <p>Applications are closed. Decisions go out within two weeks.</p>
-          ) : meta.status === 'enrolled' ? (
-            <p>This cohort is full. Join the waitlist for the next run.</p>
-          ) : (
-            <p>This cohort has shipped.</p>
-          )}
-        </div>
-      </section>
-    </Container>
+          <section className="mt-(--space-7)" aria-labelledby="cta-heading">
+            <h2 id="cta-heading" className="display-3">
+              Next step
+            </h2>
+            <Bone edge="subtle" className="mt-(--space-5) p-(--space-5) body-2">
+              {meta.status === 'announced' ? (
+                <WaitlistForm cohortSlug={meta.slug} sourceTag="cohort-detail" />
+              ) : meta.status === 'open' ? (
+                <div>
+                  <p>
+                    Applications are open. Review the cohort details above,
+                    then submit yours.
+                  </p>
+                  <p className="mt-(--space-4)">
+                    <Link
+                      href={`/cohorts/${meta.slug}/apply`}
+                      className="inline-flex items-center gap-(--space-2) border border-(--color-oxblood) bg-(--color-oxblood) px-(--space-4) py-(--space-3) text-(--color-bone) transition-colors hover:border-(--color-ink) hover:bg-(--color-ink)"
+                    >
+                      Apply to this cohort
+                    </Link>
+                  </p>
+                </div>
+              ) : meta.status === 'closed' ? (
+                <p>Applications are closed. Decisions go out within two weeks.</p>
+              ) : meta.status === 'enrolled' ? (
+                <p>This cohort is full. Join the waitlist for the next run.</p>
+              ) : (
+                <p>This cohort has shipped.</p>
+              )}
+            </Bone>
+          </section>
+        </Container>
+      </Section>
+    </>
   );
 }

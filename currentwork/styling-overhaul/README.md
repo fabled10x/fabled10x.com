@@ -101,7 +101,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 7.2 | `/episodes` + `/episodes/[slug]` editorial manuscript treatment                          | 7 - Page Surfaces              | M    | Complete |
 | 7.3 | `/cases` + `/cases/[slug]` editorial + spec-sheet sidebar                                | 7 - Page Surfaces              | M    | Complete |
 | 7.4 | `/build-log/*` Bone surfaces, Parchment inner panels                                     | 7 - Page Surfaces              | L    | Complete |
-| 7.5 | Storefront — `/products`, `/cohorts`, `/products/account` editorial reskin               | 7 - Page Surfaces              | M    | Planned |
+| 7.5 | Storefront — `/products`, `/cohorts`, `/products/account` editorial reskin               | 7 - Page Surfaces              | M    | Complete |
 | 7.6 | `/about`, `/login`, `/login/verify`, `not-found`, `error` quiet marble                   | 7 - Page Surfaces              | M    | Planned |
 | 8.1 | Logo SVG suite + favicon set                                                             | 8 - Asset Pipeline             | M    | Planned |
 | 8.2 | Dynamic `opengraph-image.tsx` root + per-route (episodes, cases)                         | 8 - Asset Pipeline             | L    | Planned |
