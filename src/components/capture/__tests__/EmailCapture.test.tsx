@@ -1,21 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const mockAction = vi.fn(async (_prev: unknown, formData: FormData) => {
-  const email = formData.get('email');
-  if (typeof email !== 'string' || !email.includes('@')) {
-    return { status: 'error' as const, message: 'Please enter a valid email address.' };
-  }
-  return { status: 'success' as const };
-});
-
-vi.mock('../actions', () => ({
-  captureEmail: (...args: Parameters<typeof mockAction>) => mockAction(...args),
-}));
-
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { EmailCapture } from '../EmailCapture';
 
@@ -26,257 +13,158 @@ const EMAIL_CAPTURE_SRC = readSource(EMAIL_CAPTURE_SOURCE);
 const GLOBALS_CSS = readSource('src/app/globals.css');
 const FORBIDDEN_SENTINEL_SRC = readSource('src/__tests__/brand/forbidden-patterns.test.ts');
 
-function emailInput(container: HTMLElement): HTMLInputElement {
-  const el = container.querySelector('input[name="email"]') as HTMLInputElement | null;
-  expect(el, 'email input not found').not.toBeNull();
-  return el!;
-}
-
-function sourceInput(container: HTMLElement): HTMLInputElement {
-  const el = container.querySelector('input[name="source"]') as HTMLInputElement | null;
-  expect(el, 'source hidden input not found').not.toBeNull();
-  return el!;
-}
-
-function formEl(container: HTMLElement): HTMLFormElement {
-  const el = container.querySelector('form') as HTMLFormElement | null;
-  expect(el, 'form element not found').not.toBeNull();
-  return el!;
-}
+const ENV_KEY = 'NEXT_PUBLIC_SUBSTACK_EMBED_URL';
+const EMBED_URL = 'https://fabled10x.substack.com/embed';
 
 function boneSurfaceRoot(container: HTMLElement): HTMLElement {
-  // The Bone wrapper is the outermost element in both idle/error and success states.
   const el = container.firstElementChild as HTMLElement | null;
   expect(el, 'Bone surface root not found').not.toBeNull();
   return el!;
 }
 
-describe('EmailCapture reskin (styling-overhaul-5.3)', () => {
+function iframeEl(container: HTMLElement): HTMLIFrameElement {
+  const el = container.querySelector('iframe') as HTMLIFrameElement | null;
+  expect(el, 'iframe not found').not.toBeNull();
+  return el!;
+}
+
+describe('EmailCapture — Substack embed (email-funnel-1)', () => {
+  const prev = process.env[ENV_KEY];
+
   beforeEach(() => {
-    mockAction.mockClear();
+    process.env[ENV_KEY] = EMBED_URL;
   });
 
-  // ─── Unit ──────────────────────────────────────────────────────────────
+  afterEach(() => {
+    if (prev === undefined) delete process.env[ENV_KEY];
+    else process.env[ENV_KEY] = prev;
+  });
 
-  it('unit_idle_renders_form_landmark', () => {
+  // ─── Unit: iframe rendering ────────────────────────────────────────────
+
+  it('unit_renders_iframe_with_substack_origin', () => {
     const { container } = render(<EmailCapture source="homepage-hero" />);
-    expect(screen.getByRole('form')).toBeInTheDocument();
-    expect(formEl(container)).toBeInTheDocument();
-    expect(screen.queryByText(/welcome to the library/i)).not.toBeInTheDocument();
+    const iframe = iframeEl(container);
+    expect(new URL(iframe.src).origin).toBe('https://fabled10x.substack.com');
+    expect(new URL(iframe.src).pathname).toBe('/embed');
   });
 
-  it('unit_source_hidden_input_present', () => {
+  it('unit_iframe_has_accessible_title', () => {
     const { container } = render(<EmailCapture source="homepage-hero" />);
-    const hidden = sourceInput(container);
-    expect(hidden.type).toBe('hidden');
-    expect(hidden.value).toBe('homepage-hero');
+    expect(iframeEl(container).title).toBe('Subscribe to fabled10x on Substack');
   });
 
-  it('unit_button_label_default_join_the_library', () => {
-    render(<EmailCapture source="test" />);
-    expect(screen.getByRole('button', { name: /join the library/i })).toBeInTheDocument();
+  it('unit_iframe_loading_lazy', () => {
+    const { container } = render(<EmailCapture source="homepage-hero" />);
+    expect(iframeEl(container).getAttribute('loading')).toBe('lazy');
   });
 
-  it('unit_button_label_override', () => {
-    render(<EmailCapture source="test" buttonLabel="Subscribe" />);
-    expect(screen.getByRole('button', { name: /subscribe/i })).toBeInTheDocument();
+  it('unit_iframe_source_dataset_propagated', () => {
+    const { container } = render(<EmailCapture source="case-pm-discovery" />);
+    const iframe = iframeEl(container);
+    expect(iframe.dataset.source).toBe('case-pm-discovery');
+    expect(iframe.dataset.pillar).toBe('business');
   });
 
-  it('unit_placeholder_default_you_at_somewhere_dev', () => {
-    const { container } = render(<EmailCapture source="test" />);
-    expect(emailInput(container).placeholder).toBe('you@somewhere.dev');
+  // ─── Unit: UTM params ──────────────────────────────────────────────────
+
+  it('unit_utm_campaign_pillar_delivery_for_episode_source', () => {
+    const { container } = render(<EmailCapture source="episode-claude-shipped-an-app" />);
+    const params = new URL(iframeEl(container).src).searchParams;
+    expect(params.get('utm_source')).toBe('fabled10x.com');
+    expect(params.get('utm_medium')).toBe('embed');
+    expect(params.get('utm_campaign')).toBe('pillar:delivery');
+    expect(params.get('utm_content')).toBe('episode-claude-shipped-an-app');
   });
 
-  it('unit_placeholder_override', () => {
-    const { container } = render(<EmailCapture source="test" placeholder="email@acme.dev" />);
-    expect(emailInput(container).placeholder).toBe('email@acme.dev');
+  it('unit_utm_campaign_pillar_business_for_case_source', () => {
+    const { container } = render(<EmailCapture source="case-party-masters" />);
+    const params = new URL(iframeEl(container).src).searchParams;
+    expect(params.get('utm_campaign')).toBe('pillar:business');
+    expect(params.get('utm_content')).toBe('case-party-masters');
   });
 
-  it('unit_email_input_attrs_type_email_required', () => {
-    const { container } = render(<EmailCapture source="test" />);
-    const email = emailInput(container);
-    expect(email.type).toBe('email');
-    expect(email.required).toBe(true);
+  it('unit_utm_campaign_pillar_delivery_for_homepage_hero', () => {
+    const { container } = render(<EmailCapture source="homepage-hero" />);
+    const params = new URL(iframeEl(container).src).searchParams;
+    expect(params.get('utm_campaign')).toBe('pillar:delivery');
+    expect(params.get('utm_content')).toBe('homepage-hero');
   });
 
-  it('unit_idle_form_wrapped_in_bone_surface', () => {
-    const { container } = render(<EmailCapture source="test" />);
+  // ─── Unit: surface ─────────────────────────────────────────────────────
+
+  it('unit_iframe_wrapped_in_bone_surface', () => {
+    const { container } = render(<EmailCapture source="homepage-hero" />);
     const root = boneSurfaceRoot(container);
     expect(root.className).toMatch(/bg-\(--color-bone\)/);
     expect(root.className).toMatch(/border-\(--edge-color-subtle\)/);
   });
 
-  it('unit_input_has_ink_underline_at_rest', () => {
-    const { container } = render(<EmailCapture source="test" />);
-    const email = emailInput(container);
-    expect(email.className).toMatch(/\bborder-0\b/);
-    expect(email.className).toMatch(/\bborder-b\b/);
-    expect(email.className).toMatch(/border-\(--color-ink\)/);
-  });
+  // ─── Fallback: env var unset ───────────────────────────────────────────
 
-  it('unit_input_has_oxblood_focus_underline', () => {
-    const { container } = render(<EmailCapture source="test" />);
-    const email = emailInput(container);
-    expect(email.className).toMatch(/focus:outline-none/);
-    expect(email.className).toMatch(/focus:border-\(--color-oxblood\)/);
-  });
-
-  it('unit_submit_is_brand_button_primary', () => {
-    render(<EmailCapture source="test" />);
-    const button = screen.getByRole('button');
-    // Button primitive default variant=primary → bg-(--color-ink) text-(--color-marble)
-    expect(button.className).toMatch(/bg-\(--color-ink\)/);
-    expect(button.className).toMatch(/text-\(--color-marble\)/);
-  });
-
-  it('unit_visible_label_text_email', () => {
-    const { container } = render(<EmailCapture source="test" />);
-    const labels = Array.from(container.querySelectorAll('label')) as HTMLLabelElement[];
-    // Find the label that is NOT sr-only and contains the word "Email"
-    const visible = labels.find(
-      l => !/\bsr-only\b/.test(l.className) && /email/i.test(l.textContent ?? ''),
-    );
-    expect(visible, 'visible (non-sr-only) Email label not found').toBeDefined();
-    // Must use the .label brand utility somewhere inside the label
-    expect(visible!.innerHTML).toMatch(/\blabel\b/);
-  });
-
-  // ─── Integration ───────────────────────────────────────────────────────
-
-  it('integration_action_receives_formdata_email_and_source', async () => {
-    const user = userEvent.setup();
+  it('unit_fallback_link_when_env_unset', () => {
+    delete process.env[ENV_KEY];
     const { container } = render(<EmailCapture source="homepage-hero" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await waitFor(() => expect(mockAction).toHaveBeenCalled());
-    const formData = mockAction.mock.calls[0][1] as FormData;
-    expect(formData.get('source')).toBe('homepage-hero');
-    expect(formData.get('email')).toBe('user@example.com');
+    expect(container.querySelector('iframe')).toBeNull();
+    const link = container.querySelector('a') as HTMLAnchorElement | null;
+    expect(link, 'fallback link not found').not.toBeNull();
+    expect(link!.href).toBe('https://substack.com/@fabled10x');
+    expect(link!.target).toBe('_blank');
+    expect(link!.rel).toMatch(/noopener/);
   });
 
-  it('integration_idle_to_success_transition_replaces_form', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await waitFor(() =>
-      expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument(),
-    );
-    expect(screen.queryByRole('form')).not.toBeInTheDocument();
-    // Success state still wrapped in a Bone surface
+  it('unit_fallback_wrapped_in_bone_surface', () => {
+    delete process.env[ENV_KEY];
+    const { container } = render(<EmailCapture source="homepage-hero" />);
     const root = boneSurfaceRoot(container);
     expect(root.className).toMatch(/bg-\(--color-bone\)/);
+    expect(root.className).toMatch(/border-\(--edge-color-subtle\)/);
   });
 
-  it('integration_error_state_renders_action_message', async () => {
-    mockAction.mockResolvedValueOnce({
-      status: 'error',
-      message: 'Custom error message from action',
-    });
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toMatch(/custom error message from action/i);
-    expect(alert.className).toMatch(/text-\(--color-oxblood\)/);
-    expect(alert.className).toMatch(/\bbody-3\b/);
-    // Form still visible
-    expect(screen.getByRole('form')).toBeInTheDocument();
-  });
+  // ─── A11y ──────────────────────────────────────────────────────────────
 
-  it('integration_pending_state_swaps_button_label_and_disables', async () => {
-    let resolveAction: (v: { status: 'success' }) => void = () => {};
-    mockAction.mockImplementationOnce(
-      () =>
-        new Promise<{ status: 'success' }>((resolve) => {
-          resolveAction = resolve;
-        }),
-    );
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" buttonLabel="Join now" />);
-    await user.type(emailInput(container), 'user@example.com');
-    const button = screen.getByRole('button') as HTMLButtonElement;
-    await user.click(button);
-    // While pending: label flips to Sending… and button disables
-    await waitFor(() => expect(button.disabled).toBe(true));
-    expect(button.textContent).toMatch(/sending/i);
-    expect(button.textContent).not.toMatch(/join now/i);
-    resolveAction({ status: 'success' });
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-  });
-
-  it('integration_success_state_renders_verdigris_check_glyph', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-    const glyph = container.querySelector('[aria-hidden="true"]') as HTMLElement | null;
-    expect(glyph, '✓ glyph element not found').not.toBeNull();
-    expect(glyph!.textContent).toBe('✓');
-    expect(glyph!.className).toMatch(/text-\(--color-verdigris\)/);
-  });
-
-  // ─── Accessibility ────────────────────────────────────────────────────
-
-  it('a11y_label_associated_with_email_input_via_for', () => {
+  it('a11y_iframe_has_title', () => {
     const { container } = render(<EmailCapture source="homepage-hero" />);
-    const email = emailInput(container);
-    // Either: a) htmlFor matches email.id, OR b) implicit association (label wraps input)
-    const labelFor = email.id
-      ? (container.querySelector(`label[for="${email.id}"]`) as HTMLLabelElement | null)
-      : null;
-    const implicit = email.closest('label');
-    expect(labelFor || implicit, 'no label associated with email input').toBeTruthy();
+    expect(iframeEl(container).title.length).toBeGreaterThan(0);
   });
 
-  it('a11y_form_landmark_present_in_idle', () => {
-    render(<EmailCapture source="test" />);
-    // getByRole('form') only works when the form has an accessible name (aria-label or aria-labelledby).
-    expect(screen.getByRole('form')).toBeInTheDocument();
+  it('a11y_fallback_link_is_descriptive', () => {
+    delete process.env[ENV_KEY];
+    const { container } = render(<EmailCapture source="homepage-hero" />);
+    const link = container.querySelector('a') as HTMLAnchorElement;
+    expect(link.textContent?.trim().length).toBeGreaterThan(0);
+    expect(link.rel).toMatch(/noopener/);
+    expect(link.target).toBe('_blank');
   });
 
-  it('a11y_error_message_has_role_alert', async () => {
-    mockAction.mockResolvedValueOnce({ status: 'error', message: 'Boom.' });
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    const alert = await screen.findByRole('alert');
-    expect(alert.tagName).toBe('P');
-    expect(alert.getAttribute('role')).toBe('alert');
+  // ─── Edge cases ────────────────────────────────────────────────────────
+
+  it('edge_long_source_string_propagated_to_utm_content', () => {
+    const longSource = 'case-some-very-long-slug-with-many-segments-2026';
+    const { container } = render(<EmailCapture source={longSource} />);
+    const params = new URL(iframeEl(container).src).searchParams;
+    expect(params.get('utm_content')).toBe(longSource);
+    expect(params.get('utm_campaign')).toBe('pillar:business');
   });
 
-  it('a11y_success_check_glyph_aria_hidden', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-    const glyph = container.querySelector('[aria-hidden="true"]');
-    expect(glyph).not.toBeNull();
-    expect(glyph?.textContent).toBe('✓');
+  it('edge_unknown_source_defaults_to_delivery_pillar', () => {
+    const { container } = render(<EmailCapture source="about-cta" />);
+    const params = new URL(iframeEl(container).src).searchParams;
+    expect(params.get('utm_campaign')).toBe('pillar:delivery');
   });
 
-  it('a11y_button_is_keyboard_focusable_and_tab_order', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    const email = emailInput(container);
-    const button = screen.getByRole('button') as HTMLButtonElement;
-    await user.tab();
-    // First tab can land on either the email input or the label-wrapping element;
-    // ensure we can tab through to the button.
-    let safety = 0;
-    while (document.activeElement !== button && safety < 5) {
-      await user.tab();
-      safety++;
-    }
-    expect(button).toHaveFocus();
-    expect(email.tabIndex).not.toBe(-1);
+  // ─── Infrastructure: source guards ─────────────────────────────────────
+
+  it('infra_no_resend_import', () => {
+    expect(EMAIL_CAPTURE_SRC).not.toMatch(/\bResend\b/);
+    expect(EMAIL_CAPTURE_SRC).not.toMatch(/from\s+['"]resend['"]/);
   });
 
-  // ─── Infrastructure ────────────────────────────────────────────────────
+  it('infra_no_server_action_imports', () => {
+    expect(EMAIL_CAPTURE_SRC).not.toMatch(/useActionState/);
+    expect(EMAIL_CAPTURE_SRC).not.toMatch(/from\s+['"]\.\/actions['"]/);
+    expect(EMAIL_CAPTURE_SRC).not.toMatch(/['"]use server['"]/);
+  });
 
   it('infra_no_placeholder_palette_names', () => {
     const forbidden: Array<[string, RegExp]> = [
@@ -315,10 +203,6 @@ describe('EmailCapture reskin (styling-overhaul-5.3)', () => {
   });
 
   it('infra_forbidden_pattern_sentinel_clean', () => {
-    // Cross-cutting forbidden-pattern sentinel scans src/ excluding SKIP_PATHS.
-    // EmailCapture.tsx must NOT be in SKIP_PATHS post-reskin — the regression
-    // guard relies on this to catch future drift back to placeholder palette.
-    // [^=]* (not [^[]*) — type annotation `: string[]` contains `[`.
     const skipBlock = FORBIDDEN_SENTINEL_SRC.match(/SKIP_PATHS[^=]*=\s*\[([\s\S]*?)\];/);
     expect(skipBlock, 'SKIP_PATHS not found in sentinel').not.toBeNull();
     const body = skipBlock?.[1] ?? '';
@@ -330,196 +214,23 @@ describe('EmailCapture reskin (styling-overhaul-5.3)', () => {
     );
   });
 
+  it('infra_brand_bone_imported_from_brand_path', () => {
+    const importsBone =
+      /import\s*\{[^}]*\bBone\b[^}]*\}\s*from\s*['"]@\/components\/brand(?:\/Bone)?['"]/.test(
+        EMAIL_CAPTURE_SRC,
+      );
+    expect(importsBone, 'Bone not imported from @/components/brand').toBe(true);
+  });
+
   it('infra_tokens_resolve_in_globals_css', () => {
     const tokens = [
       '--color-bone',
-      '--color-ink',
-      '--color-oxblood',
-      '--color-verdigris',
-      '--color-marble',
-      '--color-muted',
       '--edge-color-subtle',
-      '--space-1',
-      '--space-2',
-      '--space-3',
       '--space-5',
       '--pair-text-on-bone',
     ];
     for (const t of tokens) {
       expect(GLOBALS_CSS, `token ${t} not declared in globals.css`).toContain(t);
     }
-    // .label utility declaration present
-    expect(GLOBALS_CSS).toMatch(/\.label\s*\{/);
-  });
-
-  it('infra_use_client_directive_present', () => {
-    const firstNonEmpty = EMAIL_CAPTURE_SRC.split('\n').find((l) => l.trim().length > 0) ?? '';
-    expect(firstNonEmpty).toMatch(/['"]use client['"]/);
-  });
-
-  it('infra_brand_primitives_imported_from_brand_barrel', () => {
-    // Source-grep: must import Bone and Button from a brand-located path
-    // (either '@/components/brand' barrel or the individual files under that dir).
-    const importsBone =
-      /import\s*\{[^}]*\bBone\b[^}]*\}\s*from\s*['"]@\/components\/brand(?:\/Bone)?['"]/.test(
-        EMAIL_CAPTURE_SRC,
-      );
-    expect(importsBone, 'Bone not imported from @/components/brand').toBe(true);
-    const importsButton =
-      /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"]@\/components\/brand(?:\/Button)?['"]/.test(
-        EMAIL_CAPTURE_SRC,
-      );
-    expect(importsButton, 'Button not imported from @/components/brand').toBe(true);
-  });
-
-  // ─── Edge cases ────────────────────────────────────────────────────────
-
-  it('edge_long_source_string_propagated_to_hidden_input', () => {
-    const longSource = 'case-some-very-long-slug-with-many-segments-2026';
-    const { container } = render(<EmailCapture source={longSource} />);
-    expect(sourceInput(container).value).toBe(longSource);
-  });
-
-  it('edge_special_chars_in_source_not_html_escaped_into_attribute', () => {
-    const trickySource = 'episode-a&b"c';
-    const { container } = render(<EmailCapture source={trickySource} />);
-    expect(sourceInput(container).value).toBe(trickySource);
-  });
-
-  it('edge_empty_button_label_string_renders_empty_button', () => {
-    render(<EmailCapture source="test" buttonLabel="" />);
-    // Button still exists in the DOM; idle button label is the empty string
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBeGreaterThan(0);
-    const submit = buttons.find((b) => (b as HTMLButtonElement).type === 'submit') as HTMLButtonElement | undefined;
-    expect(submit, 'submit button not found').toBeDefined();
-    // Idle state (not pending) → empty label
-    expect(submit!.textContent).toBe('');
-  });
-
-  it('edge_pending_overrides_buttonLabel', async () => {
-    let resolveAction: (v: { status: 'success' }) => void = () => {};
-    mockAction.mockImplementationOnce(
-      () =>
-        new Promise<{ status: 'success' }>((resolve) => {
-          resolveAction = resolve;
-        }),
-    );
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" buttonLabel="Custom Label" />);
-    await user.type(emailInput(container), 'user@example.com');
-    const button = screen.getByRole('button') as HTMLButtonElement;
-    await user.click(button);
-    await waitFor(() => expect(button.disabled).toBe(true));
-    expect(button.textContent).toMatch(/sending/i);
-    expect(button.textContent).not.toMatch(/custom label/i);
-    resolveAction({ status: 'success' });
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-  });
-
-  // ─── Error recovery ────────────────────────────────────────────────────
-
-  it('err_double_submit_prevented_by_pending_disabled', async () => {
-    let resolveAction: (v: { status: 'success' }) => void = () => {};
-    mockAction.mockImplementationOnce(
-      () =>
-        new Promise<{ status: 'success' }>((resolve) => {
-          resolveAction = resolve;
-        }),
-    );
-    const user = userEvent.setup();
-    const { container } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(container), 'user@example.com');
-    const button = screen.getByRole('button') as HTMLButtonElement;
-    await user.click(button);
-    await user.click(button);
-    await user.click(button);
-    expect(button.disabled).toBe(true);
-    expect(mockAction).toHaveBeenCalledTimes(1);
-    resolveAction({ status: 'success' });
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-  });
-
-  it('err_render_no_console_errors_on_mount_unmount', async () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    // Idle
-    const { unmount: u1 } = render(<EmailCapture source="test" />);
-    u1();
-
-    // Error
-    mockAction.mockResolvedValueOnce({ status: 'error', message: 'X' });
-    const user = userEvent.setup();
-    const { container: c2, unmount: u2 } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(c2), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await screen.findByRole('alert');
-    u2();
-
-    // Success
-    const { container: c3, unmount: u3 } = render(<EmailCapture source="test" />);
-    await user.type(emailInput(c3), 'user@example.com');
-    await user.click(screen.getByRole('button'));
-    await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-    u3();
-
-    expect(errSpy).not.toHaveBeenCalled();
-    expect(warnSpy).not.toHaveBeenCalled();
-    errSpy.mockRestore();
-    warnSpy.mockRestore();
-  });
-
-  // ─── Data integrity ───────────────────────────────────────────────────
-
-  it('data_state_to_surface_pairing_invariant', async () => {
-    // Idle: Bone surface + --edge-color-subtle border
-    {
-      const { container, unmount } = render(<EmailCapture source="test" />);
-      const root = boneSurfaceRoot(container);
-      expect(root.className, 'idle bg').toMatch(/bg-\(--color-bone\)/);
-      expect(root.className, 'idle border').toMatch(/border-\(--edge-color-subtle\)/);
-      unmount();
-    }
-    // Error: Bone surface preserved; error <p> has oxblood text
-    {
-      mockAction.mockResolvedValueOnce({ status: 'error', message: 'E' });
-      const user = userEvent.setup();
-      const { container, unmount } = render(<EmailCapture source="test" />);
-      await user.type(emailInput(container), 'user@example.com');
-      await user.click(screen.getByRole('button'));
-      const alert = await screen.findByRole('alert');
-      const root = boneSurfaceRoot(container);
-      expect(root.className, 'error bg').toMatch(/bg-\(--color-bone\)/);
-      expect(alert.className, 'error message color').toMatch(/text-\(--color-oxblood\)/);
-      unmount();
-    }
-    // Success: Bone surface + verdigris ✓
-    {
-      const user = userEvent.setup();
-      const { container, unmount } = render(<EmailCapture source="test" />);
-      await user.type(emailInput(container), 'user@example.com');
-      await user.click(screen.getByRole('button'));
-      await waitFor(() => expect(screen.getByText(/welcome to the library/i)).toBeInTheDocument());
-      const root = boneSurfaceRoot(container);
-      expect(root.className, 'success bg').toMatch(/bg-\(--color-bone\)/);
-      const glyph = container.querySelector('[aria-hidden="true"]') as HTMLElement;
-      expect(glyph.className, 'success glyph color').toMatch(/text-\(--color-verdigris\)/);
-      unmount();
-    }
-  });
-
-  it('data_button_label_default_constants_match_planning_doc', () => {
-    // Source-grep: exact string literals from planning doc § 5.3 plan template.
-    expect(EMAIL_CAPTURE_SRC, "default placeholder string drifted from planning doc").toContain(
-      'you@somewhere.dev',
-    );
-    expect(EMAIL_CAPTURE_SRC, "default buttonLabel string drifted from planning doc").toContain(
-      'Join the library',
-    );
-    // Success-state copy from planning doc
-    expect(EMAIL_CAPTURE_SRC, "success headline copy drifted").toContain(
-      'Welcome to the library.',
-    );
   });
 });

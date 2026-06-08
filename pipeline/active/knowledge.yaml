@@ -6025,3 +6025,26 @@ styling-overhaul-7.3:
     - 'formatEngagement helper is inlined at top of src/app/cases/[slug]/page.tsx. Currently the ONLY consumer of the "start → end ?? Ongoing" pattern. Deferred extraction until a second consumer surfaces (likely so-7.5 storefront if products carry shipping date ranges, or future cohort-detail engagement fields). Re-evaluate at so-7.5 discovery.'
     - 'Cross-cutting brand forbidden-patterns sentinel (so-3.3) does NOT trip on regex literals embedded in test source — same outcome as so-7.1/7.2 episode tests. Test files do not need to be added to SKIP_PATHS for this reason. Empirically verified by running the sentinel suite (28/28 pass) before commit.'
   reusable_utilities: []
+  email-funnel-1.1:
+    completed_at: '2026-06-07'
+    posture: scope-bundle
+    bundled_sections: [email-funnel-1.1, email-funnel-1.2, email-funnel-1.3, email-funnel-1.4]
+    patterns_established:
+      - description: Substack iframe wrapper as RSC over Bone surface
+        file: src/components/capture/EmailCapture.tsx
+        reusable_for: Any third-party embed swap (Calendly, Typeform, Stripe Payment Element static) that wants brand-consistent chrome plus UTM attribution
+      - description: Pure source-prefix -> ContentPillar helper
+        file: src/components/capture/sourceToPillar.ts
+        reusable_for: Any analytics dimension that needs source-shape inference without frontmatter lookup
+    gotchas:
+      - "Strict 1.1 (delete actions.ts alone) would break the build because EmailCapture.tsx imports ./actions. Pipeline bundled 1.1+1.2+1.3+1.4 via AskUserQuestion so gates stayed clean. Future pure-deletion sections that have known consumers should bundle the consumer rewrite from the start, not split."
+      - "NEXT_PUBLIC_SUBSTACK_EMBED_URL is intentionally public-prefixed (build-time inline). Operator must add the value to .env.local before the iframe renders; otherwise the fallback link to substack.com/@fabled10x ships."
+      - "RESEND_AUDIENCE_ID was read by the deleted actions.ts but was never declared in .env.example (orphan env var). Operator should remove it from .env.local and deploy secrets after this ships. NOT a code-side concern."
+    reusable_utilities:
+      - function: sourceToPillar
+        file: src/components/capture/sourceToPillar.ts
+        purpose: Maps capture source prop to ContentPillar for utm_campaign attribution; safe-defaults to delivery for unknown sources
+    deferred_followups:
+      - "Section 1.5 (.env.example update) — add NEXT_PUBLIC_SUBSTACK_EMBED_URL after operator confirms publication URL"
+      - "Section 1.6 (docs/future-jobs.md §4 rewrite) — replace Resend-funnel prose with Substack-embed scope; sizing M/L -> S; alias ef noted"
+      - "Operator migration: export Resend audience as CSV -> import to Substack, OR email existing subscribers asking them to re-subscribe. Out of TDD scope."

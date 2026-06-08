@@ -1,10 +1,10 @@
 session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
-  current_phase: styling-overhaul
-  current_section: styling-overhaul-7.4
+  current_phase: email-funnel
+  current_section: email-funnel-1.5
   current_agent: pending
-  current_stage: styling-overhaul-7.3-complete
+  current_stage: email-funnel-1.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
@@ -105,6 +105,84 @@ completed_sections:
       (Storefront reskin), so-7.6 (About/auth/error quiet marble) can all
       proceed in parallel. so-7.4 is the canonical next so section by
       numeric order.
+  - id: email-funnel-1.1
+    name: Substack swap (bundled 1.1+1.2+1.3+1.4)
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add Substack capture swap with 28 tests (email-funnel-1.1)
+    tests: 28
+    files_new: 2
+    files_modified: 2
+    files_deleted: 2
+    pushed: false
+    posture: scope-bundle
+    notes: |
+      First feature of email-funnel job. Supersedes wf-4.1 Resend server-action
+      capture with a Substack embed iframe. Per AskUserQuestion 2026-06-07,
+      sections 1.1+1.2+1.3+1.4 bundled into one atomic ship: strict 1.1 (delete
+      actions.ts alone) would have broken the build because EmailCapture.tsx
+      imports ./actions. Bundling kept the gates clean.
+
+      NEW src/components/capture/sourceToPillar.ts — 8-line pure function:
+      episode-* -> delivery, case-* -> business, homepage-hero -> delivery,
+      default -> delivery. Imports ContentPillar from @/content/schemas/content-
+      pillar (no inline redefinition).
+
+      REPLACED src/components/capture/EmailCapture.tsx — 55-line RSC (no
+      use-client) wrapping Substack embed iframe in Bone edge=subtle p-(--space-5).
+      UTM params: utm_source=fabled10x.com, utm_medium=embed,
+      utm_campaign=pillar:{pillar}, utm_content={source}. iframe title=Subscribe
+      to fabled10x on Substack, loading=lazy, className=block w-full
+      min-h-[150px] bg-(--color-bone) border-0. Fallback (env unset): anchor
+      to https://substack.com/@fabled10x with target=_blank rel=noopener,
+      also wrapped in Bone. Drops buttonLabel and placeholder props (no caller
+      passes them).
+
+      DELETED src/components/capture/actions.ts (captureEmail server action;
+      RESEND_API_KEY plus RESEND_AUDIENCE_ID consumer) and its test file. The
+      resend package stays installed — still consumed by sa (storefront-auth)
+      purchase confirmation and cohort-enrollment waitlist.
+
+      REWRITTEN EmailCapture.test.tsx — 23 tests: 10 unit (iframe origin, title,
+      lazy, dataset, UTM x3, Bone surface, fallback link + Bone), 2 a11y, 2 edge
+      (long source string, unknown -> delivery), 9 infra (no Resend import, no
+      server-action imports, no placeholder palette, no rounded, no shadow, no
+      gradient, sentinel SKIP_PATHS clean, Bone import discipline, tokens resolve
+      in globals.css). NEW sourceToPillar.test.ts — 5 unit tests (each prefix
+      branch + CONTENT_PILLARS membership).
+
+      Categories N/A: integration (covered by existing page tests), security/
+      contract/permission (STRIDE n/a section-level — no server endpoints),
+      error_recovery (no async failure modes; env-unset fallback is a deliberate
+      degradation), data_integrity (no persistence).
+
+      Refactor produced ZERO source-code changes — 24th consecutive zero-source-
+      change refactor section. Type safety: 0 any/as/@ts-ignore. Cross-section
+      DRY: sourceToPillar is the only source->pillar mapping in src/;
+      ContentPillar type already centralized in @/content/schemas.
+
+      Audits clean: 0 ESLint warnings, 0 tsc errors, build pass (53 routes
+      prerender). Full suite green-end: 2187 passed / 60 skipped / 0 failed
+      (vs preflight 2211 / 60; net -24 from removed actions tests + replaced
+      EmailCapture suite; baseline skipped unchanged).
+
+      Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+      provision_test_db; slot at $WORKTREES/section-email-funnel-1.1 on branch
+      section/email-funnel-1.1 from origin/main 1cb2d4a). PWTC N/A (fabled10x
+      has no docker/db infra). node_modules bind-mounted; no env files in main
+      to symlink (static site).
+
+      Operator action items (out of TDD scope): (1) confirm publication URL
+      at fabled10x.substack.com/embed exists; (2) migrate existing Resend
+      audience via CSV export -> Substack import OR ask subscribers to
+      re-subscribe; (3) create Substack sections per pillar (delivery/workflow/
+      business/future); (4) drop RESEND_AUDIENCE_ID from .env.local + deploy
+      secrets (now-dead env var; never was in .env.example).
+
+      Next: email-funnel-1.5 (.env.example NEXT_PUBLIC_SUBSTACK_EMBED_URL row)
+      and email-funnel-1.6 (docs/future-jobs.md §4 rewrite). Both S-sized and
+      independent of the code bundle that shipped here. Also outstanding:
+      styling-overhaul-7.3 onward (was current_section before this run).
   - id: styling-overhaul-7.2
     name: Episodes index + detail
     completed_at: '2026-06-07'

@@ -1,79 +1,54 @@
-'use client';
-
-import { useActionState } from 'react';
-
 import { Bone } from '@/components/brand/Bone';
-import { Button } from '@/components/brand/Button';
 
-import { captureEmail, type CaptureState } from './actions';
-
-const initialState: CaptureState = { status: 'idle' };
+import { sourceToPillar } from './sourceToPillar';
 
 interface EmailCaptureProps {
   source: string;
-  placeholder?: string;
-  buttonLabel?: string;
 }
 
-export function EmailCapture({
-  source,
-  placeholder = 'you@somewhere.dev',
-  buttonLabel = 'Join the library',
-}: EmailCaptureProps) {
-  const [state, formAction, pending] = useActionState(captureEmail, initialState);
+const PROFILE_URL = 'https://substack.com/@fabled10x';
 
-  if (state.status === 'success') {
+export function EmailCapture({ source }: EmailCaptureProps) {
+  const baseUrl = process.env.NEXT_PUBLIC_SUBSTACK_EMBED_URL;
+  const pillar = sourceToPillar(source);
+
+  if (!baseUrl) {
     return (
-      <Bone edge="subtle" className="p-(--space-5) flex items-center gap-(--space-3)">
-        <span aria-hidden="true" className="text-(--color-verdigris) text-2xl">
-          ✓
-        </span>
-        <div>
-          <p className="label">Welcome to the library.</p>
-          <p className="body-3 mt-(--space-1)">
-            Episode notifications begin with the next release.
-          </p>
-        </div>
+      <Bone edge="subtle" className="p-(--space-5)">
+        <p className="body-3">
+          Email signups live on{' '}
+          <a
+            className="underline"
+            href={PROFILE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-source={source}
+            data-pillar={pillar}
+          >
+            Substack
+          </a>
+          .
+        </p>
       </Bone>
     );
   }
 
-  const inputId = `email-${source}`;
+  const url = new URL(baseUrl);
+  url.searchParams.set('utm_source', 'fabled10x.com');
+  url.searchParams.set('utm_medium', 'embed');
+  url.searchParams.set('utm_campaign', `pillar:${pillar}`);
+  url.searchParams.set('utm_content', source);
 
   return (
     <Bone edge="subtle" className="p-(--space-5)">
-      <form
-        action={formAction}
-        aria-label="Email capture"
-        className="flex flex-col gap-(--space-3) md:flex-row md:items-end"
-      >
-        <input type="hidden" name="source" value={source} />
-        <label
-          htmlFor={inputId}
-          className="flex-1 flex flex-col gap-(--space-1)"
-        >
-          <span className="label">Email</span>
-          <input
-            id={inputId}
-            type="email"
-            name="email"
-            required
-            placeholder={placeholder}
-            className="bg-transparent border-0 border-b border-(--color-ink) focus:outline-none focus:border-(--color-oxblood) py-(--space-2) body-1 placeholder:text-(--color-muted)"
-          />
-        </label>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Sending…' : buttonLabel}
-        </Button>
-      </form>
-      {state.status === 'error' && (
-        <p
-          role="alert"
-          className="body-3 mt-(--space-2) text-(--color-oxblood)"
-        >
-          {state.message}
-        </p>
-      )}
+      <iframe
+        src={url.toString()}
+        title="Subscribe to fabled10x on Substack"
+        loading="lazy"
+        className="block w-full min-h-[150px] bg-(--color-bone) border-0"
+        data-source={source}
+        data-pillar={pillar}
+      />
     </Bone>
   );
 }
