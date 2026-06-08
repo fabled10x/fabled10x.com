@@ -1,10 +1,10 @@
 session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
-  current_phase: email-funnel
-  current_section: email-funnel-1.6
+  current_phase: build-log-overhaul
+  current_section: build-log-overhaul-1.2
   current_agent: pending
-  current_stage: email-funnel-1.5-complete
+  current_stage: build-log-overhaul-1.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
@@ -21,76 +21,137 @@ completed_sections:
     files_modified: 2
     pushed: false
     posture: zero-source-change-implementation
-    notes: |
-      Fifth (numerically) section of email-funnel job — pure documentation
+    notes: 'Fifth (numerically) section of email-funnel job — pure documentation
+
       section adding the NEXT_PUBLIC_SUBSTACK_EMBED_URL row to .env.example so
+
       new contributors know the value EmailCapture.tsx consumes (already
+
       shipped in ef-1.1 bundle). Two appended lines: per-source comment header
-      '# Substack embed (email-funnel — supersedes self-hosted Resend funnel)'
-      + 'NEXT_PUBLIC_SUBSTACK_EMBED_URL=https://fabled10x.substack.com/embed'.
+
+      ''# Substack embed (email-funnel — supersedes self-hosted Resend funnel)''
+
+      + ''NEXT_PUBLIC_SUBSTACK_EMBED_URL=https://fabled10x.substack.com/embed''.
+
       Mirrors cohort-enrollment-2.2 / storefront-auth-2.x per-source-section
+
       header convention used by Database / Auth.js / Stripe / Cohort enrollment
+
       blocks.
 
+
       5 new it() blocks appended to src/__tests__/env-example.test.ts within
-      the existing describe('.env.example safety') block: 1 security
+
+      the existing describe(''.env.example safety'') block: 1 security
+
       (sec_info_disclosure_env_example_substack_url_is_public_placeholder —
+
       URL shape is bare public embed URL, no tokens / no query params), 3
+
       infrastructure (infra_env_example_documents_substack_embed_url presence,
+
       infra_env_example_substack_section_header_present header-precedes-var
+
       ordering, infra_env_example_preserves_resend_and_cohort_vars preservation
+
       pin), 1 edge_case (edge_input_substack_embed_url_not_in_empty_secrets_
-      list — meta self-grep against the test file's own emptyExpected[] runtime
+
+      list — meta self-grep against the test file''s own emptyExpected[] runtime
+
       list to prevent future contributor from accidentally policing the URL
+
       var as if it were a secret).
 
+
       Hybrid red posture extended to pure-config section. At red-start: 4
+
       failing (require the new var/header to be present) + 1 passing
+
       (preservation pin already true on origin/main). At green-end: all 5
+
       passing. Refactor produced ZERO source-code changes — 25th consecutive
+
       zero-source-change refactor section. Within-section DRY: each test is
+
       a distinct pin of a distinct property; no duplication. Cross-section
+
       DRY: env-example.test.ts is the unique env-file assertion site repo-
+
       wide; no extraction needed.
 
+
       Categories explicitly N/A per Discovery (6 of 10): unit, integration,
+
       accessibility, error_recovery, data_integrity, contract, permission.
+
       Justifications stored in test-cases.yaml#not_applicable.
 
+
       Audits clean: 0 ESLint warnings, 0 tsc errors, npm run build pass (53
+
       routes prerender). Full suite green-end: 2213 passed | 60 skipped | 0
+
       failed (vs preflight 2208 | 60; net +5 = exactly the 5 new tests;
+
       baseline skipped unchanged).
 
+
       Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+
       provision_test_db; slot at $WORKTREES/section-email-funnel-1.5 on
+
       branch section/email-funnel-1.5 from origin/main 601ae42 ef-1.1).
+
       PWTC N/A (fabled10x has no docker/db infra). Env-symlink loop fell
+
       through silently — no .env / .env.local / .env.db in main (static
+
       site). node_modules bind-mounted from main.
 
+
       Knowledge.yaml: appended top-level email-funnel-1.5 entry capturing the
+
       .env.example documentation discipline pattern, public-placeholder URL
+
       discipline (NOT in emptyExpected list), env-example.test.ts singularity
+
       gotcha, and the meta-self-grep regression-guard pattern. Note logged:
-      email-funnel-1.1's entry was nested under styling-overhaul-7.3 by
+
+      email-funnel-1.1''s entry was nested under styling-overhaul-7.3 by
+
       mistake in the prior session — left alone per section-scoped rule.
 
+
       Operator action items (carried forward from ef-1.1, still outstanding):
+
       (1) confirm fabled10x.substack.com/embed exists OR create the
+
       publication; (2) populate NEXT_PUBLIC_SUBSTACK_EMBED_URL in .env.local
+
       with the real URL; (3) migrate existing Resend audience via CSV
+
       export → Substack import; (4) create Substack sections per pillar;
+
       (5) drop RESEND_AUDIENCE_ID from .env.local + deploy secrets.
 
+
       Blocker cleared: email-funnel job is now 5/6 features shipped
+
       (1.1-1.4 bundled into ef-1.1; 1.5 here). Only ef-1.6 (docs/future-
+
       jobs.md §4 rewrite — replace Resend-funnel prose with Substack-embed
+
       scope; sizing M/L -> S; alias ef noted) remains. Independent S-sized
+
       section, no code surface. Also outstanding: styling-overhaul Phase
+
       7 (Page Surfaces) is 3/6 — so-7.4 (Build-log surfaces), so-7.5
+
       (Storefront reskin), so-7.6 (About/auth/error quiet marble) can all
+
       proceed in parallel with ef-1.6.
+
+      '
   - id: styling-overhaul-7.3
     name: Cases index + detail
     completed_at: '2026-06-07'
@@ -100,91 +161,166 @@ completed_sections:
     files_new: 0
     files_modified: 4
     pushed: false
-    notes: |
-      Third feature of styling-overhaul Phase 7 (Page Surfaces). Both /cases
+    notes: 'Third feature of styling-overhaul Phase 7 (Page Surfaces). Both /cases
+
       index + /cases/[slug] detail reskinned onto brand primitives, mirroring
+
       the so-7.2 episode pattern with the accent-vocabulary differential
+
       (episodes ask = "?", cases close = ".") and the cases-specific
+
       spec-sheet sidebar.
 
+
       Index: Marble + Section rhythm=md + Container (default width=layout);
+
       .label "Field Notes" kicker + .display-1 "Case Studies" h1 + .body-1
+
       muted subtitle; <ul grid-cols-1 md:grid-cols-2 gap-(--space-4)> of
+
       <EditorialCard tag={client} headline={title} subtitle={summary}
+
       accent="." href=/cases/{slug} footer=<span className="label">
+
       {CASE_STATUS_LABELS[status]}</span>>.
 
+
       Detail: Marble + Section rhythm=lg + Container as="article" width=
+
       "prose"; .label header "{CASE_STATUS_LABELS[status]} · {client}";
+
       <h1 className="display-1"> wrapping <DropAccent glyph="." size="large">;
+
       .body-1 summary; spec-sheet <aside><dl grid-cols-1 md:grid-cols-3
+
       gap-(--space-4)> with Client / Engagement / Status (.label dt + .body-2
+
       dd; Engagement renders "startedAt → shippedAt" or "startedAt → Ongoing"
+
       or "Ongoing" via inlined formatEngagement helper). Preserved problem /
+
       Deliverables / Outcome h2 sections (rewritten as .display-3 with
+
       border-t border-(--edge-color) section breaks); MDX <Component/> inside
+
       build-log-prose with border-t separator; preserved related-episodes
+
       link section (oxblood underline), LllCrosslinks mount, terminal
+
       EmailCapture with source=`case-{slug}` per established pattern,
+
       JSON-LD CreativeWork (with creator Organization + about=client),
+
       generateMetadata title/desc/og/twitter, generateStaticParams,
+
       dynamicParams=false, notFound() on missing slug.
 
+
       Hybrid red posture (so-5.3/7.1/7.2 precedent) — 66 tests = 28 index +
+
       38 detail. At red-start: 39 PASSED preserving prior behavior pins
+
       (loader mocks, problem/deliverables/outcome h2 landmarks, JSON-LD
+
       CreativeWork shape, generateMetadata title/desc/og/twitter,
+
       generateStaticParams one-per-slug, dynamicParams false, notFound on
+
       missing slug, related-episode filter, EmailCapture source format,
+
       LllCrosslinks mount); 27 FAILED requiring brand composition (Marble
+
       surface, Section rhythm, .label/.display-1/.body-1 utilities,
+
       EditorialCard composition, DropAccent "." glyph, spec-sheet
+
       <aside><dl>, source-level banned-token sweep). All 27 passed at
+
       green-end; 39 preserved tests continued passing.
 
+
       Refactor produced ZERO source-code changes — 24th consecutive zero-
+
       source-change refactor section (so-1.1/1.2/1.3, ce-2.2/1.3, bpd-2.3,
+
       ce-2.1/3.1, so-2.1/2.2/2.3/2.4, ce-4.3, so-3.2/4.1/4.4/5.1/5.2/5.3/
+
       5.4, so-6.1/6.3/6.2/4.2/6.4/7.1/7.2, now 7.3). Within-section DRY:
+
       formatEngagement / formatIsoDate inlined per minimal-implementation
+
       principle. Cross-section DRY: formatEngagement is the ONLY consumer
+
       site of "start → end ?? Ongoing" pattern — premature extraction
+
       avoided; flagged in knowledge.yaml for re-evaluation at so-7.5
+
       (storefront) if a second consumer surfaces. toRoman from @/lib/format/
+
       roman explicitly NOT used here per planning doc §7.2 directive
-      ("cases probably don't" want Roman numerals).
+
+      ("cases probably don''t" want Roman numerals).
+
 
       Status surface uses CASE_STATUS_LABELS lookup at TWO sites (index
+
       EditorialCard footer + detail spec-sheet Status dd). Single source of
+
       truth — neither site re-implements the enum→label mapping.
 
+
       All audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint
+
       warnings, 0 tsc errors, production build pass (52 routes prerender
+
       including /cases static + /cases/[slug] SSG one entry party-masters).
+
       Full suite at green-end: 2232 passed | 60 skipped | 0 failed (+21 net
+
       vs 2271 preflight baseline; the +66 new tests minus 45 retired tests
+
       from the two REWRITTEN files; 60 skipped baseline unchanged).
 
+
       Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+
       provision_test_db; slot at $WORKTREES/section-styling-overhaul-7.3 on
+
       branch section/styling-overhaul-7.3 from origin/main 1cb2d4a). PWTC
+
       N/A (fabled10x has no docker/db infra). Env-symlink loop fell through
+
       silently — no .env / .env.local / .env.db in main (static site).
+
       node_modules bind-mounted from main.
 
+
       Source-grep sentinels embedded in both new test files lock the 21
+
       banned placeholder utility tokens out of future edits AND assert
+
       positive adoption of .label / .display-1 / .body-1 / DropAccent and
+
       the brand primitive imports. Cross-cutting so-3.3 forbidden-pattern
+
       sentinel stays green on both reskinned files (regex literals in test
-      sources don't trip it — same precedent as so-7.1/7.2 episode tests).
+
+      sources don''t trip it — same precedent as so-7.1/7.2 episode tests).
+
 
       Blocker cleared: styling-overhaul Phase 7 (Page Surfaces) is now
+
       3/6 complete (7.1 Homepage hero + 7.2 Episodes + 7.3 Cases). so-7.4
+
       (Build-log surfaces — Bone + Parchment inner panels), so-7.5
+
       (Storefront reskin), so-7.6 (About/auth/error quiet marble) can all
+
       proceed in parallel. so-7.4 is the canonical next so section by
+
       numeric order.
+
+      '
   - id: email-funnel-1.1
     name: Substack swap (bundled 1.1+1.2+1.3+1.4)
     completed_at: '2026-06-07'
@@ -196,73 +332,129 @@ completed_sections:
     files_deleted: 2
     pushed: false
     posture: scope-bundle
-    notes: |
-      First feature of email-funnel job. Supersedes wf-4.1 Resend server-action
+    notes: 'First feature of email-funnel job. Supersedes wf-4.1 Resend server-action
+
       capture with a Substack embed iframe. Per AskUserQuestion 2026-06-07,
+
       sections 1.1+1.2+1.3+1.4 bundled into one atomic ship: strict 1.1 (delete
+
       actions.ts alone) would have broken the build because EmailCapture.tsx
+
       imports ./actions. Bundling kept the gates clean.
 
+
       NEW src/components/capture/sourceToPillar.ts — 8-line pure function:
+
       episode-* -> delivery, case-* -> business, homepage-hero -> delivery,
+
       default -> delivery. Imports ContentPillar from @/content/schemas/content-
+
       pillar (no inline redefinition).
 
+
       REPLACED src/components/capture/EmailCapture.tsx — 55-line RSC (no
+
       use-client) wrapping Substack embed iframe in Bone edge=subtle p-(--space-5).
+
       UTM params: utm_source=fabled10x.com, utm_medium=embed,
+
       utm_campaign=pillar:{pillar}, utm_content={source}. iframe title=Subscribe
+
       to fabled10x on Substack, loading=lazy, className=block w-full
+
       min-h-[150px] bg-(--color-bone) border-0. Fallback (env unset): anchor
+
       to https://substack.com/@fabled10x with target=_blank rel=noopener,
+
       also wrapped in Bone. Drops buttonLabel and placeholder props (no caller
+
       passes them).
 
+
       DELETED src/components/capture/actions.ts (captureEmail server action;
+
       RESEND_API_KEY plus RESEND_AUDIENCE_ID consumer) and its test file. The
+
       resend package stays installed — still consumed by sa (storefront-auth)
+
       purchase confirmation and cohort-enrollment waitlist.
 
+
       REWRITTEN EmailCapture.test.tsx — 23 tests: 10 unit (iframe origin, title,
+
       lazy, dataset, UTM x3, Bone surface, fallback link + Bone), 2 a11y, 2 edge
+
       (long source string, unknown -> delivery), 9 infra (no Resend import, no
+
       server-action imports, no placeholder palette, no rounded, no shadow, no
+
       gradient, sentinel SKIP_PATHS clean, Bone import discipline, tokens resolve
+
       in globals.css). NEW sourceToPillar.test.ts — 5 unit tests (each prefix
+
       branch + CONTENT_PILLARS membership).
 
+
       Categories N/A: integration (covered by existing page tests), security/
+
       contract/permission (STRIDE n/a section-level — no server endpoints),
+
       error_recovery (no async failure modes; env-unset fallback is a deliberate
+
       degradation), data_integrity (no persistence).
 
+
       Refactor produced ZERO source-code changes — 24th consecutive zero-source-
+
       change refactor section. Type safety: 0 any/as/@ts-ignore. Cross-section
+
       DRY: sourceToPillar is the only source->pillar mapping in src/;
+
       ContentPillar type already centralized in @/content/schemas.
 
+
       Audits clean: 0 ESLint warnings, 0 tsc errors, build pass (53 routes
+
       prerender). Full suite green-end: 2187 passed / 60 skipped / 0 failed
+
       (vs preflight 2211 / 60; net -24 from removed actions tests + replaced
+
       EmailCapture suite; baseline skipped unchanged).
 
+
       Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+
       provision_test_db; slot at $WORKTREES/section-email-funnel-1.1 on branch
+
       section/email-funnel-1.1 from origin/main 1cb2d4a). PWTC N/A (fabled10x
+
       has no docker/db infra). node_modules bind-mounted; no env files in main
+
       to symlink (static site).
 
+
       Operator action items (out of TDD scope): (1) confirm publication URL
+
       at fabled10x.substack.com/embed exists; (2) migrate existing Resend
+
       audience via CSV export -> Substack import OR ask subscribers to
+
       re-subscribe; (3) create Substack sections per pillar (delivery/workflow/
+
       business/future); (4) drop RESEND_AUDIENCE_ID from .env.local + deploy
+
       secrets (now-dead env var; never was in .env.example).
 
+
       Next: email-funnel-1.5 (.env.example NEXT_PUBLIC_SUBSTACK_EMBED_URL row)
+
       and email-funnel-1.6 (docs/future-jobs.md §4 rewrite). Both S-sized and
+
       independent of the code bundle that shipped here. Also outstanding:
+
       styling-overhaul-7.3 onward (was current_section before this run).
+
+      '
   - id: styling-overhaul-7.2
     name: Episodes index + detail
     completed_at: '2026-06-07'
@@ -272,69 +464,124 @@ completed_sections:
     files_new: 2
     files_modified: 4
     pushed: false
-    notes: |
-      Second feature of styling-overhaul Phase 7 (Page Surfaces).
+    notes: 'Second feature of styling-overhaul Phase 7 (Page Surfaces).
+
       Both /episodes index + /episodes/[slug] detail reskinned onto brand
+
       primitives (Marble surface; Section rhythm=md on index / rhythm=lg
+
       on detail; Container default width on index / width=prose on detail;
+
       .label / .display-1 / .body-1 / .build-log-prose utilities; EditorialCard
+
       grid with tag="${series} · ${RomanAct}.${RomanEpisode}", accent=?,
+
       href=/episodes/{slug}; DropAccent ? glyph after detail h1 title;
+
       border-t border-(--edge-color) section breaks above MDX body, source
+
       materials, LllCrosslinks, and stay-in-the-loop EmailCapture).
 
+
       NEW src/lib/format/roman.ts — pure toRoman helper. 13-entry NUMERAL_MAP
+
       including all subtractive forms; defensive against undefined / non-integer
+
       / out-of-range (returns "" so optional Episode.act collapses cleanly
+
       in the tag string without NaN/undefined leak).
 
+
       Hybrid red posture (so-5.3/7.1 precedent) — 30 tests PASSED at red-end
+
       pinning preserved behavior (JSON-LD VideoObject fields, EmailCapture
+
       wiring source=episode-{slug}, LllCrosslinks mount, generateMetadata
+
       title/desc/og/twitter, generateStaticParams one-per-slug, dynamicParams
+
       false, notFound() on missing slug, Source materials section, h1 + article
+
       landmarks, error metadata returns {}); 29 tests FAILED requiring brand
+
       composition + toRoman wiring + source-level placeholder sweep. All 29
+
       passed at green-end. 59 tests active total (9 roman + 25 index + 25
+
       detail = 59 — minus 10 collapsed from prior suite shapes during rewrite).
 
+
       Refactor produced ZERO source-code changes — 23rd consecutive zero-
+
       source-change refactor section (so-1.1/1.2/1.3, ce-2.2/1.3, bpd-2.3,
+
       ce-2.1/3.1, so-2.1/2.2/2.3/2.4, ce-4.3, so-3.2/4.1/4.4/5.1/5.2/5.3/5.4,
+
       so-6.1/6.3/6.2/4.2/6.4/7.1, now 7.2). Within-section DRY: toRoman is
+
       single source consumed by both pages with intentionally divergent format
+
       strings. Cross-section DRY: zero other Roman helpers in src/; homepage
-      hero's arabic `Act ${meta.act}` is intentional informal-vs-editorial
+
+      hero''s arabic `Act ${meta.act}` is intentional informal-vs-editorial
+
       vocabulary divergence, NOT drift.
 
+
       All audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint warnings,
+
       0 tsc errors, production build pass (52 routes prerender including
+
       /episodes static + /episodes/[slug] SSG one entry pilot-party-masters-
+
       discovery). Full suite at green-end: 2211 passed | 60 skipped | 0 failed
+
       (+24 net vs 2187 preflight baseline; the +59 new tests minus 35 retired
+
       tests from the two REWRITTEN files; 60 skipped baseline unchanged).
 
+
       Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+
       provision_test_db; slot at $WORKTREES/section-styling-overhaul-7.2
+
       on branch section/styling-overhaul-7.2 from origin/main ccf153a so-7.1).
+
       PWTC N/A (fabled10x has no docker/db infra). Env-symlink loop fell
+
       through silently — no .env / .env.local / .env.db in main (static site).
+
       node_modules bind-mounted from main.
 
+
       Imports of CONTENT_TIER_LABELS and CONTENT_PILLAR_QUESTIONS removed from
+
       both pages — the editorial system uses {series} · {RomanAct}.{RomanEpisode}
+
       as the tag/label vocabulary, not tier-label or pillar-question prose.
+
       Existing test pins for those strings were replaced with brand-aware
+
       assertions per hybrid posture.
 
+
       Blocker cleared: styling-overhaul Phase 7 (Page Surfaces) is now 2/6
+
       complete (7.1 Homepage hero + 7.2 Episodes). so-7.3 (Cases index +
+
       detail — mirrors episodes with `.` accent + spec-sheet sidebar),
+
       so-7.4 (Build-log surfaces — Bone + Parchment inner panels), so-7.5
+
       (Storefront reskin), so-7.6 (About/auth/error quiet marble) can all
+
       start in parallel after the so-7.1+7.2 reskin pattern is established.
+
       so-7.3 is the canonical next section by numeric order — it can re-use
+
       @/lib/format/roman for case-study numerals if applicable.
+
+      '
   - id: styling-overhaul-7.1
     name: Homepage hero
     completed_at: '2026-06-07'
@@ -344,38 +591,34 @@ completed_sections:
     files_new: 0
     files_modified: 2
     pushed: false
-    notes: 'First feature of styling-overhaul Phase 7 (Page Surfaces). Homepage
-      reskin onto brand primitives. Hero scaffold (Image + HeroBackdrop)
-      preserved from prior spike; this section restructured the rest:
-      raw <section>/Container collapsed onto <Section rhythm=lg|md>; .label /
-      .display-1 / .display-2 / .body-1 brand utilities replaced all
-      placeholder typography (text-accent, text-muted, font-display,
-      text-5xl, text-lg, text-sm, border-mist, bg-marble-texture,
-      rounded-lg, text-link); latest-episode block restructured onto
-      EditorialCard (tag=`{series} · Act {act}`, accent=?); SECTIONS
-      constant rewritten from 3 entries (Episodes/Cases/About) to 4
-      (Episodes/Case Studies/Build Log/Products) per spec; legacy "Inside
-      the build" section replaced with sister-project Bone block + DropAccent
-      (glyph=→) on "The Large Language Library" heading + outbound link to
-      https://largelanguagelibrary.ai. Three SectionDividers chain the
-      surface transitions (marble→parchment→marble→bone) and collapse
-      together when getLatestEpisode returns null. RSC-pure throughout.
+    notes: 'First feature of styling-overhaul Phase 7 (Page Surfaces). Homepage reskin
+      onto brand primitives. Hero scaffold (Image + HeroBackdrop) preserved from prior
+      spike; this section restructured the rest: raw <section>/Container collapsed
+      onto <Section rhythm=lg|md>; .label / .display-1 / .display-2 / .body-1 brand
+      utilities replaced all placeholder typography (text-accent, text-muted, font-display,
+      text-5xl, text-lg, text-sm, border-mist, bg-marble-texture, rounded-lg, text-link);
+      latest-episode block restructured onto EditorialCard (tag=`{series} · Act {act}`,
+      accent=?); SECTIONS constant rewritten from 3 entries (Episodes/Cases/About)
+      to 4 (Episodes/Case Studies/Build Log/Products) per spec; legacy "Inside the
+      build" section replaced with sister-project Bone block + DropAccent (glyph=→)
+      on "The Large Language Library" heading + outbound link to https://largelanguagelibrary.ai.
+      Three SectionDividers chain the surface transitions (marble→parchment→marble→bone)
+      and collapse together when getLatestEpisode returns null. RSC-pure throughout.
 
 
-      44 tests in src/app/__tests__/page.test.tsx (22 unit, 4 integration,
-      6 a11y, 4 infra, 4 edge, 1 err, 3 data; security/permission/contract
-      N/A — UI-only page). Source-level infra sentinels read page.tsx via
-      readFileSync to lock the 21 banned placeholder utility tokens out of
-      future edits and to assert positive adoption of .label / .display-1 /
-      .display-2 / .body-1 and the brand primitive imports.
+      44 tests in src/app/__tests__/page.test.tsx (22 unit, 4 integration, 6 a11y,
+      4 infra, 4 edge, 1 err, 3 data; security/permission/contract N/A — UI-only page).
+      Source-level infra sentinels read page.tsx via readFileSync to lock the 21 banned
+      placeholder utility tokens out of future edits and to assert positive adoption
+      of .label / .display-1 / .display-2 / .body-1 and the brand primitive imports.
 
 
-      3 tests rewritten during green with intent preserved: image selector
-      switched from src*=floatbg.png to alt=""+aria-hidden=true (next/image
-      rewrites src); divider count when latest=null reduced from 2 to 1
-      (cleanest brand semantics — both surrounding dividers collapse with
-      the parchment block); empty-summary check scoped to the EditorialCard
-      article descendant instead of a too-broad screen-wide empty-text query.
+      3 tests rewritten during green with intent preserved: image selector switched
+      from src*=floatbg.png to alt=""+aria-hidden=true (next/image rewrites src);
+      divider count when latest=null reduced from 2 to 1 (cleanest brand semantics
+      — both surrounding dividers collapse with the parchment block); empty-summary
+      check scoped to the EditorialCard article descendant instead of a too-broad
+      screen-wide empty-text query.
 
       '
   - id: styling-overhaul-6.2
