@@ -11,6 +11,27 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: build-log-overhaul-1.2
+    name: Relative-time formatter (formatRelativeTime SSR-safe pure function)
+    completed_at: '2026-06-08'
+    commit_hash: 1bee62a
+    commit_message: 'Add relative-time formatter with 35 tests (build-log-overhaul-1.2)'
+    tests: 35
+    files_new: 2
+    files_modified: 1
+    pushed: false
+    posture: pure-utility
+    notes: 'Second section of build-log-overhaul (blo) job — single pure function
+      formatRelativeTime(iso, nowIso) at src/lib/build-log/relative-time.ts.
+      Six relative buckets ("just now" / "Nm ago" / "Nh ago" / "yesterday" /
+      "N days ago" / "N weeks ago") + absolute "on YYYY-MM-DD" past 30 days.
+      SSR-safe (no Date.now()), TZ-safe (iso.slice instead of Date round-trip),
+      tolerant of null/undefined/invalid input (returns empty string).
+      35 tests: 14 unit (branch + boundary coverage), 2 security (script-input,
+      input-not-mutated), 8 edge case (input + temporal + DST), 2 error recovery
+      (invalid nowIso), 3 data integrity (TZ preservation + SSR determinism).
+      No API, no UI, no DB — consumed by future Hero (3.1), JobCard (2.2),
+      RecentActivity (3.3) sections.'
   - id: styling-overhaul-7.4
     name: Build-log surfaces
     completed_at: '2026-06-07'
