@@ -42,7 +42,7 @@ The operator must supply the publication's embed URL via `NEXT_PUBLIC_SUBSTACK_E
 | 1.2 | Replace `EmailCapture.tsx` body with Substack iframe         | 1 - Substack swap | M    | Shipped (bundled) |
 | 1.3 | `sourceToPillar` helper + tests                              | 1 - Substack swap | S    | Shipped (bundled) |
 | 1.4 | Rewrite `EmailCapture.test.tsx` for iframe assertions        | 1 - Substack swap | M    | Shipped (bundled) |
-| 1.5 | Add `NEXT_PUBLIC_SUBSTACK_EMBED_URL` to `.env.example`       | 1 - Substack swap | S    | Planned |
+| 1.5 | Add `NEXT_PUBLIC_SUBSTACK_EMBED_URL` to `.env.example`       | 1 - Substack swap | S    | Shipped |
 | 1.6 | Rewrite `docs/future-jobs.md` §4                             | 1 - Substack swap | S    | Planned |
 
 1.1–1.4 shipped as one atomic section under section-id `email-funnel-1.1`. Deleting `actions.ts` alone (strict 1.1) would break the build because `EmailCapture.tsx` imported `./actions`; bundling the four code-touching items keeps the build/test gates clean. 1.5 (.env.example) and 1.6 (docs/future-jobs.md) remain separately runnable.

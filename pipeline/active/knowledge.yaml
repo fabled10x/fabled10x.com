@@ -6048,3 +6048,23 @@ styling-overhaul-7.3:
       - "Section 1.5 (.env.example update) — add NEXT_PUBLIC_SUBSTACK_EMBED_URL after operator confirms publication URL"
       - "Section 1.6 (docs/future-jobs.md §4 rewrite) — replace Resend-funnel prose with Substack-embed scope; sizing M/L -> S; alias ef noted"
       - "Operator migration: export Resend audience as CSV -> import to Substack, OR email existing subscribers asking them to re-subscribe. Out of TDD scope."
+
+email-funnel-1.5:
+  completed_at: '2026-06-07'
+  posture: zero-source-change-implementation
+  patterns_established:
+    - description: ".env.example documentation discipline — when a new public-prefixed env var is added by a section, the section also (a) appends a per-source comment header above the var ('# {Group label} ({source-section-id})') and (b) adds presence + value-shape pins to src/__tests__/env-example.test.ts as new it() blocks within the existing describe(). Mirrors cohort-enrollment-2.2 / storefront-auth-2.x precedent."
+      file: .env.example + src/__tests__/env-example.test.ts
+      reusable_for: "Any future section that adds a new env var (free-tools, community-showcase, testimonials-results, lll-deep-integration, search jobs all likely to add at least one var)"
+    - description: "Public-placeholder URL discipline — public-prefixed (NEXT_PUBLIC_*) env vars whose value is a non-secret URL are documented with the real placeholder URL filled in, NOT empty, and are NOT added to the emptyExpected[] enforcement list. Empty-list membership is reserved for true secrets (AUTH_SECRET, RESEND_API_KEY, STRIPE_*, RESEND_COHORT_*)."
+      file: .env.example + src/__tests__/env-example.test.ts (emptyExpected[] at line 30)
+      reusable_for: "Any future NEXT_PUBLIC_* URL var; informs the test-writing convention for non-secret placeholders"
+  gotchas:
+    - "src/__tests__/env-example.test.ts is the single repo-wide site for .env.example assertions. New env vars MUST add their pin here, not in a parallel file. The describe('.env.example safety') block stays singular; new pins are added as additional it() blocks at the bottom."
+    - "Hybrid red posture applies even to pure-config sections: preservation pins (RESEND_API_KEY + cohort vars still present) start passing at red-end; new-behavior pins (URL row + section header) start failing. This pattern locks both the additive change AND the no-regression guarantee in the same red phase."
+    - "The edge_input_substack_embed_url_not_in_empty_secrets_list test does a meta self-grep of env-example.test.ts itself to assert that the new URL key is NOT inside the emptyExpected[] runtime list. This is a regression guard against a future contributor accidentally policing a non-secret URL as if it were a secret (which would silently invert the public-placeholder invariant — the existing 'value must be empty' assertion would then enforce 'URL must be unset'). Pattern reusable for any future non-secret-placeholder env var."
+  reusable_utilities: []
+  deferred_followups:
+    - "email-funnel-1.6 (docs/future-jobs.md §4 rewrite) — replace Resend-funnel prose with Substack-embed scope; sizing M/L -> S; alias ef noted. Independent S-sized section."
+    - "Knowledge.yaml hygiene: email-funnel-1.1 was nested under styling-overhaul-7.3's reusable_utilities by mistake in the prior session. Not fixed here per section-scoped rule. Whoever runs ef-1.6 next could promote it to a top-level entry en passant if convenient."
+    - "Operator action items (still outstanding from ef-1.1): confirm fabled10x.substack.com/embed exists OR create the publication; migrate Resend audience to Substack via CSV export -> import; create Substack sections per pillar; drop RESEND_AUDIENCE_ID from .env.local + deploy secrets."
