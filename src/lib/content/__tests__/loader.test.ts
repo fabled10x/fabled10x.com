@@ -239,7 +239,7 @@ describe('loadContent', () => {
   // --- Infrastructure Tests ---
 
   describe('infrastructure', () => {
-    it('infra_loader_path_resolution — resolves directory relative to cwd', async () => {
+    it('infra_loader_path_resolution — passes the configured directory to readdirFn', async () => {
       const readdirFn = createMockReaddir([]);
       const importFn = createMockImport(validEpisodeMeta);
 
@@ -250,9 +250,11 @@ describe('loadContent', () => {
         readdirFn,
       });
 
+      // The loader resolves content via static manifests, so the directory is
+      // passed through verbatim — no process.cwd() absolute-path resolution
+      // (which would make Turbopack's NFT trace the entire project).
       const calledPath = readdirFn.mock.calls[0][0] as string;
-      expect(calledPath).toContain('src/content/episodes');
-      expect(calledPath).toMatch(/^\//); // absolute path
+      expect(calledPath).toBe('src/content/episodes');
     });
   });
 });

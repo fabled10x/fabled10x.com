@@ -18,8 +18,7 @@ export interface LoadContentOptions<T> {
 export async function loadContent<T>(
   options: LoadContentOptions<T>,
 ): Promise<LoadedEntry<T>[]> {
-  const dir = path.resolve(process.cwd(), options.directory);
-  const files = await options.readdirFn(dir);
+  const files = await options.readdirFn(options.directory);
   const mdxFiles = files.filter((f) => f.endsWith('.mdx'));
 
   if (mdxFiles.length === 0) return [];
@@ -27,7 +26,7 @@ export async function loadContent<T>(
   return Promise.all(
     mdxFiles.map(async (file) => {
       const slug = file.replace(/\.mdx$/, '');
-      const filePath = path.join(dir, file);
+      const filePath = path.join(options.directory, file);
       const mod = await options.importFn(filePath);
 
       if (!mod.default) {
