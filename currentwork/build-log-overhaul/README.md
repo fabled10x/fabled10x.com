@@ -151,7 +151,7 @@ this job composes. No prerequisite job is pending.
 | #   | Feature                                                                                  | Phase                          | Size | Status  |
 |-----|------------------------------------------------------------------------------------------|--------------------------------|------|---------|
 | 1.1 | `phase-labels` const map + canonical 7-phase ordering + branded `PhaseName` type         | 1 - Foundation utilities       | S    | Shipped |
-| 1.2 | `relative-time` helper — pure `formatRelativeTime(iso, nowIso)` SSR-safe formatter       | 1 - Foundation utilities       | S    | Planned |
+| 1.2 | `relative-time` helper — pure `formatRelativeTime(iso, nowIso)` SSR-safe formatter       | 1 - Foundation utilities       | S    | Shipped |
 | 1.3 | `derive-live-status` — pure state-machine returning `'active' \| 'idle' \| 'paused' \| 'stale' \| 'unknown'` | 1 - Foundation utilities | M    | Planned |
 | 1.4 | Schema additions — `concurrentJobs?` on `SessionStatus`, discriminated `CompletedSectionEntry` union | 1 - Foundation utilities | S    | Planned |
 | 2.1 | `<PhaseStepper>` primitive — horizontal dot/line stepper for the 7 pipeline phases       | 2 - Display primitives         | M    | Planned |
