@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
+import { EditorialCard, Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { getAllCases } from '@/lib/content/cases';
 import { CASE_STATUS_LABELS } from '@/content/schemas';
@@ -14,32 +14,36 @@ export default async function CasesIndex() {
   const cases = await getAllCases();
 
   return (
-    <Container as="section" className="py-16">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">Case Studies</h1>
-      <p className="mt-4 max-w-2xl text-muted">
-        Real projects, real clients, real outcomes. The structured technical
-        entries that came out of each build live in The Large Language Library
-        — case studies link out directly.
-      </p>
-      <ul className="mt-12 grid gap-6 md:grid-cols-2">
-        {cases.map((caseStudy) => (
-          <li key={caseStudy.meta.id}>
-            <Link
-              href={`/cases/${caseStudy.slug}`}
-              className="block rounded-lg border border-mist p-6 hover:border-accent"
-            >
-              <p className="text-xs uppercase tracking-wide text-muted">
-                {CASE_STATUS_LABELS[caseStudy.meta.status]}
-              </p>
-              <h2 className="mt-2 font-display text-xl font-semibold">
-                {caseStudy.meta.title}
-              </h2>
-              <p className="mt-3 text-sm text-muted">{caseStudy.meta.summary}</p>
-              <p className="mt-4 text-xs text-accent">{caseStudy.meta.client}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Container>
+    <Marble>
+      <Section rhythm="md">
+        <Container>
+          <span className="label">Field Notes</span>
+          <h1 className="display-1 mt-(--space-3)">Case Studies</h1>
+          <p className="body-1 mt-(--space-4) max-w-prose text-(--color-muted)">
+            Real projects, real clients, real outcomes. The structured technical
+            entries that came out of each build live in The Large Language
+            Library — case studies link out directly.
+          </p>
+          <ul className="mt-(--space-7) grid grid-cols-1 md:grid-cols-2 gap-(--space-4)">
+            {cases.map((caseStudy) => (
+              <li key={caseStudy.meta.id}>
+                <EditorialCard
+                  tag={caseStudy.meta.client}
+                  headline={caseStudy.meta.title}
+                  subtitle={caseStudy.meta.summary}
+                  accent="."
+                  href={`/cases/${caseStudy.slug}`}
+                  footer={
+                    <span className="label">
+                      {CASE_STATUS_LABELS[caseStudy.meta.status]}
+                    </span>
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </Section>
+    </Marble>
   );
 }

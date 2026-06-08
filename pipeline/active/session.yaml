@@ -2,15 +2,109 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-7.3
+  current_section: styling-overhaul-7.4
   current_agent: pending
-  current_stage: styling-overhaul-7.2-complete
+  current_stage: styling-overhaul-7.3-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-7.3
+    name: Cases index + detail
+    completed_at: '2026-06-07'
+    commit_hash: pending
+    commit_message: Add cases index + detail brand reskin with 66 tests (styling-overhaul-7.3)
+    tests: 66
+    files_new: 0
+    files_modified: 4
+    pushed: false
+    notes: |
+      Third feature of styling-overhaul Phase 7 (Page Surfaces). Both /cases
+      index + /cases/[slug] detail reskinned onto brand primitives, mirroring
+      the so-7.2 episode pattern with the accent-vocabulary differential
+      (episodes ask = "?", cases close = ".") and the cases-specific
+      spec-sheet sidebar.
+
+      Index: Marble + Section rhythm=md + Container (default width=layout);
+      .label "Field Notes" kicker + .display-1 "Case Studies" h1 + .body-1
+      muted subtitle; <ul grid-cols-1 md:grid-cols-2 gap-(--space-4)> of
+      <EditorialCard tag={client} headline={title} subtitle={summary}
+      accent="." href=/cases/{slug} footer=<span className="label">
+      {CASE_STATUS_LABELS[status]}</span>>.
+
+      Detail: Marble + Section rhythm=lg + Container as="article" width=
+      "prose"; .label header "{CASE_STATUS_LABELS[status]} · {client}";
+      <h1 className="display-1"> wrapping <DropAccent glyph="." size="large">;
+      .body-1 summary; spec-sheet <aside><dl grid-cols-1 md:grid-cols-3
+      gap-(--space-4)> with Client / Engagement / Status (.label dt + .body-2
+      dd; Engagement renders "startedAt → shippedAt" or "startedAt → Ongoing"
+      or "Ongoing" via inlined formatEngagement helper). Preserved problem /
+      Deliverables / Outcome h2 sections (rewritten as .display-3 with
+      border-t border-(--edge-color) section breaks); MDX <Component/> inside
+      build-log-prose with border-t separator; preserved related-episodes
+      link section (oxblood underline), LllCrosslinks mount, terminal
+      EmailCapture with source=`case-{slug}` per established pattern,
+      JSON-LD CreativeWork (with creator Organization + about=client),
+      generateMetadata title/desc/og/twitter, generateStaticParams,
+      dynamicParams=false, notFound() on missing slug.
+
+      Hybrid red posture (so-5.3/7.1/7.2 precedent) — 66 tests = 28 index +
+      38 detail. At red-start: 39 PASSED preserving prior behavior pins
+      (loader mocks, problem/deliverables/outcome h2 landmarks, JSON-LD
+      CreativeWork shape, generateMetadata title/desc/og/twitter,
+      generateStaticParams one-per-slug, dynamicParams false, notFound on
+      missing slug, related-episode filter, EmailCapture source format,
+      LllCrosslinks mount); 27 FAILED requiring brand composition (Marble
+      surface, Section rhythm, .label/.display-1/.body-1 utilities,
+      EditorialCard composition, DropAccent "." glyph, spec-sheet
+      <aside><dl>, source-level banned-token sweep). All 27 passed at
+      green-end; 39 preserved tests continued passing.
+
+      Refactor produced ZERO source-code changes — 24th consecutive zero-
+      source-change refactor section (so-1.1/1.2/1.3, ce-2.2/1.3, bpd-2.3,
+      ce-2.1/3.1, so-2.1/2.2/2.3/2.4, ce-4.3, so-3.2/4.1/4.4/5.1/5.2/5.3/
+      5.4, so-6.1/6.3/6.2/4.2/6.4/7.1/7.2, now 7.3). Within-section DRY:
+      formatEngagement / formatIsoDate inlined per minimal-implementation
+      principle. Cross-section DRY: formatEngagement is the ONLY consumer
+      site of "start → end ?? Ongoing" pattern — premature extraction
+      avoided; flagged in knowledge.yaml for re-evaluation at so-7.5
+      (storefront) if a second consumer surfaces. toRoman from @/lib/format/
+      roman explicitly NOT used here per planning doc §7.2 directive
+      ("cases probably don't" want Roman numerals).
+
+      Status surface uses CASE_STATUS_LABELS lookup at TWO sites (index
+      EditorialCard footer + detail spec-sheet Status dd). Single source of
+      truth — neither site re-implements the enum→label mapping.
+
+      All audits clean: 0 any/as/@ts-ignore in section files, 0 ESLint
+      warnings, 0 tsc errors, production build pass (52 routes prerender
+      including /cases static + /cases/[slug] SSG one entry party-masters).
+      Full suite at green-end: 2232 passed | 60 skipped | 0 failed (+21 net
+      vs 2271 preflight baseline; the +66 new tests minus 45 retired tests
+      from the two REWRITTEN files; 60 skipped baseline unchanged).
+
+      Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+      provision_test_db; slot at $WORKTREES/section-styling-overhaul-7.3 on
+      branch section/styling-overhaul-7.3 from origin/main 1cb2d4a). PWTC
+      N/A (fabled10x has no docker/db infra). Env-symlink loop fell through
+      silently — no .env / .env.local / .env.db in main (static site).
+      node_modules bind-mounted from main.
+
+      Source-grep sentinels embedded in both new test files lock the 21
+      banned placeholder utility tokens out of future edits AND assert
+      positive adoption of .label / .display-1 / .body-1 / DropAccent and
+      the brand primitive imports. Cross-cutting so-3.3 forbidden-pattern
+      sentinel stays green on both reskinned files (regex literals in test
+      sources don't trip it — same precedent as so-7.1/7.2 episode tests).
+
+      Blocker cleared: styling-overhaul Phase 7 (Page Surfaces) is now
+      3/6 complete (7.1 Homepage hero + 7.2 Episodes + 7.3 Cases). so-7.4
+      (Build-log surfaces — Bone + Parchment inner panels), so-7.5
+      (Storefront reskin), so-7.6 (About/auth/error quiet marble) can all
+      proceed in parallel. so-7.4 is the canonical next so section by
+      numeric order.
   - id: styling-overhaul-7.2
     name: Episodes index + detail
     completed_at: '2026-06-07'

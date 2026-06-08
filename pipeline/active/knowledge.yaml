@@ -6001,3 +6001,27 @@ styling-overhaul-7.2:
     - function: toRoman
       file: src/lib/format/roman.ts
       purpose: 'Convert an integer (or undefined) in [1..3999] to a Roman-numeral string; returns empty string for undefined / NaN / non-integer / out-of-range. Mathematical canonical NUMERAL_MAP (13 entries M..I with subtractive pairs CM/CD/XC/XL/IX/IV).'
+
+styling-overhaul-7.3:
+  completed_at: '2026-06-07'
+  patterns_established:
+    - description: "Cases reskin (index + detail) — mirrors so-7.2 episodes shell with accent-vocabulary differential ('?'=ask/open vs '.'=close)"
+      file: 'src/app/cases/page.tsx + src/app/cases/[slug]/page.tsx'
+      reusable_for: 'so-7.4 build-log surfaces, so-7.5 storefront, so-7.6 about/auth/error pages — all consumer pages following the Marble + Section + Container + DropAccent + EditorialCard + EmailCapture pattern'
+    - description: "Spec-sheet sidebar: <aside><dl grid-cols-1 md:grid-cols-3 gap-(--space-4)> with .label dt + .body-2 dd; border-t border-b border-(--edge-color) py-(--space-4) frame"
+      file: 'src/app/cases/[slug]/page.tsx (lines ~111-130)'
+      reusable_for: 'cohort detail engagement field, purchase receipt detail, product detail spec sheet, future case-study-shaped resource details'
+    - description: "Status surface uses CASE_STATUS_LABELS lookup at both EditorialCard footer (index) and spec-sheet Status dd (detail) — single source of truth, no enum re-implementation"
+      file: 'src/app/cases/page.tsx (footer slot) + src/app/cases/[slug]/page.tsx (Status dd)'
+      reusable_for: 'any future surface that wants to display Case.status as user-visible text — never duplicate the enum→label mapping'
+    - description: "Hybrid red posture extended to non-roman-numeral page (cases). The hybrid pattern transfers cleanly even when the per-page editorial differential (Roman vs arabic vs none) varies. Each section makes the accent/glyph/numeral decision per planning-doc voice, but the shell+test-structure pattern is identical."
+      file: 'src/app/cases/__tests__/page.test.tsx + src/app/cases/[slug]/__tests__/page.test.tsx'
+      reusable_for: 'so-7.4 build-log (no Roman numerals, no accent glyph on h1), so-7.5 storefront (no glyph, status badge), so-7.6 quiet pages (DropAccent="." on about, "✓" on login-verify, "✕" on not-found)'
+  gotchas:
+    - 'planning doc §7.3 references `CaseStatusBadge` component which does NOT exist in the codebase; the planning doc explicitly allows "if it exists; otherwise inline at the page" — we inlined as <span className="label">{CASE_STATUS_LABELS[meta.status]}</span>. Future Phase 5/6 work could extract a CaseStatusBadge in the StatusBadge variant family; not blocking for 7.3.'
+    - 'planning doc references `cse.industry` field which does NOT exist on Case schema; fields available are client/status. We used CASE_STATUS_LABELS[status] · client in the label header instead. planning doc also references `cse.startDate`/`cse.endDate` — actual schema is startedAt/shippedAt. planning doc references `cse.body` + MarkdownDocument source prop — actual is MDX <Component /> render pattern. Always cross-reference planning doc field names against src/content/schemas/case.ts.'
+    - 'EditorialCard renders headline as h3 (display-3) — the cases index has h1 → h3 hierarchy (no h2 intervening), same documented anti-skip exception as so-6.x / 7.2 (per planning doc §6.1). Tests assert this hierarchy directly to prevent accidental h2 insertion.'
+    - 'EditorialCard footer prop accepts ReactNode; we passed a single <span className="label"> wrapping the status text. EditorialCard wraps the footer in `<div className="mt-(--space-2) flex items-center gap-(--space-3)">` so the visual layout is consistent across all card variants.'
+    - 'formatEngagement helper is inlined at top of src/app/cases/[slug]/page.tsx. Currently the ONLY consumer of the "start → end ?? Ongoing" pattern. Deferred extraction until a second consumer surfaces (likely so-7.5 storefront if products carry shipping date ranges, or future cohort-detail engagement fields). Re-evaluate at so-7.5 discovery.'
+    - 'Cross-cutting brand forbidden-patterns sentinel (so-3.3) does NOT trip on regex literals embedded in test source — same outcome as so-7.1/7.2 episode tests. Test files do not need to be added to SKIP_PATHS for this reason. Empirically verified by running the sentinel suite (28/28 pass) before commit.'
+  reusable_utilities: []

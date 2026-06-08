@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { DropAccent, Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { EmailCapture } from '@/components/capture/EmailCapture';
 import { LllCrosslinks } from '@/components/crosslinks/LllCrosslinks';
@@ -40,6 +41,24 @@ export async function generateMetadata({
   };
 }
 
+function formatIsoDate(iso: string | undefined): string {
+  if (!iso) return '';
+  const slice = iso.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(slice) ? slice : '';
+}
+
+function formatEngagement(
+  startedAt: string | undefined,
+  shippedAt: string | undefined,
+): string {
+  const start = formatIsoDate(startedAt);
+  const end = formatIsoDate(shippedAt);
+  if (start && end) return `${start} → ${end}`;
+  if (start) return `${start} → Ongoing`;
+  if (end) return end;
+  return 'Ongoing';
+}
+
 export default async function CaseDetail({
   params,
 }: {
@@ -72,69 +91,107 @@ export default async function CaseDetail({
   };
 
   return (
-    <Container as="article" className="py-16">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <p className="text-xs uppercase tracking-wide text-muted">
-        {CASE_STATUS_LABELS[meta.status]} · {meta.client}
-      </p>
-      <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight">
-        {meta.title}
-      </h1>
-      <p className="mt-4 max-w-2xl text-muted">{meta.summary}</p>
+    <Marble>
+      <Section rhythm="lg">
+        <Container as="article" width="prose">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+          <span className="label">
+            {CASE_STATUS_LABELS[meta.status]} · {meta.client}
+          </span>
+          <h1 className="display-1 mt-(--space-3)">
+            <DropAccent glyph="." size="large">
+              {meta.title}
+            </DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-5) text-(--color-muted)">
+            {meta.summary}
+          </p>
 
-      <section className="mt-12">
-        <h2 className="font-display text-2xl font-semibold">The problem</h2>
-        <p className="mt-3 text-muted">{meta.problem}</p>
-      </section>
+          <aside className="mt-(--space-6) border-t border-b border-(--edge-color) py-(--space-4)">
+            <dl className="grid grid-cols-1 md:grid-cols-3 gap-(--space-4)">
+              <div>
+                <dt className="label">Client</dt>
+                <dd className="body-2 mt-(--space-1)">{meta.client}</dd>
+              </div>
+              <div>
+                <dt className="label">Engagement</dt>
+                <dd className="body-2 mt-(--space-1)">
+                  {formatEngagement(meta.startedAt, meta.shippedAt)}
+                </dd>
+              </div>
+              <div>
+                <dt className="label">Status</dt>
+                <dd className="label mt-(--space-1)">
+                  {CASE_STATUS_LABELS[meta.status]}
+                </dd>
+              </div>
+            </dl>
+          </aside>
 
-      <section className="mt-12">
-        <h2 className="font-display text-2xl font-semibold">Deliverables</h2>
-        <ul className="mt-3 list-disc pl-6 space-y-1 text-muted">
-          {meta.deliverables.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
+          <section className="mt-(--space-7) border-t border-(--edge-color) pt-(--space-5)">
+            <h2 className="display-3">The problem</h2>
+            <p className="body-1 mt-(--space-3) text-(--color-muted)">
+              {meta.problem}
+            </p>
+          </section>
 
-      <section className="mt-12">
-        <h2 className="font-display text-2xl font-semibold">Outcome</h2>
-        <p className="mt-3 text-muted">{meta.outcome}</p>
-      </section>
+          <section className="mt-(--space-7) border-t border-(--edge-color) pt-(--space-5)">
+            <h2 className="display-3">Deliverables</h2>
+            <ul className="body-1 mt-(--space-3) list-disc pl-(--space-6) text-(--color-muted)">
+              {meta.deliverables.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
-      <div className="mt-12 prose-style">
-        <Component />
-      </div>
+          <section className="mt-(--space-7) border-t border-(--edge-color) pt-(--space-5)">
+            <h2 className="display-3">Outcome</h2>
+            <p className="body-1 mt-(--space-3) text-(--color-muted)">
+              {meta.outcome}
+            </p>
+          </section>
 
-      {relatedEpisodes.length > 0 && (
-        <section className="mt-12">
-          <h2 className="font-display text-2xl font-semibold">Episodes</h2>
-          <ul className="mt-4 space-y-3">
-            {relatedEpisodes.map((ep) => (
-              <li key={ep.meta.id}>
-                <Link
-                  href={`/episodes/${ep.slug}`}
-                  className="text-link hover:underline underline-offset-2"
-                >
-                  {ep.meta.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <div className="build-log-prose mt-(--space-7) border-t border-(--edge-color) pt-(--space-7)">
+            <Component />
+          </div>
 
-      {meta.lllEntryUrls.length > 0 && (
-        <LllCrosslinks urls={meta.lllEntryUrls} className="mt-12" />
-      )}
+          {relatedEpisodes.length > 0 && (
+            <section className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)">
+              <h2 className="display-3">Episodes</h2>
+              <ul className="body-2 mt-(--space-4)">
+                {relatedEpisodes.map((ep) => (
+                  <li key={ep.meta.id} className="mt-(--space-2)">
+                    <Link
+                      href={`/episodes/${ep.slug}`}
+                      className="border-b border-(--color-oxblood) pb-(--space-1) text-(--color-oxblood)"
+                    >
+                      {ep.meta.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-      <section className="mt-16 border-t border-mist pt-12">
-        <div className="max-w-md">
-          <EmailCapture source={`case-${meta.slug}`} />
-        </div>
-      </section>
-    </Container>
+          {meta.lllEntryUrls.length > 0 && (
+            <LllCrosslinks
+              urls={meta.lllEntryUrls}
+              className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)"
+            />
+          )}
+
+          <section className="mt-(--space-8) border-t border-(--edge-color) pt-(--space-5)">
+            <span className="label">Stay in the loop</span>
+            <h2 className="display-3 mt-(--space-3)">New work, no spam.</h2>
+            <div className="mt-(--space-5)">
+              <EmailCapture source={`case-${meta.slug}`} />
+            </div>
+          </section>
+        </Container>
+      </Section>
+    </Marble>
   );
 }
