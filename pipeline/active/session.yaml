@@ -20,73 +20,131 @@ completed_sections:
     files_new: 0
     files_modified: 13
     pushed: false
-    notes: |
-      Fourth feature of styling-overhaul Phase 7 (Page Surfaces). All four
+    notes: 'Fourth feature of styling-overhaul Phase 7 (Page Surfaces). All four
+
       /build-log/* pages + JobsRollupTable + PhaseNav reskinned onto brand
+
       primitives. 13 files modified (6 source + 6 test + planning README),
+
       0 new. NO content schema / TypeScript types / API endpoints /
+
       serializers / DB.
 
+
       Pages: Bone primary surface; Section rhythm=md on index+status,
+
       rhythm=lg on detail pages; Container width=wide on index+status,
+
       width=prose on detail pages. .label kicker + .display-1 title +
+
       .body-1 subtitle pattern repeated. Detail pages add Parchment
+
       edge=strong p-(--space-6) inner panel wrapping MarkdownDocument
+
       (the "live document on the workbench" metaphor per planning §7.4).
+
       No DropAccent — build-log voice is documentary, not editorial.
 
+
       JobsRollupTable wrapped in Marble edge=strong overflow-hidden;
+
       thead bg-(--color-bone) with .label utility for th text; tbody
+
       hover:bg-(--color-parchment); numeric cols use font-mono
+
       tabular-nums; progressbar restyled to bg-(--color-bone) track +
+
       bg-(--color-oxblood) fill (replaces placeholder bg-mist/bg-accent).
+
       Prop contract preserved (rows: readonly JobRollupEntry[]).
+
       StatusBadge data-testid cross-consumer pin preserved.
 
-      PhaseNav restyled as Oxblood chip rail. Outer 'Phases' hint via
+
+      PhaseNav restyled as Oxblood chip rail. Outer ''Phases'' hint via
+
       .label. <ol inline-flex flex-wrap gap-(--space-3)>. Active chip:
+
       aria-current=page + border-b-2 border-(--color-oxblood) +
+
       text-(--color-ink). Inactive: text-(--color-muted)
-      hover:text-(--color-oxblood). Planning doc's 3-state design
+
+      hover:text-(--color-oxblood). Planning doc''s 3-state design
+
       (with Verdigris ✓ completed) deferred because JobPhase has no
-      completion field — out of scope. Existing test's bg-accent
+
+      completion field — out of scope. Existing test''s bg-accent
+
       className pin REWRITTEN during red to assert /oxblood/ instead
+
       (intent preserved, assertion updated to brand chrome).
 
+
       Hybrid red posture (so-5.3/7.1/7.2/7.3 precedent) — 156 tests =
+
       ~70 preserved-behavior pins (data flow, JSON-LD, metadata,
+
       generateMetadata/StaticParams/dynamicParams, notFound, prop
+
       contracts, aria-current, StatusBadge cross-consumer testid) +
+
       ~61 new brand-aware tests (Bone/Marble/Parchment mounts, Section,
+
       Container, .label/.display-N/.body-N utilities, Parchment-panel-
+
       wraps-markdown integration test, source-grep sentinels,
+
       forbidden-pattern re-check, Oxblood active indicator on PhaseNav).
 
+
       Refactor produced ZERO source-code changes — 25th consecutive
+
       zero-source-change refactor section. One deferred finding —
+
       back-link className composition at 4 sites within section.
+
       Per 24-section precedent, deferred. Re-evaluate at so-7.5.
 
+
       All audits clean. Full suite at green-end: 2277 passed | 60
+
       skipped | 0 failed (+21 net vs preflight). Post-rebase onto
+
       build-log-overhaul-1.1 (which landed during release): 2258
+
       passed | 60 skipped | 0 failed.
 
+
       Pipeline run in WORKTREE mode. Slot at
+
       $WORKTREES/section-styling-overhaul-7.4 on branch
+
       section/styling-overhaul-7.4 from origin/main d9096eb. Rebased
+
       THREE times during release as concurrent peers landed
+
       email-funnel-1.1 (601ae42), email-funnel-1.5 (af45888), and
+
       build-log-overhaul-1.1 (2430ec4). Final rebase done via
+
       reset-to-main + checkout-section-files approach to avoid the
+
       conflict-replay storm. Resolver shortcomings flagged for future
+
       worktree-release iterations: additive-merge resolver loses
+
       newly-prepended completed_sections entries.
 
+
       Blocker cleared: styling-overhaul Phase 7 (Page Surfaces) is
+
       now 4/6 complete. so-7.5 (Storefront reskin) and so-7.6
+
       (About/auth/error quiet marble) remain. so-7.5 is the canonical
+
       next so section.
+
+      '
   - id: email-funnel-1.5
     name: Add NEXT_PUBLIC_SUBSTACK_EMBED_URL to .env.example
     completed_at: '2026-06-07'

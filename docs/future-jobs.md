@@ -36,7 +36,7 @@ when the jobbuild runs, so every future context window auto-picks it up.
 | 1  | `website-foundation`  | `wf`  | L/XL       | —                                               | **already planned** |
 | 2  | `free-tools`          | —     | L          | `wf`                                            | 2nd           |
 | 3  | `storefront-auth`     | —     | XL         | `wf`                                            | 2nd or 3rd    |
-| 4  | `email-funnel`        | —     | M/L        | `wf`, `storefront-auth`                         | after #3      |
+| 4  | `email-funnel`        | `ef`  | S          | `wf`                                            | any time after `wf` |
 | 5  | `community-showcase`  | —     | L          | `wf`                                            | parallel to #2/#3 |
 | 6  | `testimonials-results`| —     | M          | `wf`                                            | parallel to #2/#3 |
 | 7  | `cohort-enrollment`   | —     | L          | `wf`, `storefront-auth`                         | after #3      |
@@ -165,52 +165,36 @@ No subscriptions, no cohort flows in this job.
 
 ---
 
-## 4. `email-funnel` — Resend nurture sequences + analytics
+## 4. `email-funnel` — Substack embed swap
+
+**Status:** planned, see `currentwork/email-funnel/README.md` (alias `ef`).
 
 ### Source
-Phase 2 of the implementation-plan doc, specifically "Email sequence built out
-from capture to product funnel" under the Monetization Layer bullet list.
+Originally Phase 2 "email sequence" under the Monetization Layer. On
+2026-06-07 the operator superseded the self-hosted plan with **Substack**,
+which delivers sending, templates, list management, RFC 8058 unsubscribe,
+deliverability, and basic analytics natively.
 
 ### Scope
-Take the raw Resend capture from `website-foundation` Phase 4.1 and build an
-actual marketing funnel on top of it: segmented welcome sequences, a
-nurture cadence, product-pitch emails tied to `storefront-auth` product pages,
-and basic capture-to-sale analytics.
+Replace the native email capture from `website-foundation` Phase 4.1 with a
+Substack embed iframe wrapped in the same brand `Bone` surface. The
+`source` taxonomy survives as a UTM dimension
+(`utm_campaign=pillar:{pillar}`, `utm_content={source}`) so Substack
+publication analytics can still break signups down by surface and pillar.
 
-**Concrete deliverables:**
-- Segmentation by capture source (homepage, episode-specific, case-specific,
-  tool result, etc.) — the `source` field is already captured in `wf` Phase
-  4.1 for this purpose.
-- Welcome email template (one per segment at minimum)
-- Nurture sequence: 3–5 emails over 2 weeks introducing the channel, case
-  studies, and sister project (LLL)
-- Product-pitch emails pointing to specific `/products` entries
-- Unsubscribe flow (legal requirement)
-- Basic analytics: open rate, click rate, capture-to-click-through-to-product
-- Resend audience tagging based on engagement
-
-### Out of scope
-- A/B testing framework (add later)
-- SMS / push
-- CRM integration
-- AI-generated personalization
+### Out of scope (handled by Substack)
+- Sending, templates, list management, deliverability
+- RFC 8058 unsubscribe + List-Unsubscribe headers
+- Per-subscriber tagging (replaced by UTM source breakdown)
+- Branching welcome flows by pillar (operator uses Substack sections)
 
 ### Dependencies
-- `website-foundation` (Resend capture wired, source tagging working)
-- `storefront-auth` (product pages exist to link to)
-- Resend audience + email templates provisioned (user provides)
+- `website-foundation` Phase 4.1 capture (replaced, not extended)
+- Substack publication + `NEXT_PUBLIC_SUBSTACK_EMBED_URL` env var
+- No dependency on `storefront-auth` (was prerequisite under old plan)
 
 ### Suggested jobbuild prompt
-```
-/jobbuild email-funnel
-
-Build a Resend-based email marketing funnel on top of the capture events
-already collected by website-foundation (each capture carries a `source`
-field for segmentation). Deliverables: welcome sequences per segment, a 3–5
-email nurture cadence, product-pitch emails tied to /products entries from
-storefront-auth, unsubscribe flow, and basic open/click/conversion analytics.
-Requires storefront-auth to have shipped first so product pages exist.
-```
+Already planned — see `currentwork/email-funnel/`.
 
 ---
 

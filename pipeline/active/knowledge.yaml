@@ -6231,6 +6231,59 @@ email-funnel-1.5:
       exists OR create the publication; migrate Resend audience to Substack via CSV
       export -> import; create Substack sections per pillar; drop RESEND_AUDIENCE_ID
       from .env.local + deploy secrets.'
+email-funnel-1.6:
+  completed_at: '2026-06-08'
+  posture: zero-source-change-implementation
+  patterns_established:
+    - description: |
+        docs-as-test-target pattern — when a section's only change is prose in
+        docs/*.md, the failing-test surface is a top-level
+        src/__tests__/{doc-slug}-doc.test.ts that readFileSync()s the doc,
+        regex-extracts the affected heading-anchored section once at module
+        scope, then asserts on heading subtitle, body content, anti-regression
+        strings (negative toMatch assertions), and a body-line-count shrink
+        guard when the rewrite shortens the section. Mirrors
+        src/__tests__/brand/docs.test.ts and src/__tests__/env-example.test.ts;
+        lives at top-level src/__tests__/ because docs/ has no colocated
+        __tests__/ folder.
+      file: src/__tests__/future-jobs-doc.test.ts
+      reusable_for: |
+        Any future section whose deliverable is a docs/*.md rewrite — for
+        example, when a job from docs/future-jobs.md is later planned or
+        shipped, the same one-test-file pattern locks the section rewrite
+        (subtitle, scope, anti-regression, body shrink) and any sizing-table
+        row update via cell-by-cell pipe-split assertions.
+    - description: |
+        Sizing-table-row assertion via pipe-split — for a markdown table row,
+        split the line by the pipe character, trim each cell, and assert by
+        zero-indexed cell position (cell 3 alias, cell 4 size, cell 6 ordering).
+        Avoids brittle regex against the whole row, survives column-padding
+        edits, and pinpoints which cell drifted in failure messages.
+      file: src/__tests__/future-jobs-doc.test.ts
+      reusable_for: |
+        Any future test that needs to lock a single row of a markdown table
+        (sizing tables, status tables, ordering tables) without binding to
+        whitespace.
+  gotchas:
+    - |
+      The section-4 extraction regex uses a non-capturing lookahead for the
+      next heading-2 OR the special 'Things explicitly NOT on this list'
+      meta-heading at the end. If a future contributor adds a job section
+      11..N AFTER the 'Things' section, update the lookahead — the test would
+      otherwise capture the entire tail of the doc into section4 and the
+      body-shrink edge_case test would fail.
+    - |
+      The body-shrink guard (less than 35 non-blank lines) is intentionally
+      loose. The rewrite landed at about 18 non-blank lines, leaving roughly
+      17 lines of headroom for future small edits. Tighten only if the
+      section-4 body grows back toward the original 40-line footprint.
+  reusable_utilities: []
+  deferred_followups:
+    - |
+      Knowledge.yaml hygiene (carried over from ef-1.5): email-funnel-1.1
+      entry is still nested under styling-overhaul-7.3's reusable_utilities.
+      Not fixed here either (section-scoped rule). Future operator can
+      promote it en passant.
 build_log_overhaul_1_1:
   completed_at: '2026-06-08'
   patterns_established:
