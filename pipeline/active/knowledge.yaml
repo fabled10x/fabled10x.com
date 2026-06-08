@@ -6600,3 +6600,97 @@ styling-overhaul-7.5:
       (stale from so-7.4 commit 28b718d). Cleaned up inline as preflight remediation.
       Test file 1 line modified beyond the 7.5 scope.
   reusable_utilities: []
+build_log_overhaul_1_3:
+  completed_at: '2026-06-08'
+  patterns_established:
+    - description: Pure state-machine returning a discriminated string-literal union;
+        inputs are typed in-memory objects threaded from the page-level render — no
+        IO, no Date.now(), no fs.
+      file: src/lib/build-log/derive-live-status.ts
+      reusable_for: Any what-state-are-we-in-right-now derivation across the build-log
+        surface — Hero (3.1) renders LiveStatus variants directly; LiveWorktreesPanel
+        (3.4) and PipelineExplainer (3.2) can pattern-match on the same union without
+        re-deriving. Generalizes to any future SSR-rendered status helper where the
+        decision tree spans 3+ inputs and 3+ outputs.
+    - description: Inline private helper mostRecentCompletedAt operates on the raw
+        SessionStatus.completedSections union via typeof-entry-is-string discrimination
+        — self-contained, NO dependency on a downstream normalize lib (2.3 toEntry
+        not yet shipped).
+      file: src/lib/build-log/derive-live-status.ts
+      reusable_for: Any section that needs to operate on the legacy string-or-object
+        completedSections shape before 2.3 ships normalize.toEntry. Pattern is to
+        inline the typeof-string skip + Number.isNaN guard rather than wait for the
+        full discriminated-union machinery. When 2.3 ships, internals may refactor
+        to call toEntry — out of scope per section-scoped rule.
+    - description: Threshold constants re-exported via _thresholds object even when
+        only one is consumed in the function body, so future Hero copy variants can
+        render different idle messaging inside vs outside the 24h soft window without
+        re-tuning derive-live-status.
+      file: src/lib/build-log/derive-live-status.ts
+      reusable_for: Any module with a tunability surface where the test layer wants
+        to assert the values AND downstream consumers may want to read them. _thresholds
+        naming + underscore prefix signal internal — do not import in production outside
+        the build-log surface.
+  gotchas:
+    - Planning doc 1.3 spec imports CompletedSectionEntry from @/content/schemas (added
+      in 1.4) and toEntry from @/lib/build-log/normalize (added in 2.3). Neither has
+      shipped. Section 1.3 resolves by (a) defining LiveStatus locally in derive-live-status.ts
+      per 1.3 spec text, (b) operating on raw SessionStatus.completedSections union
+      directly via inline mostRecentCompletedAt, (c) NOT importing toEntry. Documented
+      in discovery.yaml#analysis.forward_dependency_resolution. When 1.4 lands, it
+      may want to keep LiveStatus where 1.3 placed it (single canonical location)
+      rather than moving it — discovery for 1.4 should call this out.
+    - The paused branch takes precedence over active — a currentAgent equal to pending
+      OR a currentStage that endsWith -failed returns paused even when a matching
+      worktree exists. Locked by unit_paused_precedence_over_active. Documents the
+      semantic that a pending agent or a failed stage means the worktree may still
+      be on disk but the pipeline is waiting on a human or a fix; saying active in
+      that state would lie.
+    - Both <=IDLE_WINDOW_HOURS and <=STALE_WINDOW_HOURS branches return idle per planning
+      1.3 generous-grace semantics. The IDLE_WINDOW_HOURS constant is therefore unused
+      in the function body (only re-exported via _thresholds). This is intentional
+      — IDLE documents the soft comfortable-idle boundary for future Hero copy variants;
+      STALE is the hard this-is-dead boundary. ESLint is clean because the constant
+      IS consumed via the _thresholds export.
+    - mostRecentCompletedAt skips string entries (legacy backfilled sections) and
+      object entries missing completedAt. If completedSections contains ONLY string
+      entries, the function returns null which makes deriveLiveStatus return stale.
+      Locked by edge_input_completedSections_all_string_entries.
+    - Strict equality on currentAgent equal to pending (NOT substring match) — currentAgent
+      equal to pending-review does NOT trigger paused. Same for currentStage endsWith
+      -failed — currentStage equal to -failed-then-recovered does NOT trigger paused.
+      Locked by edge_input_stage_failed_substring_not_match and edge_input_currentAgent_pending_substring_not_match.
+  reusable_utilities:
+    - function: deriveLiveStatus({session, worktrees, completedSections, nowIso})
+      file: src/lib/build-log/derive-live-status.ts
+      purpose: 'Pure state-machine mapping (session, worktrees, completedSections,
+        nowIso) to a LiveStatus union (active|idle|paused|stale|unknown). Decision
+        tree (precedence-ordered): null session => unknown; pending agent OR stage
+        endsWith -failed => paused; worktree matches currentSection => active; no
+        work + within 72h of last completion => idle; older or never => stale; session.currentSection
+        set but no matching worktree (mid-pipeline race) => idle (fallback). Never
+        throws — total function.'
+    - function: _thresholds (re-exported {IDLE_WINDOW_HOURS, STALE_WINDOW_HOURS})
+      file: src/lib/build-log/derive-live-status.ts
+      purpose: Tunability + test-visibility surface for the 24h/72h boundary constants.
+        Underscore prefix signals internal — do not import in production code. Consumed
+        by unit_thresholds_re_exported test.
+  deferred_followups:
+    - 'Extract the Date.parse + Number.isNaN defensive parse pattern to a shared helper
+      when a third consumer surfaces. Current sites: derive-live-status.ts + relative-time.ts.
+      Below the established 3-site extraction threshold per so-7.3 cases formatEngagement
+      precedent. Likely third candidate: 2.3 normalize.toEntry (will need the same
+      defensive parse for legacy-string-vs-object discrimination).'
+    - 'When 1.4 ships, the CompletedSectionEntry discriminated union becomes available
+      from @/content/schemas. Internals of mostRecentCompletedAt may refactor to call
+      toEntry (from 2.3 normalize) — but only AFTER 2.3 has shipped. Until then, the
+      inline typeof-string discrimination is the canonical pattern. Coordinator for
+      the eventual refactor: 1.4 discovery should NOT move LiveStatus to build-log.ts
+      as planning 1.4 originally said; keep it in derive-live-status.ts (where 1.3
+      spec text actually placed it). Net 1.4 scope change: drop the add-LiveStatus-to-build-log.ts
+      item.'
+    - The fallback return idle at the end of the function fires when session.currentSection
+      is set but no worktree matches (mid-pipeline transition race). If a future section
+      observes this race genuinely produces stale data (rather than just a moment
+      of misalignment), revisit the decision — could promote to a stale return or
+      add a transitioning variant to the LiveStatus union.
