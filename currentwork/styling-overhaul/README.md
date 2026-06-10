@@ -104,7 +104,7 @@ but is scaled down: fabled10x is one brand, one mode, one storefront — not a
 | 7.5 | Storefront — `/products`, `/cohorts`, `/products/account` editorial reskin               | 7 - Page Surfaces              | M    | Complete |
 | 7.6 | `/about`, `/login`, `/login/verify`, `not-found`, `error` quiet marble                   | 7 - Page Surfaces              | M    | Complete |
 | 8.1 | Logo SVG suite + favicon set                                                             | 8 - Asset Pipeline             | M    | Complete |
-| 8.2 | Dynamic `opengraph-image.tsx` root + per-route (episodes, cases)                         | 8 - Asset Pipeline             | L    | Planned |
+| 8.2 | Dynamic `opengraph-image.tsx` root + per-route (episodes, cases)                         | 8 - Asset Pipeline             | L    | Complete |
 | 8.3 | Dev-only `/thumb-preview` route for YouTube thumbnail capture                            | 8 - Asset Pipeline             | L    | Planned |
 | 8.4 | `docs/fabled10x-design-system.md` finalize (tokens, fonts, asset paths, forbidden list)  | 8 - Asset Pipeline             | S    | Planned |
 | 9.1 | Mobile-first legibility tests (320×180 og, 1280×720 thumb, 360×640 viewport)             | 9 - A11y + Polish              | M    | Planned |

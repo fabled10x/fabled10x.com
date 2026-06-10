@@ -6813,29 +6813,88 @@ build-log-overhaul-2.1:
   patterns_established:
     - description: 'Pure presentational server component (no ''use client'', no useState/useEffect)
         driven by data-* attributes (data-phase / data-current / data-completed) for
-        stable test assertions instead of hashed Tailwind class lists. Brand-token dots
-        via Tailwind 4 bg-(--color-oxblood)/border-(--color-bone) syntax. <ol role="group">
-        with a friendly aria-label computed from PHASE_LABELS (e.g. "Build phase: Making
-        the tests pass"); decorative dot spans are aria-hidden. isPhaseName guard before
-        highlight so unknown/empty/garbage currentPhase degrades to legend mode (no current/completed)
-        without throwing.'
+        stable test assertions instead of hashed Tailwind class lists. Brand-token
+        dots via Tailwind 4 bg-(--color-oxblood)/border-(--color-bone) syntax. <ol
+        role="group"> with a friendly aria-label computed from PHASE_LABELS (e.g.
+        "Build phase: Making the tests pass"); decorative dot spans are aria-hidden.
+        isPhaseName guard before highlight so unknown/empty/garbage currentPhase degrades
+        to legend mode (no current/completed) without throwing.'
       file: src/components/build-log/PhaseStepper.tsx
-      reusable_for: 'Any small ordered-step / progress indicator primitive. data-attr-driven
-        styling + aria-hidden decorative glyph + computed-aria-label-on-root is the same
-        idiom as StatusBadge; copy it for future build-log primitives.'
+      reusable_for: Any small ordered-step / progress indicator primitive. data-attr-driven
+        styling + aria-hidden decorative glyph + computed-aria-label-on-root is the
+        same idiom as StatusBadge; copy it for future build-log primitives.
   gotchas:
     - 'PHASE 2 PRIMITIVES SHIP UNMOUNTED (intentional, plan-documented): PhaseStepper
-      is NOT rendered by any page — it ships as an importable barrel export only. The
-      /finish implementation-audit (component-mount trace) would flag this as an orphan,
-      but it is a DEFERRED-by-design case, not ghost code: phase-2-primitives.md states
-      "None of the new primitives are mounted in the live page yet — they ship as importable
-      modules ... ready for Phase 3''s composition." Phase 3 mounts it (3.1 Hero, 3.2
-      PipelineExplainer legend, 3.4 LiveWorktreesPanel per-worktree). Resolution: mark
-      audit_component_mounts na with the plan citation rather than failing finish. Same
-      pattern will apply to any other Phase-2 primitive section.'
-    - 'PhaseStepper test asserts source has NO ''use client''/useState/useEffect via readFileSync
-      with REPO_ROOT=join(__dirname, ''..'',''..'',''..'',''..'') — resolves from the test
-      file, NOT process.cwd(), so it passes inside worktree slots (same lesson as so-8.1).
-      currentPhase=42 (cast as never) is the error-recovery edge: isPhaseName(42) is false
-      (42 truthy but not in PHASE_ORDER) → legend fallback, no throw.'
+      is NOT rendered by any page — it ships as an importable barrel export only.
+      The /finish implementation-audit (component-mount trace) would flag this as
+      an orphan, but it is a DEFERRED-by-design case, not ghost code: phase-2-primitives.md
+      states "None of the new primitives are mounted in the live page yet — they ship
+      as importable modules ... ready for Phase 3''s composition." Phase 3 mounts
+      it (3.1 Hero, 3.2 PipelineExplainer legend, 3.4 LiveWorktreesPanel per-worktree).
+      Resolution: mark audit_component_mounts na with the plan citation rather than
+      failing finish. Same pattern will apply to any other Phase-2 primitive section.'
+    - 'PhaseStepper test asserts source has NO ''use client''/useState/useEffect via
+      readFileSync with REPO_ROOT=join(__dirname, ''..'',''..'',''..'',''..'') — resolves
+      from the test file, NOT process.cwd(), so it passes inside worktree slots (same
+      lesson as so-8.1). currentPhase=42 (cast as never) is the error-recovery edge:
+      isPhaseName(42) is false (42 truthy but not in PHASE_ORDER) → legend fallback,
+      no throw.'
   reusable_utilities: []
+styling-overhaul-8.2:
+  completed_at: '2026-06-10'
+  patterns_established:
+    - description: next/og dynamic og:image — shared pure helper src/lib/og/og-image.tsx
+        (OG_SIZE 1200x630, OG_CONTENT_TYPE image/png, OG_COLORS shadow/marble/ink/oxblood,
+        BRUSHSTROKE_CLIP polygon, scaleTitle len->fontSize, loadOgFonts fs-reads 3
+        static TTFs, buildOgComposition({tag,titleLines,accent,fontSize})->ReactElement)
+        consumed by 3 thin opengraph-image.tsx routes (root + episodes/[slug] + cases/[slug]).
+      file: src/lib/og/og-image.tsx
+      reusable_for: Phase 8.3 thumb-preview (same brand composition at 1280x720);
+        any future ImageResponse surface (twitter-image, per-page og). Reuse buildOgComposition
+        + loadOgFonts; pass scaleTitle for variable-length titles.
+    - description: 'og route brand-hex discipline — Satori cannot resolve CSS var()/tokens,
+        so OG_COLORS are INLINE hex equal to globals.css @theme (Shadow #2A2520, Marble
+        #F7F4EC, Ink #1C1814, Oxblood #6B2020). All four pass forbidden-patterns sentinel
+        (none are pure #000/#fff/#f00) and brushstroke uses clip-path:polygon NOT
+        linear-gradient -> NO SKIP_PATHS entry needed for the og files.'
+      file: src/lib/og/og-image.tsx
+      reusable_for: Any src/ file rendering brand color literals — use the 4 warm
+        hexes, never pure black/white/red; a data_consistency test reads globals.css
+        and asserts OG_COLORS == tokens to catch drift.
+    - description: ImageResponse route testing without WASM render — vi.mock("next/og")
+        ImageResponse to a spy capturing (element, options); pure-test buildOgComposition
+        by walking the returned ReactElement (isValidElement + props.children/style,
+        no `any`); accentGlyph = the oxblood span with the largest fontSize.
+      file: src/app/episodes/[slug]/__tests__/opengraph-image.test.tsx
+      reusable_for: Any Satori/ImageResponse route test (8.3 thumb-preview, future
+        og); avoids the slow/realm-fragile WASM render path entirely.
+  gotchas:
+    - A code COMMENT containing the literal banned hexes (#000/#fff/#f00) trips BOTH
+      the section infra sentinel AND the repo-wide forbidden-patterns sentinel (they
+      scan src/**/*.{ts,tsx,css} including comments). Describe banned colors in prose
+      ("pure black/white/red"), never as hex literals, anywhere in src/.
+    - 'Buffer realm trap in jsdom tests: `buffer instanceof Uint8Array` is FALSE (jsdom
+      Uint8Array !== Node Uint8Array realm) and `x instanceof Uint8Array` after a
+      Buffer-typed narrow trips TS2358 (never-LHS). Use Buffer.isBuffer(x) — realm-safe
+      AND tsc-safe — to assert binary font data.'
+    - Dynamic [slug] opengraph-image routes do NOT need their own generateStaticParams
+      — they inherit the page segment's. In Next 16 build they render as ƒ (Dynamic,
+      on-demand + cached) while the page is SSG; root /opengraph-image is ○ (Static,
+      Satori runs at build). Both render fine; planning accepted request-time font
+      reads.
+    - 'Satori validity: every div with >1 child needs display:flex. buildOgComposition
+      sets it on the outer, panel, title-container, and each title span (text + accent
+      span). npm run build is the real Satori gate — a jsdom-mocked test passing does
+      NOT prove the route renders; root og is Static so build catches composition
+      errors there.'
+    - 'Episode field access is entry.meta.* — getEpisodeBySlug/getCaseBySlug return
+      LoadedEntry { slug, meta, Component }. Episode uses meta.episodeNumber (NOT
+      meta.episode); planning-doc pseudocode (ep.series/ep.episode/ep.title) was wrong.
+      Case: meta.title, meta.client. Routes render ONLY public fields (never Case.contractValue/summary
+      or Episode.summary/transcriptPath) — enforced by sec_info_disclosure tests.'
+  reusable_utilities:
+    - function: buildOgComposition / loadOgFonts / scaleTitle
+      file: src/lib/og/og-image.tsx
+      purpose: Brand og:image composition builder (marble panel + brushstroke clip
+        + Cinzel title + oxblood accent), static-TTF font loader, and title-length->fontSize
+        scaler. scaleTitle buckets <=24:72, 25-40:60, 41-60:50, >60:42.
