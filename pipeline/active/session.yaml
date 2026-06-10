@@ -4,7 +4,7 @@ session:
   current_phase: styling-overhaul
   current_section: styling-overhaul-9.1
   current_agent: pending
-  current_stage: styling-overhaul-8.4-complete
+  current_stage: build-log-overhaul-3.3-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
@@ -21,16 +21,38 @@ completed_sections:
     files_modified: 2
     pushed: true
     posture: ui-block
+    notes: 'Phase 3 block 3.4. Pure-renderer LiveWorktreesPanel + local WorktreeCard:
+      null-guard hides empty block, 3-way length-switch intro copy, orphan-slot badge
+      when pid null, friendly phaseLabel via isPhaseName guard, optional agentName/startedAt(relative)/truncated
+      slotPath rows, per-card PhaseStepper size=sm. Additively extended LiveWorktree
+      (worktree-state.ts) with optional agentName/startedAt (component read them;
+      type lacked them). Barrel-exported. Ships UNMOUNTED by design — Phase 4.1 mounts
+      it (audit_component_mounts N/A per plan). 16 tests: 8 unit, 2 integration, 3
+      edge, 1 error-recovery, 2 a11y. No jest-axe (semantic RTL a11y).
+
+      '
+  - id: build-log-overhaul-3.3
+    name: RecentActivity block
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add RecentActivity block with 26 tests (build-log-overhaul-3.3)
+    tests: 26
+    files_new: 1
+    files_modified: 1
+    pushed: true
+    posture: ui-presentational-unmounted
     notes: >
-      Phase 3 block 3.4. Pure-renderer LiveWorktreesPanel + local WorktreeCard:
-      null-guard hides empty block, 3-way length-switch intro copy, orphan-slot
-      badge when pid null, friendly phaseLabel via isPhaseName guard, optional
-      agentName/startedAt(relative)/truncated slotPath rows, per-card
-      PhaseStepper size=sm. Additively extended LiveWorktree (worktree-state.ts)
-      with optional agentName/startedAt (component read them; type lacked them).
-      Barrel-exported. Ships UNMOUNTED by design — Phase 4.1 mounts it
-      (audit_component_mounts N/A per plan). 16 tests: 8 unit, 2 integration,
-      3 edge, 1 error-recovery, 2 a11y. No jest-axe (semantic RTL a11y).
+      Third section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+      src/components/build-log/RecentActivity.tsx — pure static RSC reverse-chronological
+      feed of completedSections. Buckets normalized entries (toEntry + reverse) into top-5
+      expanded ActivityCards (commit links + collapsed notes preview), 6-25 compact mono
+      rows, and 25+ inside a "Show N older" <details>. Notes (up to 40KB) are NEVER
+      auto-expanded — closed <details> with a 1000-char flattened summary preview.
+      Discriminated CompletedSectionEntry drives minimal ("no detail recorded") vs detailed
+      cards; numeric commit hashes render via toEntry's String() coercion. 26 tests
+      (11 unit, 2 integration, 3 a11y, 2 infra, 5 edge, 1 err, 2 data) — security/permission/
+      contract N/A (UI-only). Ships UNMOUNTED by design (Phase 4.1 mounts it); barrel-exported.
+      Zero refactorings — verbatim realization of the planning doc, green on first run.
   - id: styling-overhaul-8.4
     name: Design-system doc finalize
     completed_at: '2026-06-09'
@@ -41,15 +63,16 @@ completed_sections:
     files_modified: 2
     pushed: true
     posture: docs-only
-    notes: >
-      Final section of styling-overhaul Phase 8 (Asset Pipeline). Finalized
-      docs/fabled10x-design-system.md with real shipped asset paths (individual
-      font rows, apple 180×180, hero floatbg.png), an Off-site brand surfaces
-      section (3 og:image routes @1200×630 + Satori clip-path note + /thumb-preview
-      @1280×720 + accent glyphs), Regeneration notes, and expanded Implementation
-      references. 23 tests appended to the brand docs harness assert both content
-      presence AND on-disk existence of every documented path/route. Hero path
-      gotcha: documented floatbg.png (plan's marble-column.jpg never existed).
+    notes: 'Final section of styling-overhaul Phase 8 (Asset Pipeline). Finalized
+      docs/fabled10x-design-system.md with real shipped asset paths (individual font
+      rows, apple 180×180, hero floatbg.png), an Off-site brand surfaces section (3
+      og:image routes @1200×630 + Satori clip-path note + /thumb-preview @1280×720
+      + accent glyphs), Regeneration notes, and expanded Implementation references.
+      23 tests appended to the brand docs harness assert both content presence AND
+      on-disk existence of every documented path/route. Hero path gotcha: documented
+      floatbg.png (plan''s marble-column.jpg never existed).
+
+      '
   - id: build-log-overhaul-3.2
     name: PipelineExplainer block
     completed_at: '2026-06-09'
@@ -60,40 +83,69 @@ completed_sections:
     files_modified: 1
     pushed: true
     posture: ui-presentational-unmounted
-    notes: |
-      Second section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+    notes: 'Second section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+
       src/components/build-log/PipelineExplainer.tsx — zero-prop pure static RSC
-      (no 'use client', no useState/useEffect) wrapping a native <details
+
+      (no ''use client'', no useState/useEffect) wrapping a native <details
+
       id="whatisthis" open> with <summary>"What is this?"</summary>, three
+
       hand-written explainer paragraphs (code refs as <code> in oxblood mono),
+
       and a <PhaseStepper currentPhase={null} size="md"> legend. Collapsible
+
       without JS; open-by-default for first-time viewers. Implemented verbatim
+
       from planning §3.2; brand classes match shipped Hero (3.1): border
+
       border-bone, text-(--color-ink/muted/oxblood), text-link, font-display/mono.
-      &apos; for the apostrophe in "job's" (react/no-unescaped-entities).
+
+      &apos; for the apostrophe in "job''s" (react/no-unescaped-entities).
+
 
       14 tests (1 new file PipelineExplainer.test.tsx): 4 unit, 2 integration,
+
       3 a11y, 2 infra, 3 edge; security/permission/contract/error-recovery/data
+
       all N/A (pure static component, no input/API/data/async). Barrel-exported
+
       (PipelineExplainer) from components/build-log/index.ts. SHIPS UNMOUNTED by
+
       design (Phase 3 preamble — Phase 4.1 page rewrite mounts it); page.tsx
+
       untouched. audit_component_mounts N/A with plan citation (same as 2.1/3.1).
 
+
       GREEN test fix (in-bounds, intent-preserving): <details> exposes an implicit
-      ARIA role=group, so getByRole('group') collided with PhaseStepper's <ol
-      role="group">. Disambiguated via { name: 'Build phase legend' } — strengthens
+
+      ARIA role=group, so getByRole(''group'') collided with PhaseStepper''s <ol
+
+      role="group">. Disambiguated via { name: ''Build phase legend'' } — strengthens
+
       the selector. First-pass green otherwise; zero-source-change refactor (27th
+
       consecutive). Full suite 2620 passed | 60 skipped | 0 failed (+14 exact).
+
       tsc/lint/build clean.
 
+
       WORKTREE mode. Slot section-build-log-overhaul-3.2 from origin/main fbdcc79.
+
       PWTC N/A (fabled10x static). node_modules bind-mounted; .env.local symlinked.
 
+
       DEFERRED: <code className="font-mono text-(--color-oxblood)"> appears 3x
+
       within PipelineExplainer (within-section static copy). <CodeRef> extraction
+
       deferred until 3.3 RecentActivity / 3.5 KnowledgeDigest reuse the className
+
       on commit hashes / section ids (crosses 3-consumer-FILE threshold). Next blo:
+
       3.3 RecentActivity / 3.4 LiveWorktreesPanel / 3.5 KnowledgeDigest (Phase 3).
+
+      '
   - id: build-log-overhaul-3.1
     name: Hero block
     completed_at: '2026-06-09'

@@ -7169,29 +7169,141 @@ styling-overhaul-8.4:
 build-log-overhaul-3.2:
   completed_at: '2026-06-09'
   patterns_established:
-    - description: 'PipelineExplainer — zero-prop pure static RSC: native <details id="whatisthis" open> + <summary>"What is this?"</summary> + 3 hand-written explainer paragraphs + <PhaseStepper currentPhase={null} size="md"> legend. No ''use client''/useState/useEffect. Collapsible without JS (browser remembers per-session); open-by-default so first-time viewers see context. Code refs use <code className="font-mono text-(--color-oxblood)"> — the "code = oxblood monospace" idiom planning §3.2 establishes for the page (3.3 commit hashes, 3.5 will inherit).'
+    - description: 'PipelineExplainer — zero-prop pure static RSC: native <details
+        id="whatisthis" open> + <summary>"What is this?"</summary> + 3 hand-written
+        explainer paragraphs + <PhaseStepper currentPhase={null} size="md"> legend.
+        No ''use client''/useState/useEffect. Collapsible without JS (browser remembers
+        per-session); open-by-default so first-time viewers see context. Code refs
+        use <code className="font-mono text-(--color-oxblood)"> — the "code = oxblood
+        monospace" idiom planning §3.2 establishes for the page (3.3 commit hashes,
+        3.5 will inherit).'
       file: src/components/build-log/PipelineExplainer.tsx
-      reusable_for: Any static no-JS collapsible explainer/disclosure block. The <details open> + <summary> pattern is the brand's no-client disclosure primitive (also used by RecentActivity notes 3.3, KnowledgeDigest 3.5).
+      reusable_for: Any static no-JS collapsible explainer/disclosure block. The <details
+        open> + <summary> pattern is the brand's no-client disclosure primitive (also
+        used by RecentActivity notes 3.3, KnowledgeDigest 3.5).
   gotchas:
-    - '<details> exposes an IMPLICIT ARIA role=group. A bare screen.getByRole("group") inside a component that also mounts PhaseStepper (<ol role="group">) throws "multiple elements" — disambiguate with { name: "Build phase legend" } (the PhaseStepper aria-label in legend mode). Caught in green; the fix STRENGTHENS the selector (intent unchanged).'
-    - 'SHIPS UNMOUNTED by design (Phase 3 preamble — same as 2.1 PhaseStepper / 3.1 Hero). audit_component_mounts marked N/A with plan citation, NOT failed: phase-3-blocks.md states the five blocks ship as importable modules; Phase 4.1 page rewrite mounts them. Barrel-exported now for that consumer. Same resolution applies to 3.3/3.4/3.5.'
-    - 'Brand-class convention matches shipped Hero (3.1): `border border-bone`, `text-(--color-ink|muted|oxblood)`, `text-link`, `font-display/font-mono` — all resolve via globals.css @theme tokens and pass forbidden-patterns sentinel. Use &apos; for apostrophes in JSX text ("job&apos;s") to satisfy react/no-unescaped-entities.'
-    - 'Source-regex infra test (no use client/useState/useEffect) uses REPO_ROOT=join(__dirname,"..","..","..","..") so readFileSync resolves inside worktree slots — same lesson as PhaseStepper 2.1 / StatusBadge. Barrel re-export test: import * as buildLogBarrel from ".."; expect(barrel).toHaveProperty("PipelineExplainer").'
+    - '<details> exposes an IMPLICIT ARIA role=group. A bare screen.getByRole("group")
+      inside a component that also mounts PhaseStepper (<ol role="group">) throws
+      "multiple elements" — disambiguate with { name: "Build phase legend" } (the
+      PhaseStepper aria-label in legend mode). Caught in green; the fix STRENGTHENS
+      the selector (intent unchanged).'
+    - 'SHIPS UNMOUNTED by design (Phase 3 preamble — same as 2.1 PhaseStepper / 3.1
+      Hero). audit_component_mounts marked N/A with plan citation, NOT failed: phase-3-blocks.md
+      states the five blocks ship as importable modules; Phase 4.1 page rewrite mounts
+      them. Barrel-exported now for that consumer. Same resolution applies to 3.3/3.4/3.5.'
+    - 'Brand-class convention matches shipped Hero (3.1): `border border-bone`, `text-(--color-ink|muted|oxblood)`,
+      `text-link`, `font-display/font-mono` — all resolve via globals.css @theme tokens
+      and pass forbidden-patterns sentinel. Use &apos; for apostrophes in JSX text
+      ("job&apos;s") to satisfy react/no-unescaped-entities.'
+    - 'Source-regex infra test (no use client/useState/useEffect) uses REPO_ROOT=join(__dirname,"..","..","..","..")
+      so readFileSync resolves inside worktree slots — same lesson as PhaseStepper
+      2.1 / StatusBadge. Barrel re-export test: import * as buildLogBarrel from "..";
+      expect(barrel).toHaveProperty("PipelineExplainer").'
   reusable_utilities: []
   deferred_followups:
-    - 'cross-section DRY: <code className="font-mono text-(--color-oxblood)"> appears 3x WITHIN PipelineExplainer (within-section, trivial static-copy spans). A <CodeRef> extraction is speculative until 3.3 RecentActivity + 3.5 KnowledgeDigest ship and reuse the same className on commit hashes / section ids — that crosses the genuine 3-consumer-FILE threshold. Re-evaluate at 3.3/3.5.'
-
+    - 'cross-section DRY: <code className="font-mono text-(--color-oxblood)"> appears
+      3x WITHIN PipelineExplainer (within-section, trivial static-copy spans). A <CodeRef>
+      extraction is speculative until 3.3 RecentActivity + 3.5 KnowledgeDigest ship
+      and reuse the same className on commit hashes / section ids — that crosses the
+      genuine 3-consumer-FILE threshold. Re-evaluate at 3.3/3.5.'
 build-log-overhaul-3.4:
   completed_at: '2026-06-09'
   patterns_established:
-    - description: 'LiveWorktreesPanel — pure-renderer section + local WorktreeCard sub-component. Top-level guard `if (worktrees.length === 0 && !session?.currentSection) return null` hides the whole block. Intro copy is a 3-way length switch (0 → "checked out but no worktree", 1 → singular, >1 → "{n} sections..."). Each card: orphan-slot badge when `pid == null` else "pid {n}"; friendly phaseLabel only when isPhaseName(currentPhase); optional agentName/startedAt(relative)/truncated slotPath rows; per-card <PhaseStepper size="sm" currentPhase={phase}>.'
+    - description: 'LiveWorktreesPanel — pure-renderer section + local WorktreeCard
+        sub-component. Top-level guard `if (worktrees.length === 0 && !session?.currentSection)
+        return null` hides the whole block. Intro copy is a 3-way length switch (0
+        → "checked out but no worktree", 1 → singular, >1 → "{n} sections..."). Each
+        card: orphan-slot badge when `pid == null` else "pid {n}"; friendly phaseLabel
+        only when isPhaseName(currentPhase); optional agentName/startedAt(relative)/truncated
+        slotPath rows; per-card <PhaseStepper size="sm" currentPhase={phase}>.'
       file: src/components/build-log/LiveWorktreesPanel.tsx
-      reusable_for: 'Any "list of live entities as cards with a status stepper" block. The null-guard + length-switch-copy + optional-field-row idiom matches Hero (3.1)/RecentActivity (3.3).'
+      reusable_for: Any "list of live entities as cards with a status stepper" block.
+        The null-guard + length-switch-copy + optional-field-row idiom matches Hero
+        (3.1)/RecentActivity (3.3).
   gotchas:
-    - 'LiveWorktree (src/lib/build-log/worktree-state.ts) did NOT declare agentName/startedAt, but the planned component reads both. Plan test fixtures cast `as never`, masking the gap in tests — the component body would not compile under strict TS. Fix: additively extend the interface with `agentName?: string` + `startedAt?: string` (optional, backward-compatible; getLiveWorktrees need not populate them yet). Discovery flagged this as a missing_dependency; green did the extension in group_1.'
-    - 'WorktreeCard does NOT wrap itself in <details>, so the ONLY role=group in a card is PhaseStepper''s — `screen.getByRole("group")` is unambiguous here (1 per card), unlike PipelineExplainer 3.2 where a sibling <details> forced a {name} disambiguator. getAllByRole("group").length === worktrees.length is the per-worktree-stepper assertion.'
-    - 'SHIPS UNMOUNTED by design (Phase 3 preamble, line 11). audit_component_mounts marked N/A with plan citation, NOT failed — Phase 4.1 page rewrite mounts them. Barrel-exported (LiveWorktreesPanel + LiveWorktreesPanelProps) now for that consumer. Same resolution as 3.1/3.2/3.3/3.5.'
-    - 'No jest-axe in this codebase — a11y tests use semantic RTL: section[aria-labelledby] id === <h2> id, and PhaseStepper role=group + non-empty aria-label. Mirrors Hero 3.1.'
+    - 'LiveWorktree (src/lib/build-log/worktree-state.ts) did NOT declare agentName/startedAt,
+      but the planned component reads both. Plan test fixtures cast `as never`, masking
+      the gap in tests — the component body would not compile under strict TS. Fix:
+      additively extend the interface with `agentName?: string` + `startedAt?: string`
+      (optional, backward-compatible; getLiveWorktrees need not populate them yet).
+      Discovery flagged this as a missing_dependency; green did the extension in group_1.'
+    - WorktreeCard does NOT wrap itself in <details>, so the ONLY role=group in a
+      card is PhaseStepper's — `screen.getByRole("group")` is unambiguous here (1
+      per card), unlike PipelineExplainer 3.2 where a sibling <details> forced a {name}
+      disambiguator. getAllByRole("group").length === worktrees.length is the per-worktree-stepper
+      assertion.
+    - SHIPS UNMOUNTED by design (Phase 3 preamble, line 11). audit_component_mounts
+      marked N/A with plan citation, NOT failed — Phase 4.1 page rewrite mounts them.
+      Barrel-exported (LiveWorktreesPanel + LiveWorktreesPanelProps) now for that
+      consumer. Same resolution as 3.1/3.2/3.3/3.5.
+    - 'No jest-axe in this codebase — a11y tests use semantic RTL: section[aria-labelledby]
+      id === <h2> id, and PhaseStepper role=group + non-empty aria-label. Mirrors
+      Hero 3.1.'
   reusable_utilities: []
   deferred_followups:
-    - 'getLiveWorktrees() does not yet populate agentName/startedAt (now-optional fields on LiveWorktree). When a future section wires real agent-name/start-time into the worktree-state reader, the panel renders them with zero component changes. Until then both rows are simply omitted.'
+    - getLiveWorktrees() does not yet populate agentName/startedAt (now-optional fields
+      on LiveWorktree). When a future section wires real agent-name/start-time into
+      the worktree-state reader, the panel renders them with zero component changes.
+      Until then both rows are simply omitted.
+build-log-overhaul-3.3:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: 'RecentActivity — bounded reverse-chronological feed RSC. entries.map(toEntry).reverse()
+        then slice into 3 buckets: top-5 expanded ActivityCards (TOP_N_EXPANDED=5),
+        6-25 compact mono rows (COMPACT_TAIL_CAP=25), 25+ inside a <details> "Show
+        N older". Pure static RSC (no use client/hooks). Discriminated CompletedSectionEntry
+        drives a kind===minimal early-return ("Shipped earlier (no detail recorded)")
+        vs detailed card. resolveJobName uses rollup.find(r => id.startsWith(slug
+        + "-")) — cheapest correct slug match since slugs contain hyphens.'
+      file: src/components/build-log/RecentActivity.tsx
+      reusable_for: Any bounded long-list feed where the long tail must not explode
+        the DOM. The top-N-expanded / middle-compact / hidden-details bucketing is
+        the brand pattern for "feels complete without overwhelming". 3.4 LiveWorktreesPanel
+        + 4.1 page assembly consume the same completedSections data.
+    - description: 'Notes-in-nested-<details> pattern: 40KB notes are NEVER auto-expanded
+        — closed <details> with a 1000-char (NOTES_PREVIEW_CHARS) summary preview
+        flattened via replace(/\s+/g, single-space) and an ellipsis when truncated.
+        MarkdownDocument renders the full body only once opened. Nesting <details>
+        inside the card works because the parent card is non-interactive.'
+      file: src/components/build-log/RecentActivity.tsx
+      reusable_for: Any oversize author-controlled prose (notes, transcripts) that
+        should be collapsible-by-default to bound first-paint cost. 3.5 KnowledgeDigest
+        renders patterns/deferred-followups the same way.
+  gotchas:
+    - 'SHIPS UNMOUNTED by design (Phase 3 preamble — same as Hero 3.1 / PipelineExplainer
+      3.2). audit_component_mounts + all wiring beats marked N/A with plan citation,
+      NOT failed: the five Phase-3 blocks ship as importable modules; Phase 4.1 page
+      rewrite mounts them. Barrel-exported (RecentActivity + RecentActivityProps)
+      now for that consumer. Same resolution applies to 3.4/3.5.'
+    - toEntry() String()-coerces commit_hash because YAML parses all-digit short hashes
+      as NUMBERS. A numeric commit_hash (e.g. 1234567) renders correctly via entry.commitHash.slice(0,7)
+      only because of that coercion — tested explicitly (data_serialization_numeric_hash_coercion).
+      When passing raw entries in tests, commit_hash is typed string | number on the
+      inline-object shape.
+    - Stat tiles render an em-dash (U+2014) for undefined tests/filesNew/filesModified
+      — string-form (minimal) and field-less detailed entries degrade gracefully.
+      Test asserts getAllByText(em-dash).toHaveLength(3) for a bare entry. Em-dash,
+      not hyphen.
+    - 'a11y verified WITHOUT jest-axe (the build-log suite has none) — semantic queries
+      instead: section[aria-labelledby=recent-heading] -> h2#recent-heading, native
+      <summary>/<details> for keyboard-operable disclosure, h2->h3 hierarchy with
+      queryByRole(level 1)===null. <ul> counting (querySelectorAll("ul").length) cleanly
+      distinguishes the 3 buckets: 1 ul = top only (<=5 entries), 2 = top+compact
+      (6-25), 3 = +older details.'
+  reusable_utilities:
+    - function: 'resolveJobName(sectionId, rollup): string | null'
+      file: src/components/build-log/RecentActivity.tsx
+      purpose: startsWith(slug + "-") match of a section id to its JobRollupEntry
+        title. Private to RecentActivity; promote to a shared build-log lib only if
+        3.4/4.1 need the same id->job-title mapping (currently 1 site).
+  deferred_followups:
+    - 'cross-section DRY (carried from 3.1): mostRecentTimestamp (Hero) ~ inline most-recent-completedAt
+      (derive-live-status.ts) stays at 2 sites — RecentActivity uses the SHARED formatRelativeTime,
+      NOT a 3rd inline copy. Defer holds.'
+    - 'cross-section DRY (carried from 3.2): <code> CodeRef extraction NOT triggered
+      by 3.3 — RecentActivity renders the oxblood-mono idiom on h3/span (section ids,
+      hashes), not as <code> spans. No 3rd CodeRef consumer-file added. Re-evaluate
+      at 3.5 KnowledgeDigest.'
+    - resolveJobName is a 1-site private helper; if 3.4 LiveWorktreesPanel or 4.1
+      page need section-id -> job-title resolution, extract to src/lib/build-log/
+      (crosses 2-3 site threshold then).
