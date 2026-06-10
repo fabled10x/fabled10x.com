@@ -160,7 +160,7 @@ this job composes. No prerequisite job is pending.
 | 3.1 | `<Hero>` block — "right now" sentence + three stat tiles + `id="current"` anchor          | 3 - Composed UI blocks         | M    | Shipped |
 | 3.2 | `<PipelineExplainer>` block — "what is this?" copy + stepper legend in `<details open>`  | 3 - Composed UI blocks         | S    | Shipped |
 | 3.3 | `<RecentActivity>` block — top-5 expanded section cards + compact tail (cap 25 + show-older) | 3 - Composed UI blocks      | L    | Planned |
-| 3.4 | `<LiveWorktreesPanel>` block — per-worktree card with stepper + agent + slot path        | 3 - Composed UI blocks         | M    | Planned |
+| 3.4 | `<LiveWorktreesPanel>` block — per-worktree card with stepper + agent + slot path        | 3 - Composed UI blocks         | M    | Shipped |
 | 3.5 | `<KnowledgeDigest>` block — patterns + deferred-followups summary in `<details>`         | 3 - Composed UI blocks         | S    | Planned |
 | 4.1 | Page rewrite of `/build-log` — compose all blocks, single merged JSON-LD                 | 4 - Page assembly + cleanup    | M    | Planned |
 | 4.2 | `/build-log/status` → `/build-log#current` server-side redirect + test                    | 4 - Page assembly + cleanup    | S    | Planned |

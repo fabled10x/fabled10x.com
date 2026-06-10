@@ -12,6 +12,8 @@ export interface LiveWorktree {
   branch: string;
   pid?: number;
   currentPhase?: string;
+  agentName?: string;
+  startedAt?: string;
 }
 
 interface ParsedRecord {

@@ -8,3 +8,5 @@ export type { PhaseStepperProps } from './PhaseStepper';
 export { Hero } from './Hero';
 export type { HeroProps } from './Hero';
 export { PipelineExplainer } from './PipelineExplainer';
+export { LiveWorktreesPanel } from './LiveWorktreesPanel';
+export type { LiveWorktreesPanelProps } from './LiveWorktreesPanel';

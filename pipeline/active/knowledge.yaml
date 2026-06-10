@@ -7180,3 +7180,18 @@ build-log-overhaul-3.2:
   reusable_utilities: []
   deferred_followups:
     - 'cross-section DRY: <code className="font-mono text-(--color-oxblood)"> appears 3x WITHIN PipelineExplainer (within-section, trivial static-copy spans). A <CodeRef> extraction is speculative until 3.3 RecentActivity + 3.5 KnowledgeDigest ship and reuse the same className on commit hashes / section ids — that crosses the genuine 3-consumer-FILE threshold. Re-evaluate at 3.3/3.5.'
+
+build-log-overhaul-3.4:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: 'LiveWorktreesPanel — pure-renderer section + local WorktreeCard sub-component. Top-level guard `if (worktrees.length === 0 && !session?.currentSection) return null` hides the whole block. Intro copy is a 3-way length switch (0 → "checked out but no worktree", 1 → singular, >1 → "{n} sections..."). Each card: orphan-slot badge when `pid == null` else "pid {n}"; friendly phaseLabel only when isPhaseName(currentPhase); optional agentName/startedAt(relative)/truncated slotPath rows; per-card <PhaseStepper size="sm" currentPhase={phase}>.'
+      file: src/components/build-log/LiveWorktreesPanel.tsx
+      reusable_for: 'Any "list of live entities as cards with a status stepper" block. The null-guard + length-switch-copy + optional-field-row idiom matches Hero (3.1)/RecentActivity (3.3).'
+  gotchas:
+    - 'LiveWorktree (src/lib/build-log/worktree-state.ts) did NOT declare agentName/startedAt, but the planned component reads both. Plan test fixtures cast `as never`, masking the gap in tests — the component body would not compile under strict TS. Fix: additively extend the interface with `agentName?: string` + `startedAt?: string` (optional, backward-compatible; getLiveWorktrees need not populate them yet). Discovery flagged this as a missing_dependency; green did the extension in group_1.'
+    - 'WorktreeCard does NOT wrap itself in <details>, so the ONLY role=group in a card is PhaseStepper''s — `screen.getByRole("group")` is unambiguous here (1 per card), unlike PipelineExplainer 3.2 where a sibling <details> forced a {name} disambiguator. getAllByRole("group").length === worktrees.length is the per-worktree-stepper assertion.'
+    - 'SHIPS UNMOUNTED by design (Phase 3 preamble, line 11). audit_component_mounts marked N/A with plan citation, NOT failed — Phase 4.1 page rewrite mounts them. Barrel-exported (LiveWorktreesPanel + LiveWorktreesPanelProps) now for that consumer. Same resolution as 3.1/3.2/3.3/3.5.'
+    - 'No jest-axe in this codebase — a11y tests use semantic RTL: section[aria-labelledby] id === <h2> id, and PhaseStepper role=group + non-empty aria-label. Mirrors Hero 3.1.'
+  reusable_utilities: []
+  deferred_followups:
+    - 'getLiveWorktrees() does not yet populate agentName/startedAt (now-optional fields on LiveWorktree). When a future section wires real agent-name/start-time into the worktree-state reader, the panel renders them with zero component changes. Until then both rows are simply omitted.'

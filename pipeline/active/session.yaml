@@ -11,6 +11,26 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: build-log-overhaul-3.4
+    name: LiveWorktreesPanel block
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add LiveWorktreesPanel block with 16 tests (build-log-overhaul-3.4)
+    tests: 16
+    files_new: 1
+    files_modified: 2
+    pushed: true
+    posture: ui-block
+    notes: >
+      Phase 3 block 3.4. Pure-renderer LiveWorktreesPanel + local WorktreeCard:
+      null-guard hides empty block, 3-way length-switch intro copy, orphan-slot
+      badge when pid null, friendly phaseLabel via isPhaseName guard, optional
+      agentName/startedAt(relative)/truncated slotPath rows, per-card
+      PhaseStepper size=sm. Additively extended LiveWorktree (worktree-state.ts)
+      with optional agentName/startedAt (component read them; type lacked them).
+      Barrel-exported. Ships UNMOUNTED by design — Phase 4.1 mounts it
+      (audit_component_mounts N/A per plan). 16 tests: 8 unit, 2 integration,
+      3 edge, 1 error-recovery, 2 a11y. No jest-axe (semantic RTL a11y).
   - id: styling-overhaul-8.4
     name: Design-system doc finalize
     completed_at: '2026-06-09'
