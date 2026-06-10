@@ -1,6 +1,6 @@
 # Phase 4: Capture + SEO
 
-**Total Size: M + S + M + M**
+**Total Size: L**
 **Prerequisites: Phase 1 + Phase 2 + Phase 3 complete (all routes render with stubs for `EmailCapture` and `LllCrosslinks`)**
 **New Types: None**
 **New Files: `src/components/capture/EmailCapture.tsx` (real impl), `src/components/capture/actions.ts`, `src/components/crosslinks/LllCrosslinks.tsx` (real impl), `src/app/sitemap.ts`, `src/app/robots.ts`**
@@ -12,18 +12,23 @@ performance sweep.
 
 ---
 
-## Feature 4.1: Resend Email Capture
+## Feature 4.1: Capture + SEO + Polish
 
-**Complexity: M** — Real server action that posts to Resend's Audiences API, a
-client component form that invokes it, and typed success/error return states.
+**Complexity: L** — Email capture via Resend, LLL crosslinks component, per-page
+SEO metadata with OpenGraph + JSON-LD, sitemap, robots, llms.txt, and a11y/perf
+sweep. Four concerns in one section — each is small individually.
 
 ### Problem
 
-Phase 3 ships with a stub `EmailCapture` component so pages compile. The stub
-doesn't actually capture anything. Email capture is the entire monetization
-funnel's first step — it has to work end-to-end in this job.
+Phase 3 ships with stub `EmailCapture` and `LllCrosslinks` components so pages
+compile. The stubs don't actually capture anything or render crosslinks. Email
+capture is the monetization funnel's first step. SEO metadata, sitemap, and
+robots are required for discoverability. The a11y/perf sweep is the bar for
+calling the site shippable.
 
 ### Implementation
+
+#### Email Capture
 
 Install the Resend SDK:
 
@@ -83,8 +88,6 @@ export async function captureEmail(
       audienceId,
       unsubscribed: false,
     });
-    // Future: attach `parsed.data.source` as a tag or metadata when the
-    // email-funnel job lands. For now it's captured server-side in logs.
     console.log('[capture] subscribed', {
       email: parsed.data.email,
       source: parsed.data.source,
@@ -100,7 +103,7 @@ export async function captureEmail(
 }
 ```
 
-**NEW** `src/components/capture/EmailCapture.tsx` (client component, replaces the Phase 3 stub):
+**MODIFY** `src/components/capture/EmailCapture.tsx` (replaces the Phase 3 stub):
 
 ```tsx
 'use client';
@@ -151,7 +154,7 @@ export function EmailCapture({
           disabled={isPending}
           className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-parchment hover:opacity-90 disabled:opacity-60"
         >
-          {isPending ? 'Sending…' : buttonLabel}
+          {isPending ? 'Sending\u2026' : buttonLabel}
         </button>
       </div>
       {state.status === 'error' && (
@@ -162,47 +165,7 @@ export function EmailCapture({
 }
 ```
 
-### Tests (red phase of section `website-foundation-4.1`)
-
-- Server action validates email format (rejects missing/invalid email)
-- Server action returns `{ status: 'error' }` when `RESEND_API_KEY` is unset
-- Server action returns `{ status: 'success' }` on mocked Resend success (mock `Resend.contacts.create`)
-- Component renders in idle state, transitions to success state after mocked action, shows error message on error state
-- `source` hidden input is always included in the FormData payload
-
-### Design Decisions
-
-- **`useActionState` pattern** — Next.js 16's recommended form pattern. Pending state + error state without client-side fetch plumbing.
-- **Resend contacts.create, not emails.send** — we're adding to an audience (subscriber list), not sending a transactional email. Future email-funnel job will orchestrate actual sends.
-- **`source` as FormData, not a closure** — server actions receive `FormData`, so we pass it as a hidden input rather than closing over it. Keeps the action signature standard.
-- **Degraded state when env vars are missing** — instead of crashing on import, log an error and return a user-friendly error state. This keeps local dev functional without a key.
-- **No client-side email regex** — `type="email"` + browser validation + Zod on the server is enough. Double-regex is redundant.
-- **Success state replaces the form entirely** — a subscribed user shouldn't re-see the form. Visual confirmation is strong enough without a toast/banner pattern.
-
-### Files
-
-| Action | File                                                     |
-|--------|----------------------------------------------------------|
-| NEW    | `src/components/capture/actions.ts`                      |
-| MODIFY | `src/components/capture/EmailCapture.tsx` (from Phase 3 stub) |
-| NEW    | `src/components/capture/__tests__/actions.test.ts`       |
-| NEW    | `src/components/capture/__tests__/EmailCapture.test.tsx` |
-
----
-
-## Feature 4.2: `<LllCrosslinks>` Component
-
-**Complexity: S** — Replace the Phase 3 stub with a real component that
-renders the list of LLL URLs with brand-appropriate styling.
-
-### Problem
-
-Both episode and case detail pages consume `<LllCrosslinks urls={...} />` but
-Phase 3 stubbed it as an empty component. The final version needs to: render
-each URL with extracted anchor text, open in a new tab, signal "this goes to a
-different sister site", and visually match the brand token system.
-
-### Implementation
+#### LLL Crosslinks
 
 **MODIFY** `src/components/crosslinks/LllCrosslinks.tsx`:
 
@@ -253,7 +216,7 @@ export function LllCrosslinks({ urls, className }: LllCrosslinksProps) {
               className="inline-flex items-center gap-2 text-link underline-offset-2 hover:underline"
             >
               <span className="capitalize">{extractEntrySlug(url)}</span>
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true">\u2197</span>
             </a>
           </li>
         ))}
@@ -263,36 +226,7 @@ export function LllCrosslinks({ urls, className }: LllCrosslinksProps) {
 }
 ```
 
-### Design Decisions
-
-- **Returns `null` for empty URL lists** — callers can unconditionally mount the component without guarding. Simpler caller code.
-- **Slug-to-label extraction** — use the last path segment of the URL, replace dashes with spaces, capitalize. Good enough for Phase 4; a future job can swap in real entry titles fetched from LLL once the LLL API exists.
-- **`target="_blank" rel="noopener"`** — crosslinks to a different site should open in a new tab so the visitor doesn't lose context.
-- **Framing copy** — the little "From The Large Language Library" label frames the link group in brand terms without over-explaining. Matches the brand doc's "acknowledged, not loud".
-- **No branded logo mark** — LLL's own branding is out of scope. A text link is enough.
-
-### Files
-
-| Action | File                                               |
-|--------|----------------------------------------------------|
-| MODIFY | `src/components/crosslinks/LllCrosslinks.tsx`      |
-
----
-
-## Feature 4.3: SEO Metadata
-
-**Complexity: M** — Per-route `generateMetadata`, OpenGraph, Twitter cards,
-and JSON-LD for the episode and case detail pages.
-
-### Problem
-
-Phase 3 pages set a basic `title` + `description`. OpenGraph images, Twitter
-card tags, and structured data (JSON-LD) are missing. Without them, social
-shares show no preview, and search engines don't get the rich metadata they
-reward with better ranking. The implementation-plan doc explicitly names SEO
-as a Phase 1 deliverable.
-
-### Implementation
+#### SEO Metadata
 
 **MODIFY** `src/app/layout.tsx` — expand the root metadata:
 
@@ -301,7 +235,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://fabled10x.com'),
   title: {
     default: 'fabled10x',
-    template: '%s · fabled10x',
+    template: '%s \u00b7 fabled10x',
   },
   description: 'One person. An agent team. Full SaaS delivery.',
   openGraph: {
@@ -391,41 +325,12 @@ const jsonLd = {
 ```
 
 **NEW** `public/og-default.png` — default OpenGraph image referenced in the
-root layout. For Phase 4 a simple branded 1200×630 PNG is enough; the file is
+root layout. For Phase 4 a simple branded 1200x630 PNG is enough; the file is
 placed manually by the user or generated via a one-off script — do not block
 the phase on it. If the file is absent, the `openGraph.images` entry still
 validates but shares will fall back to no image.
 
-### Design Decisions
-
-- **`metadataBase` at the root** — every relative OpenGraph URL in child pages resolves against this automatically.
-- **JSON-LD via `dangerouslySetInnerHTML`** — the standard Next.js pattern for inline structured data. React's default string-encoding would break the JSON.
-- **VideoObject for episodes, CreativeWork for cases** — most semantically correct schema.org types for each content kind. Both are broadly recognized by Google.
-- **`robots: { index: true, follow: true }`** — the site is explicitly open to crawlers (mirrors the llms.txt stance).
-- **No dynamic OG image generation in Phase 4** — `@vercel/og` would be nice but it's polish. Ship with a static default and backfill dynamic OG images as a future job.
-
-### Files
-
-| Action | File                                      |
-|--------|-------------------------------------------|
-| MODIFY | `src/app/layout.tsx`                      |
-| MODIFY | `src/app/episodes/[slug]/page.tsx`        |
-| MODIFY | `src/app/cases/[slug]/page.tsx`           |
-| NEW    | `public/og-default.png` (manual asset)    |
-
----
-
-## Feature 4.4: `sitemap.ts` + `robots.ts` + `llms.txt` Polish + A11y/Perf Sweep
-
-**Complexity: M** — The final shipping polish.
-
-### Problem
-
-Search engines need a sitemap. Crawlers need a `robots.txt`. The `llms.txt`
-needs to reference the sitemap. And the whole site needs an accessibility +
-performance sweep before it can be called "shippable".
-
-### Implementation
+#### Sitemap + Robots + llms.txt
 
 **NEW** `src/app/sitemap.ts`:
 
@@ -512,46 +417,79 @@ This site is open for crawling and indexing. No rate limits, no robots.txt
 disallows, no paywalls. Attribution appreciated but not required.
 ```
 
-### Accessibility + Performance Sweep
+#### Accessibility + Performance Sweep
 
-- Run `npx playwright codegen` or Lighthouse against a local `npm run build && npm run start` instance.
-- Target Lighthouse scores: a11y ≥ 95, performance ≥ 90, SEO ≥ 95, best practices ≥ 90.
+- Run Lighthouse against a local `npm run build && npm run start` instance.
+- Target Lighthouse scores: a11y >= 95, performance >= 90, SEO >= 95, best practices >= 90.
 - Check every new route for:
   - Landmark regions (`<header>`, `<main>`, `<footer>`, `<nav>` present — they are via the shell)
   - Heading hierarchy (one `<h1>` per page, no skipped levels)
-  - Color contrast ≥ 4.5:1 for body text, 3:1 for large text (adjust `--color-muted` if needed)
+  - Color contrast >= 4.5:1 for body text, 3:1 for large text (adjust `--color-muted` if needed)
   - All interactive elements keyboard-focusable with visible focus ring
   - Form inputs with associated labels (capture form uses `<label class="sr-only">`)
   - Images with `alt` attributes (no images in this job beyond the OG default, which doesn't need alt in the metadata)
 - Fix anything that lands below threshold. Document the scores in the finish commit message.
 
+### Tests (red phase of section `website-foundation-4.1`)
+
+- Server action validates email format (rejects missing/invalid email)
+- Server action returns `{ status: 'error' }` when `RESEND_API_KEY` is unset
+- Server action returns `{ status: 'success' }` on mocked Resend success (mock `Resend.contacts.create`)
+- Component renders in idle state, transitions to success state after mocked action, shows error message on error state
+- `source` hidden input is always included in the FormData payload
+- `LllCrosslinks` returns null for empty URL list
+- `LllCrosslinks` renders each URL with extracted slug label
+- Sitemap includes static routes + all episodes + all cases
+- Robots includes sitemap reference
+
 ### Design Decisions
 
-- **Sitemap is dynamic, not static** — it reads the loader so new episodes auto-appear on rebuild. No manual sitemap maintenance.
-- **Permissive robots** — matches the llms.txt stance. Crawlers explicitly welcome.
-- **Lighthouse thresholds are minimums, not aspirations** — 95/90/95/90 is the bar for a static marketing site built by a brand agency. Anything less is a Phase 4 failure, not a future-work item.
-- **No PWA / service worker / manifest** — unnecessary for a content marketing site. Don't add complexity that doesn't serve a goal.
+- **`useActionState` pattern** — Next.js 16's recommended form pattern. Pending state + error state without client-side fetch plumbing.
+- **Resend contacts.create, not emails.send** — we're adding to an audience (subscriber list), not sending a transactional email. Future email-funnel job will orchestrate actual sends.
+- **`source` as FormData, not a closure** — server actions receive `FormData`, so we pass it as a hidden input rather than closing over it. Keeps the action signature standard.
+- **Degraded state when env vars are missing** — instead of crashing on import, log an error and return a user-friendly error state. This keeps local dev functional without a key.
+- **No client-side email regex** — `type="email"` + browser validation + Zod on the server is enough.
+- **Success state replaces the form entirely** — a subscribed user shouldn't re-see the form.
+- **`LllCrosslinks` returns `null` for empty URL lists** — callers can unconditionally mount the component without guarding.
+- **Slug-to-label extraction** — use the last path segment of the URL, replace dashes with spaces. Good enough for Phase 4; a future job can swap in real entry titles fetched from LLL.
+- **`target="_blank" rel="noopener"`** — crosslinks to a different site should open in a new tab.
+- **`metadataBase` at the root** — every relative OpenGraph URL in child pages resolves against this automatically.
+- **JSON-LD via `dangerouslySetInnerHTML`** — the standard Next.js pattern for inline structured data.
+- **VideoObject for episodes, CreativeWork for cases** — most semantically correct schema.org types.
+- **`robots: { index: true, follow: true }`** — the site is explicitly open to crawlers.
+- **No dynamic OG image generation** — `@vercel/og` is polish. Ship with a static default.
+- **Sitemap is dynamic, not static** — it reads the loader so new episodes auto-appear on rebuild.
+- **Permissive robots** — matches the llms.txt stance.
+- **Lighthouse thresholds are minimums, not aspirations** — 95/90/95/90 is the bar for a static marketing site.
+- **No PWA / service worker / manifest** — unnecessary for a content marketing site.
 
 ### Files
 
-| Action | File                         |
-|--------|------------------------------|
-| NEW    | `src/app/sitemap.ts`         |
-| NEW    | `src/app/robots.ts`          |
-| MODIFY | `public/llms.txt`            |
+| Action | File                                                     |
+|--------|----------------------------------------------------------|
+| NEW    | `src/components/capture/actions.ts`                      |
+| MODIFY | `src/components/capture/EmailCapture.tsx` (from stub)    |
+| MODIFY | `src/components/crosslinks/LllCrosslinks.tsx` (from stub)|
+| MODIFY | `src/app/layout.tsx`                                     |
+| MODIFY | `src/app/episodes/[slug]/page.tsx`                       |
+| MODIFY | `src/app/cases/[slug]/page.tsx`                          |
+| NEW    | `src/app/sitemap.ts`                                     |
+| NEW    | `src/app/robots.ts`                                      |
+| MODIFY | `public/llms.txt`                                        |
+| NEW    | `public/og-default.png` (manual asset)                   |
 
 ---
 
 ## Phase 4 Exit Criteria
 
-- `npm run build` clean, `npm run lint` clean, `npm test` green, coverage still ≥ thresholds (70/80/80/80)
+- `npm run build` clean, `npm run lint` clean, `npm test` green, coverage still >= thresholds (70/80/80/80)
 - Email capture POSTs to Resend successfully (manual end-to-end test with `RESEND_API_KEY` + `RESEND_AUDIENCE_ID` in `.env.local`)
 - `/sitemap.xml` loads and lists every static route + every episode + every case
 - `/robots.txt` loads and lists the sitemap URL
 - `/llms.txt` loads with the sitemap reference near the top
 - Every detail page's JSON-LD validates against https://validator.schema.org
 - OpenGraph tags visible in `view-source:` on every route
-- Lighthouse local run: a11y ≥ 95, perf ≥ 90, SEO ≥ 95, best practices ≥ 90
+- Lighthouse local run: a11y >= 95, perf >= 90, SEO >= 95, best practices >= 90
 - LLL crosslinks component renders on the seed episode and seed case detail pages
 
 ---

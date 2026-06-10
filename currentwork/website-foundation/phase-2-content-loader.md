@@ -1,6 +1,6 @@
 # Phase 2: Content Loader
 
-**Total Size: M + L + M**
+**Total Size: L + M**
 **Prerequisites: Phase 1 complete (Case schema, Zod validators, design system, site shell)**
 **New Types: None (schemas already exist)**
 **New Files: `mdx-components.tsx`, `src/lib/content/loader.ts`, `src/lib/content/episodes.ts`, `src/lib/content/cases.ts`, `src/content/episodes/pilot-party-masters-discovery.mdx`, `src/content/cases/party-masters.mdx`**
@@ -12,19 +12,25 @@ one episode and one case of seed content.
 
 ---
 
-## Feature 2.1: `@next/mdx` Pipeline Wiring
+## Feature 2.1: MDX Pipeline + Content Loaders
 
-**Complexity: M** — Install the MDX packages, configure `next.config.ts`, and
-create the required `mdx-components.tsx` root file.
+**Complexity: L** — Install the MDX packages, configure `next.config.ts`,
+create the required `mdx-components.tsx` root file, and build the
+filesystem-driven content discovery with dynamic imports and Zod validation.
 
 ### Problem
 
 Next.js 16 does not process `.mdx` files out of the box. Without the MDX
-packages and configuration, every subsequent feature in Phase 2 breaks at the
-import step, and every Phase 3 page that renders an episode or case body has
-nowhere to get content from.
+packages and configuration, content files can't be imported. And once MDX is
+wired, every page in Phase 3 needs typed structured data — episode titles for
+the index, case summaries for the homepage, etc. Pages can't directly import
+MDX files when they also need to iterate "all episodes ordered by date". The
+loader is the layer that does filesystem discovery + dynamic import + Zod
+validation once, and exposes clean typed accessors to the rest of the app.
 
 ### Implementation
+
+#### MDX Wiring
 
 Install the packages:
 
@@ -99,38 +105,7 @@ export function useMDXComponents(): MDXComponents {
 }
 ```
 
-### Design Decisions
-
-- **Keep the MDX pipeline plain in Phase 2** — no remark-gfm, no rehype-slug, no syntax highlighting. These are valuable but each adds build-time risk, and Turbopack has constraints on non-serializable plugin options. Phase 4's polish section can layer in GFM and slug anchors once the content pipeline is proven stable.
-- **`pageExtensions` includes `md` + `mdx`** — per the Next.js docs, this is required even though we don't route MDX files directly via file-based routing (episodes and cases use dynamic `[slug]` routes that import from `src/content/`).
-- **MDX components are minimal and inline-styled with Tailwind** — no separate CSS file. The design tokens from Phase 1.3 drive everything via `var()`-backed utilities.
-- **Root-level `mdx-components.tsx`, not in `src/`** — the Next.js docs explicitly say it lives "at the same level as `pages` or `app`, or inside `src` if applicable". Root placement is the documented default and less likely to trip path-resolution issues.
-
-### Files
-
-| Action | File                      |
-|--------|---------------------------|
-| MODIFY | `next.config.ts`          |
-| NEW    | `mdx-components.tsx`      |
-| MODIFY | `package.json` (via `npm install`) |
-
----
-
-## Feature 2.2: Content Loader Utilities
-
-**Complexity: L** — Filesystem-driven content discovery with dynamic imports
-and Zod validation. The most load-bearing piece of Phase 2.
-
-### Problem
-
-MDX files are the content source but every page in Phase 3 needs typed
-structured data — episode titles for the index, case summaries for the
-homepage, etc. Pages can't directly import MDX files when they also need to
-iterate "all episodes ordered by date". The loader is the layer that does
-filesystem discovery + dynamic import + Zod validation once, and exposes clean
-typed accessors to the rest of the app.
-
-### Implementation
+#### Content Loader Utilities
 
 **NEW** `src/lib/content/loader.ts` — the generic discovery + import + validation engine:
 
@@ -276,7 +251,7 @@ export async function getCaseBySlug(slug: string): Promise<{
 }
 ```
 
-### Tests (red phase of section `website-foundation-2.2`)
+### Tests (red phase of section `website-foundation-2.1`)
 
 Colocate under `src/lib/content/__tests__/`:
 
@@ -286,6 +261,10 @@ Colocate under `src/lib/content/__tests__/`:
 
 ### Design Decisions
 
+- **Keep the MDX pipeline plain in Phase 2** — no remark-gfm, no rehype-slug, no syntax highlighting. These are valuable but each adds build-time risk, and Turbopack has constraints on non-serializable plugin options. Phase 4's polish section can layer in GFM and slug anchors once the content pipeline is proven stable.
+- **`pageExtensions` includes `md` + `mdx`** — per the Next.js docs, this is required even though we don't route MDX files directly via file-based routing (episodes and cases use dynamic `[slug]` routes that import from `src/content/`).
+- **MDX components are minimal and inline-styled with Tailwind** — no separate CSS file. The design tokens from Phase 1.3 drive everything via `var()`-backed utilities.
+- **Root-level `mdx-components.tsx`, not in `src/`** — the Next.js docs explicitly say it lives "at the same level as `pages` or `app`, or inside `src` if applicable". Root placement is the documented default and less likely to trip path-resolution issues.
 - **Module-level cache (`episodesCache`, `casesCache`)** — server components may call `getAllEpisodes()` multiple times per request. Since content is statically known at build time, caching once per process is safe and avoids re-reading the filesystem. Next.js server components already live in a request-scoped context, but the cache is harmless because the underlying data is immutable within a build.
 - **Loader returns `{ meta, Component }`** — detail pages need both the metadata (for `<title>`, breadcrumbs, badges) and the React component (for the MDX body). Returning both in a single pass avoids re-importing the file.
 - **Validation errors crash loudly** — `safeParse` + throw, not silent skip. If a content author ships an invalid file, the build fails with the file path and a readable Zod message. That is the correct failure mode for a static site.
@@ -296,6 +275,9 @@ Colocate under `src/lib/content/__tests__/`:
 
 | Action | File                                           |
 |--------|------------------------------------------------|
+| MODIFY | `next.config.ts`                               |
+| NEW    | `mdx-components.tsx`                           |
+| MODIFY | `package.json` (via `npm install`)             |
 | NEW    | `src/lib/content/loader.ts`                    |
 | NEW    | `src/lib/content/episodes.ts`                  |
 | NEW    | `src/lib/content/cases.ts`                     |
@@ -305,14 +287,14 @@ Colocate under `src/lib/content/__tests__/`:
 
 ---
 
-## Feature 2.3: Seed Content
+## Feature 2.2: Seed Content
 
 **Complexity: M** — One real episode MDX and one placeholder Party Masters
 case MDX, each exporting a typed `meta` object that passes Zod validation.
 
 ### Problem
 
-The loader from 2.2 is impossible to test end-to-end without at least one
+The loader from 2.1 is impossible to test end-to-end without at least one
 concrete content file per type. Phase 3 pages are impossible to visually verify
 without at least one episode and one case. Seed content is the bridge.
 
