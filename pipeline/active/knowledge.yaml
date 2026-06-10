@@ -6808,3 +6808,34 @@ styling-overhaul-8.1:
       file: src/__tests__/brand/favicon-assets.test.ts
       purpose: Local PNG-IHDR dimension reader + TTF magic-byte validator for committed
         binary assets
+build-log-overhaul-2.1:
+  completed_at: '2026-06-10'
+  patterns_established:
+    - description: 'Pure presentational server component (no ''use client'', no useState/useEffect)
+        driven by data-* attributes (data-phase / data-current / data-completed) for
+        stable test assertions instead of hashed Tailwind class lists. Brand-token dots
+        via Tailwind 4 bg-(--color-oxblood)/border-(--color-bone) syntax. <ol role="group">
+        with a friendly aria-label computed from PHASE_LABELS (e.g. "Build phase: Making
+        the tests pass"); decorative dot spans are aria-hidden. isPhaseName guard before
+        highlight so unknown/empty/garbage currentPhase degrades to legend mode (no current/completed)
+        without throwing.'
+      file: src/components/build-log/PhaseStepper.tsx
+      reusable_for: 'Any small ordered-step / progress indicator primitive. data-attr-driven
+        styling + aria-hidden decorative glyph + computed-aria-label-on-root is the same
+        idiom as StatusBadge; copy it for future build-log primitives.'
+  gotchas:
+    - 'PHASE 2 PRIMITIVES SHIP UNMOUNTED (intentional, plan-documented): PhaseStepper
+      is NOT rendered by any page — it ships as an importable barrel export only. The
+      /finish implementation-audit (component-mount trace) would flag this as an orphan,
+      but it is a DEFERRED-by-design case, not ghost code: phase-2-primitives.md states
+      "None of the new primitives are mounted in the live page yet — they ship as importable
+      modules ... ready for Phase 3''s composition." Phase 3 mounts it (3.1 Hero, 3.2
+      PipelineExplainer legend, 3.4 LiveWorktreesPanel per-worktree). Resolution: mark
+      audit_component_mounts na with the plan citation rather than failing finish. Same
+      pattern will apply to any other Phase-2 primitive section.'
+    - 'PhaseStepper test asserts source has NO ''use client''/useState/useEffect via readFileSync
+      with REPO_ROOT=join(__dirname, ''..'',''..'',''..'',''..'') — resolves from the test
+      file, NOT process.cwd(), so it passes inside worktree slots (same lesson as so-8.1).
+      currentPhase=42 (cast as never) is the error-recovery edge: isPhaseName(42) is false
+      (42 truthy but not in PHASE_ORDER) → legend fallback, no throw.'
+  reusable_utilities: []

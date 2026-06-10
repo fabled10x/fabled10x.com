@@ -11,6 +11,34 @@ context_window:
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: build-log-overhaul-2.1
+    name: PhaseStepper primitive
+    completed_at: '2026-06-10'
+    commit_hash: pending
+    commit_message: 'Add PhaseStepper primitive with 19 tests (build-log-overhaul-2.1)'
+    tests: 19
+    files_new: 2
+    files_modified: 1
+    pushed: false
+    posture: ui-primitive-unmounted
+    notes: |
+      First section of build-log-overhaul Phase 2 (Display primitives). Pure
+      presentational server component <PhaseStepper> rendering the 7 canonical
+      pipeline phases (preflight…release) as brand-token dots with the current
+      phase highlighted (Oxblood) and earlier phases Bone-filled. No 'use client',
+      no useState — renders in the server tree. data-* attribute styling
+      (data-phase/data-current/data-completed) for stable test assertions; <ol
+      role="group"> with friendly aria-label from PHASE_LABELS; isPhaseName guard
+      so null/empty/unknown/garbage currentPhase degrades to legend mode without
+      throwing. Two sizes: md (labels under dots, the legend role) / sm (dots-only,
+      per-worktree role). Imports phase-labels.ts (blo-1.1). NO API/schema/hooks/
+      serializers/perms (security/permission/contract/data-integrity all N/A).
+      19 tests: 6 unit, 2 integration, 3 a11y, 2 infra, 5 edge, 1 error-recovery.
+      SHIPS UNMOUNTED by design (per phase-2 plan) — exported via build-log barrel
+      for Phase 3 consumers (3.1 Hero, 3.2 PipelineExplainer legend, 3.4
+      LiveWorktreesPanel per-worktree). Ran as a concurrent_jobs section; global
+      current_section pointer (styling-overhaul-8.2) intentionally untouched.
+      Next blo: 2.2 (enriched JobCard) / 2.3 (normalize lib) — parallel after Phase 1.
   - id: styling-overhaul-8.1
     name: Logo SVG suite + favicon set
     completed_at: '2026-06-09'
