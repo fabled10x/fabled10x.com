@@ -12,3 +12,5 @@ export { LiveWorktreesPanel } from './LiveWorktreesPanel';
 export type { LiveWorktreesPanelProps } from './LiveWorktreesPanel';
 export { RecentActivity } from './RecentActivity';
 export type { RecentActivityProps } from './RecentActivity';
+export { KnowledgeDigest } from './KnowledgeDigest';
+export type { KnowledgeDigestProps } from './KnowledgeDigest';

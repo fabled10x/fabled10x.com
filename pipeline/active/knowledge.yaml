@@ -7374,3 +7374,70 @@ styling-overhaul-9.1:
       sections in Phase 8.
 
       '
+build-log-overhaul-3.5:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: 'KnowledgeDigest — pure RSC renderer of knowledge.patterns[] +
+        knowledge.deferredFollowups[] in a COLLAPSED <details> (no open attr — reference
+        material, not front-loaded, contrast with PipelineExplainer <details open>).
+        Hidden-when-empty: return null when both arrays empty. Two-column md:grid-cols-2,
+        Patterns first / Deferred follow-ups second, each conditional on length. <summary>
+        shows "{n} patterns · {m} deferred follow-ups" (middot U+00B7).'
+      file: src/components/build-log/KnowledgeDigest.tsx
+      reusable_for: Any block summarizing an unknown-shaped array from a YAML state
+        file behind a collapsed disclosure. The return-null-when-empty + collapsed-<details>
+        pair is the brand pattern for optional technical reference blocks. 4.1 page
+        composition mounts it.
+    - description: 'extractItems(raw: readonly unknown[] | undefined): NamedItem[]
+        — defensive coercion of in-the-wild YAML. Array.isArray guard (non-array →
+        []), filter to non-null objects via type predicate, best-effort map of string-only
+        name/title/summary/description. Renders untrusted content as React TEXT children
+        (auto-escaped) — no dangerouslySetInnerHTML, no MarkdownDocument — so <script>/<img
+        onerror> in a name is inert.'
+      file: src/components/build-log/KnowledgeDigest.tsx
+      reusable_for: Any component coercing loosely-typed YAML/JSON arrays where field
+        names vary (name|title, summary|description). The filter-predicate-then-map
+        shape needs NO inner casts — the predicate narrows the array element type.
+  gotchas:
+    - 'KnowledgeFile (src/content/schemas/build-log.ts:105) declares patterns?/openQuestions?
+      but NOT deferredFollowups. Component reads it via a documented cast: (knowledge
+      as KnowledgeFile & { deferredFollowups?: readonly unknown[] }).deferredFollowups.
+      This is the SOLE remaining `as` in the file (tightening the Zod schema is out
+      of scope). openQuestions is intentionally NOT surfaced — only patterns + deferredFollowups
+      render.'
+    - 'Type-safety: after `.filter((x): x is NamedItem => typeof x === "object" &&
+      x !== null)`, the array is NamedItem[], so inner `(x as NamedItem)` casts in
+      the subsequent .map are REDUNDANT — removed in refactor. Lesson: a filter type-predicate
+      already narrows; do not re-cast inside the chained map.'
+    - testing-library getByText / getNodeText joins only DIRECT text-node children.
+      The <summary> "{n} patterns · {m} deferred follow-ups" interpolates {n}/{m}
+      as text nodes (no child ELEMENTS), so getByText(/2 patterns · 1 deferred/i)
+      matches the joined string. The two column h3s ("Patterns", "Deferred follow-ups")
+      are matched with getByRole("heading", { name }) to disambiguate from the h2
+      "Patterns the agents have learned" and the lowercase summary text.
+    - 'SHIPS UNMOUNTED by design (Phase 3 preamble — same as 3.1 Hero / 3.2 PipelineExplainer).
+      FIN audit_component_mounts + audit_feature_reconciliation marked N/A with plan
+      citation, NOT failed: phase-3-blocks.md says the five blocks ship as importable
+      modules; 4.1 page rewrite mounts them. Barrel-exported (KnowledgeDigest + KnowledgeDigestProps)
+      now for that consumer.'
+    - 'Source-regex infra test uses REPO_ROOT=join(__dirname,"..","..","..","..")
+      for worktree-slot readFileSync; pure RSC asserts no use client/useState/useEffect.
+      Barrel re-export test: import * as buildLogBarrel from ".."; expect(barrel).toHaveProperty("KnowledgeDigest").
+      Same lesson chain as 2.1/3.1/3.2.'
+  reusable_utilities:
+    - function: 'extractItems(raw): NamedItem[]'
+      file: src/components/build-log/KnowledgeDigest.tsx
+      purpose: Coerce a readonly unknown[] of varied-shape items into {name,title,summary,description}
+        best-effort. Private to KnowledgeDigest; promote to src/lib/build-log/ if
+        a 2nd block needs the same name|title / summary|description coercion.
+  deferred_followups:
+    - 'cross-section DRY (CodeRef): RESOLVED-as-still-deferred. 3.2 flagged extracting
+      <CodeRef> once 3.3 RecentActivity + 3.5 KnowledgeDigest both ship. At 3.5 commit
+      time this branch (origin/main @4507425) has only 3.1+3.2 — 3.3 is NOT yet merged
+      — so the oxblood <code> idiom lives in exactly 2 FILES (PipelineExplainer 3x-within
+      + KnowledgeDigest 1x). Still BELOW the 3-consumer-FILE threshold. Carry forward:
+      whichever of 3.3/4.1 first makes it a 3rd file should do the <CodeRef> extraction.'
+    - 'within-section DRY: KnowledgeDigest Patterns + Deferred follow-ups columns
+      are 2 structurally identical <ul>/<li> blocks. 2 sites = below project 3-site
+      extraction threshold (matches Hero mostRecentTimestamp 2-site deferral). Extract
+      a <DigestColumn>/<ItemList> only if a 3rd list ever appears.'

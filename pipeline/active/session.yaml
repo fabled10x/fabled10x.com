@@ -1,16 +1,77 @@
 session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
-  current_phase: styling-overhaul
-  current_section: styling-overhaul-9.2
+  current_phase: build-log-overhaul
+  current_section: build-log-overhaul-3.3
   current_agent: pending
-  current_stage: styling-overhaul-9.1-complete
+  current_stage: build-log-overhaul-3.5-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
+resume_point:
+  last_action: section_styling_overhaul_4.4_completed
+  next_action: 'styling-overhaul-4.2 (Header restyle) is the only Phase 4 feature
+    still Planned
+
+    in currentwork/styling-overhaul/README.md — close it out to complete Phase 4
+
+    (Logo + Chrome). With 4.1 (Logo), 4.3 (Footer), and 4.4 (Layout primitives) all
+
+    shipped, Phase 5 (Component Primitives) becomes unblocked: 5.1 (Button)
+
+    cascades to 5.2/5.3/5.4. cohort-enrollment-3.2 (apply page + middleware +
+
+    ApplicationForm + submitApplication + applicant email) remains the next ce
+
+    section. Phase 7.1 (homepage hero), 7.4 (build-log surfaces), and other
+
+    page-surface work can now consume Container width variants + Section rhythm +
+
+    SectionDivider.
+
+    '
+  notes: 'styling-overhaul Phase 4 (Logo + Chrome) is at 3/4 — 4.1 (Logo), 4.3 (Footer),
+
+    4.4 (Layout primitives) shipped. so-4.2 (Header restyle) remains. Section +
+
+    SectionDivider ship standalone per the so-3.1/3.2/4.1 primitive precedent for
+
+    downstream consumption by 4.2 (Header may use Section), 7.1 (homepage hero +
+
+    SectionDivider), 7.x page surfaces (Container width=''prose'' for text-heavy
+
+    pages, Section rhythm for vertical-rhythm consistency), and 8.2/8.3 (og:image
+
+    + thumb-preview will compose against the seam).
+
+    '
 completed_sections:
+  - id: build-log-overhaul-3.5
+    name: KnowledgeDigest block
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add KnowledgeDigest block with 25 tests (build-log-overhaul-3.5)
+    tests: 25
+    files_new: 1
+    files_modified: 1
+    pushed: true
+    posture: ui-only
+    notes: >
+      Phase 3 block 3.5 — pure RSC <KnowledgeDigest> summarizing
+      knowledge.patterns[] + deferredFollowups[] in a COLLAPSED <details>
+      (contrast PipelineExplainer's <details open>), hidden when both arrays
+      empty. extractItems defensively coerces unknown[] (Array.isArray guard +
+      object filter + name|title / summary|description fallback), rendering
+      untrusted content as escaped React text (no HTML sink). KnowledgeFile
+      schema lacks deferredFollowups → read via one documented cast (sole `as`
+      in the file; refactor removed 4 redundant post-filter casts). openQuestions
+      intentionally not surfaced. Ships UNMOUNTED by design (4.1 mounts);
+      audit_component_mounts/feature_reconciliation N/A with plan citation.
+      Barrel-exported. 25 tests (7 unit, 3 integration, 2 security XSS/malformed,
+      3 a11y, 2 infra, 4 edge, 2 error, 2 data). Rebased onto 3.4+3.3+so-9.1 at
+      release — additive index.ts barrel (LiveWorktreesPanel + RecentActivity + KnowledgeDigest).
   - id: styling-overhaul-9.1
     name: Mobile-first legibility
     completed_at: '2026-06-09'
@@ -21,17 +82,18 @@ completed_sections:
     files_modified: 0
     pushed: true
     posture: test-only-sentinel
-    notes: >
-      Regression-guard section — sole artifact src/__tests__/brand/legibility.test.tsx
+    notes: 'Regression-guard section — sole artifact src/__tests__/brand/legibility.test.tsx
       (11 tests: 4 unit + 2 integration + 2 a11y + 2 edge + 1 error_recovery). Guards
       mobile-first headline legibility by extracting --text-display-1/2/3 tokens from
       globals.css and asserting each meets the per-viewport floor (og 18px, youtube
-      24px, mobile 22px), plus EditorialCard/Logo render smokes. Token-floor idiom (not
-      render+getComputedStyle — jsdom can't resolve .display-3 to px). Green-on-arrival;
+      24px, mobile 22px), plus EditorialCard/Logo render smokes. Token-floor idiom
+      (not render+getComputedStyle — jsdom can''t resolve .display-3 to px). Green-on-arrival;
       guard teeth proven via display-3->1rem mutation (5 fails) then restore. Header
-      mobile-width cases deferred to 9.5/9.6 (drawer not built). Re-inserted after a
-      FIN-23 session-resolver drop. Also reconciled the 8.4-deferred README drift:
+      mobile-width cases deferred to 9.5/9.6 (drawer not built). Re-inserted after
+      a FIN-23 session-resolver drop. Also reconciled the 8.4-deferred README drift:
       flipped 8.3 -> Complete (shipped commit bf6302d).
+
+      '
   - id: build-log-overhaul-3.4
     name: LiveWorktreesPanel block
     completed_at: '2026-06-09'
@@ -4642,43 +4704,6 @@ completed_sections:
       vertical-rhythm tokens.
 
       '
-resume_point:
-  last_action: section_styling_overhaul_4.4_completed
-  next_action: 'styling-overhaul-4.2 (Header restyle) is the only Phase 4 feature
-    still Planned
-
-    in currentwork/styling-overhaul/README.md — close it out to complete Phase 4
-
-    (Logo + Chrome). With 4.1 (Logo), 4.3 (Footer), and 4.4 (Layout primitives) all
-
-    shipped, Phase 5 (Component Primitives) becomes unblocked: 5.1 (Button)
-
-    cascades to 5.2/5.3/5.4. cohort-enrollment-3.2 (apply page + middleware +
-
-    ApplicationForm + submitApplication + applicant email) remains the next ce
-
-    section. Phase 7.1 (homepage hero), 7.4 (build-log surfaces), and other
-
-    page-surface work can now consume Container width variants + Section rhythm +
-
-    SectionDivider.
-
-    '
-  notes: 'styling-overhaul Phase 4 (Logo + Chrome) is at 3/4 — 4.1 (Logo), 4.3 (Footer),
-
-    4.4 (Layout primitives) shipped. so-4.2 (Header restyle) remains. Section +
-
-    SectionDivider ship standalone per the so-3.1/3.2/4.1 primitive precedent for
-
-    downstream consumption by 4.2 (Header may use Section), 7.1 (homepage hero +
-
-    SectionDivider), 7.x page surfaces (Container width=''prose'' for text-heavy
-
-    pages, Section rhythm for vertical-rhythm consistency), and 8.2/8.3 (og:image
-
-    + thumb-preview will compose against the seam).
-
-    '
 notes: 'fabled10x project initialized on 2026-04-11.
 
   Skills ported from partymasters (see pipeline/TECH-DECISIONS.md).
