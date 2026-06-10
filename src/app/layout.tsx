@@ -32,6 +32,14 @@ export const metadata: Metadata = {
     template: '%s · fabled10x',
   },
   description: 'One person. An agent team. Full SaaS delivery.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/android-chrome-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/android-chrome-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
   openGraph: {
     type: 'website',
     siteName: 'fabled10x',

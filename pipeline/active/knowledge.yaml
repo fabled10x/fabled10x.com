@@ -6695,21 +6695,35 @@ build_log_overhaul_1_3:
       of misalignment), revisit the decision — could promote to a stale return or
       add a transitioning variant to the LiveStatus union.
 styling-overhaul-7.6:
-  completed_at: "2026-06-09"
+  completed_at: '2026-06-09'
   patterns_established:
-    - description: "Quiet editorial page scaffold — Marble > Section rhythm=lg > Container width=prose, eyebrow .label + .display-1/2 heading with DropAccent + body. Inlined per-page (no shared wrapper) to match products/episodes/cases/cohorts convention."
-      file: "src/app/about/page.tsx"
-      reusable_for: "Any future quiet reading/utility page (no brushstroke); copy the inline scaffold rather than extracting a wrapper"
-    - description: "Brand-class regression scan — a section-local test reads the reskinned source files and asserts absence of legacy placeholder classes (text-muted/border-mist/hover:border-accent/hover:text-accent/font-display) + presence of Marble. Catches drift the global forbidden-patterns sentinel misses (it only targets gradients/shadows/pure-hex/numbered-tailwind)."
-      file: "src/app/__tests__/brand-reskin-7-6.test.ts"
-      reusable_for: "Locking any palette migration where the off-brand tokens aren't in the global sentinel's FORBIDDEN list"
+    - description: Quiet editorial page scaffold — Marble > Section rhythm=lg > Container
+        width=prose, eyebrow .label + .display-1/2 heading with DropAccent + body.
+        Inlined per-page (no shared wrapper) to match products/episodes/cases/cohorts
+        convention.
+      file: src/app/about/page.tsx
+      reusable_for: Any future quiet reading/utility page (no brushstroke); copy the
+        inline scaffold rather than extracting a wrapper
+    - description: Brand-class regression scan — a section-local test reads the reskinned
+        source files and asserts absence of legacy placeholder classes (text-muted/border-mist/hover:border-accent/hover:text-accent/font-display)
+        + presence of Marble. Catches drift the global forbidden-patterns sentinel
+        misses (it only targets gradients/shadows/pure-hex/numbered-tailwind).
+      file: src/app/__tests__/brand-reskin-7-6.test.ts
+      reusable_for: Locking any palette migration where the off-brand tokens aren't
+        in the global sentinel's FORBIDDEN list
   gotchas:
-    - "error.tsx error boundary takes unstable_retry (NOT reset) in this Next.js 16 build — keep the prop name; the existing error.test.tsx already encodes it."
-    - "DropAccent renders {children} THEN the glyph span (aria-hidden). The glyph is excluded from the heading's accessible name but IS in textContent — assert decorative glyphs via querySelector('[aria-hidden=\"true\"]'), and assert headline text via toHaveTextContent."
-    - "Brand surface assertions: use attribute-substring selectors [class*=\"bg-(--color-marble)\"] / [class*=\"max-w-prose\"] to avoid escaping the Tailwind-v4 arbitrary-value parentheses in querySelector."
-    - "SignInForm is still allow-listed for legacy red-* error styling in the forbidden-patterns SKIP_PATHS (deferred); 7.6 scope is the 5 page files only, not the form component."
+    - error.tsx error boundary takes unstable_retry (NOT reset) in this Next.js 16
+      build — keep the prop name; the existing error.test.tsx already encodes it.
+    - DropAccent renders {children} THEN the glyph span (aria-hidden). The glyph is
+      excluded from the heading's accessible name but IS in textContent — assert decorative
+      glyphs via querySelector('[aria-hidden="true"]'), and assert headline text via
+      toHaveTextContent.
+    - 'Brand surface assertions: use attribute-substring selectors [class*="bg-(--color-marble)"]
+      / [class*="max-w-prose"] to avoid escaping the Tailwind-v4 arbitrary-value parentheses
+      in querySelector.'
+    - SignInForm is still allow-listed for legacy red-* error styling in the forbidden-patterns
+      SKIP_PATHS (deferred); 7.6 scope is the 5 page files only, not the form component.
   reusable_utilities: []
-
 build-log-overhaul-1.4:
   completed_at: '2026-06-09'
   patterns_established:
@@ -6717,8 +6731,7 @@ build-log-overhaul-1.4:
         | MinimalCompletedSection = CompletedSectionEntry). First tag-discriminated
         union in src/content/schemas/build-log.ts. The TYPE lives in build-log.ts;
         the runtime normalizer `toEntry()` that produces it ships in 2.3 (normalize.ts).
-        Until 2.3, consumers still read the raw string|object union via
-        SessionStatus.completedSections.
+        Until 2.3, consumers still read the raw string|object union via SessionStatus.completedSections.
       file: src/content/schemas/build-log.ts
       reusable_for: Any schema that mirrors two YAML shapes (legacy string + detailed
         object) and wants tag-narrowing instead of `typeof`/`'field' in entry` checks.
@@ -6731,30 +6744,67 @@ build-log-overhaul-1.4:
       reusable_for: Mirroring evolving YAML state files where /finish may add fields
         the schema doesn't know yet — declare-what-you-validate, passthrough the rest.
   gotchas:
-    - 'YAML COERCION TRAP (high-value): the yaml loader parses all-digit / float- or
-      sci-notation-looking git short hashes as NUMBERS, not strings. Real session.yaml
+    - 'YAML COERCION TRAP (high-value): the yaml loader parses all-digit / float-
+      or sci-notation-looking git short hashes as NUMBERS, not strings. Real session.yaml
       entry 61 had commit_hash 68914.0 loaded as number 68914, which a strict z.string()
-      rejects and silently breaks getSessionStatus on the live file. Fix:
-      commit_hash z.union([z.string(), z.number()]) in the Zod schema AND
-      commit_hash?: string | number in the SessionStatus interface. Downstream consumers
-      (2.3 toEntry, 3.3 RecentActivity GitHub-link builder) MUST String() the value
-      before use. Caught only by the pipeline-state integration test that parses the
-      real file — quoted-hash unit fixtures hid it. Lesson: when widening a Zod field
-      that maps to YAML, run the real-file integration test, not just hand-built fixtures.'
-    - 'CROSS-SECTION DECISION (resolves 1.3 deferred_followup): LiveStatus was NOT added
-      to build-log.ts in 1.4, despite the original README/phase plan listing it. 1.3 had
-      already shipped export type LiveStatus in derive-live-status.ts and locked it with
-      a source-regex infra test (derive-live-status.test.ts:256 asserts
-      /export\s+type\s+LiveStatus\b/ in that file). Adding it to build-log.ts created a
-      duplicate; honoring 1.3 knowledge note, 1.4 dropped the add-LiveStatus item.
-      CANONICAL LiveStatus home = src/lib/build-log/derive-live-status.ts. 3.1 (Hero)
-      must import LiveStatus from @/lib/build-log/derive-live-status, NOT from
+      rejects and silently breaks getSessionStatus on the live file. Fix: commit_hash
+      z.union([z.string(), z.number()]) in the Zod schema AND commit_hash?: string
+      | number in the SessionStatus interface. Downstream consumers (2.3 toEntry,
+      3.3 RecentActivity GitHub-link builder) MUST String() the value before use.
+      Caught only by the pipeline-state integration test that parses the real file
+      — quoted-hash unit fixtures hid it. Lesson: when widening a Zod field that maps
+      to YAML, run the real-file integration test, not just hand-built fixtures.'
+    - 'CROSS-SECTION DECISION (resolves 1.3 deferred_followup): LiveStatus was NOT
+      added to build-log.ts in 1.4, despite the original README/phase plan listing
+      it. 1.3 had already shipped export type LiveStatus in derive-live-status.ts
+      and locked it with a source-regex infra test (derive-live-status.test.ts:256
+      asserts /export\s+type\s+LiveStatus\b/ in that file). Adding it to build-log.ts
+      created a duplicate; honoring 1.3 knowledge note, 1.4 dropped the add-LiveStatus
+      item. CANONICAL LiveStatus home = src/lib/build-log/derive-live-status.ts. 3.1
+      (Hero) must import LiveStatus from @/lib/build-log/derive-live-status, NOT from
       @/content/schemas. CompletedSectionEntry and concurrentJobs DID land in build-log.ts
       as planned.'
   reusable_utilities: []
   deferred_followups:
-    - 'README New Content Types table (currentwork/build-log-overhaul/README.md) and
-      phase-1-foundation.md Feature 1.4 still say LiveStatus lands in build-log.ts. That
-      is stale — actual home is derive-live-status.ts (see gotcha above). Not corrected
-      in-place to avoid rewriting historical plan prose; this knowledge entry is the
-      source of truth. 3.1 discovery should read THIS for the LiveStatus import path.'
+    - README New Content Types table (currentwork/build-log-overhaul/README.md) and
+      phase-1-foundation.md Feature 1.4 still say LiveStatus lands in build-log.ts.
+      That is stale — actual home is derive-live-status.ts (see gotcha above). Not
+      corrected in-place to avoid rewriting historical plan prose; this knowledge
+      entry is the source of truth. 3.1 discovery should read THIS for the LiveStatus
+      import path.
+styling-overhaul-8.1:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: 'Static brand-asset set: public/favicon.svg (32x32 {10x} mark,
+        Marble #F7F4EC bg + Oxblood #6B2020 text, JetBrains Mono) wired via metadata.icons
+        in layout.tsx (icon[] svg-first + android 192/512 png, apple[] 180). Next
+        16 renders the <link rel> tags.'
+      file: src/app/layout.tsx
+      reusable_for: Any future favicon/icon/og asset wiring — metadata.icons is the
+        single source; assets live in public/ (not scanned by the forbidden-patterns
+        sentinel, which is src/-only).
+    - description: 'Asset-validity test sentinel — resolve repo ROOT from import.meta.url
+        (NOT process.cwd()) so it passes inside worktree slots; assert PNG via 8-byte
+        signature + IHDR width@16/height@20 (BE uint32), TTF via 0x00010000/OTTO/true
+        magic, and favicon brand-color purity (no pure #000/#fff/#f00) since the global
+        sentinel skips public/.'
+      file: src/__tests__/brand/favicon-assets.test.ts
+      reusable_for: Phase 8.2/8.3 og:image + thumb-preview asset checks; any committed-binary
+        validation
+  gotchas:
+    - next/og (Phase 8.2) needs STATIC-weight TTFs (not variable, not woff2 — Satori
+      limitation). @fontsource ships only woff/woff2; fonttools is NOT installed (can't
+      instance from variable). Resolve static gstatic URLs via google-webfonts-helper
+      API (gwfh.mranftl.com/api/fonts/{family}?subsets=latin -> variants[].ttf). Re-resolve
+      via gwfh if a pinned gstatic URL 404s on version bump.
+    - Render favicon PNGs with sharp({density:600}) before .resize() — oversamples
+      the 32x32 SVG so {10x} text stays crisp at 180/192/512. JetBrainsMono Nerd Font
+      is installed system-wide so librsvg renders the text (else fallback monospace).
+    - 'metadata.icons is typed by next''s Metadata (IconURL | Icon[] | Icons union);
+      tests narrow it with a cast to { icon: IconEntry[]; apple: IconEntry[] } — same
+      idiom as existing layout.test.tsx casting metadata.title.'
+  reusable_utilities:
+    - function: readPngDimensions / hasValidTtfMagic
+      file: src/__tests__/brand/favicon-assets.test.ts
+      purpose: Local PNG-IHDR dimension reader + TTF magic-byte validator for committed
+        binary assets

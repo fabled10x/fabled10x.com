@@ -1,165 +1,290 @@
 session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
-  current_phase: build-log-overhaul
-  current_section: build-log-overhaul-2.1
+  current_phase: styling-overhaul
+  current_section: styling-overhaul-8.2
   current_agent: pending
-  current_stage: build-log-overhaul-1.4-complete
+  current_stage: styling-overhaul-8.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
-  - id: build-log-overhaul-1.4
-    name: 'Schema additions — concurrentJobs + discriminated CompletedSectionEntry union'
+  - id: styling-overhaul-8.1
+    name: Logo SVG suite + favicon set
     completed_at: '2026-06-09'
     commit_hash: pending
-    commit_message: 'Add SessionStatus schema additions with 16 tests (build-log-overhaul-1.4)'
+    commit_message: 'Add logo favicon suite + font assets with 26 tests (styling-overhaul-8.1)'
+    tests: 26
+    files_new: 9
+    files_modified: 1
+    pushed: false
+    posture: static-asset-and-metadata
+    notes: |
+      First section of phase 8 (Asset Pipeline). Shipped the brand favicon set
+      and the local TTF fonts that Phase 8.2's next/og ImageResponse will
+      consume. New: public/favicon.svg (32x32 {10x} mark, Marble bg + Oxblood
+      text, JetBrains Mono); apple-touch-icon.png (180), android-chrome-192/512
+      PNGs rendered from the SVG via sharp({density:600}); public/fonts/
+      Cinzel-Black + Inter-Regular/SemiBold/Bold static TTFs fetched from
+      gstatic (URLs resolved via google-webfonts-helper — static weights, not
+      variable/woff2, because next/og Satori needs static TTF). Wired
+      metadata.icons into layout.tsx (icon[] svg-first + android png; apple[]
+      180). 26 tests across 2 new files (favicon-assets infra/data sentinel
+      resolving repo ROOT from import.meta.url for worktree stability; PNG
+      signature + IHDR dims + TTF magic checks; layout.icons metadata tests).
+      No API/schema/hooks/serializers/perms — static assets + typed metadata.
+      Next: styling-overhaul-8.2 (Dynamic og:images, phase 8).
+  - id: build-log-overhaul-1.4
+    name: Schema additions — concurrentJobs + discriminated CompletedSectionEntry
+      union
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add SessionStatus schema additions with 16 tests (build-log-overhaul-1.4)
     tests: 16
     files_new: 0
     files_modified: 2
     pushed: false
     posture: schema-only
-    notes: |
-      Fourth section of build-log-overhaul (blo) job, completing Phase 1
+    notes: 'Fourth section of build-log-overhaul (blo) job, completing Phase 1
+
       (Foundation utilities) at 4/4. Pure type + Zod schema additions to
+
       src/content/schemas/build-log.ts + validators.ts — zero runtime logic,
+
       no UI, no API.
 
+
       Added: SessionStatus.concurrentJobs?: readonly string[] (mirrors
+
       session.concurrent_jobs); DetailedCompletedSection / MinimalCompletedSection
+
       / CompletedSectionEntry discriminated union (kind-tagged) for 2.3 normalize
+
       + 3.3 RecentActivity to drill into completed sections without typeof guards;
+
       widened the raw completedSections object union + CompletedSectionEntrySchema
+
       with snake_case detail fields (commit_hash, commit_message, tests, files_new,
+
       files_modified, pushed, notes, name) keeping .passthrough() for forward-compat.
 
+
       16 tests: 5 unit, 2 integration, 3 security (tampering), 3 edge case,
+
       1 error recovery, 2 data integrity. Categories N/A: accessibility (no UI),
+
       infrastructure (no cors/rate-limit/headers), contract + permission (no HTTP
+
       endpoints).
 
+
       GREEN-DISCOVERED REAL-DATA FIX: live session.yaml entry had
+
       commit_hash 68914.0 — YAML coerces all-digit/float-looking short hashes to
+
       NUMBERS, which strict z.string() rejected and silently broke getSessionStatus
+
       on the real file (caught by pipeline-state integration test). Widened
+
       commit_hash to z.union([z.string(), z.number()]) + string | number on the
+
       interface; locked with a regression unit test. Downstream (2.3 toEntry,
+
       3.3 GitHub-link builder) must String() the hash.
 
+
       CROSS-SECTION DECISION (resolves 1.3 deferred): did NOT add LiveStatus to
+
       build-log.ts despite the original plan — 1.3 already shipped it in
+
       derive-live-status.ts and locked it with a source-regex infra test. Honored
-      1.3's recorded guidance (also in this session.yaml's 1.3 notes + knowledge.yaml):
+
+      1.3''s recorded guidance (also in this session.yaml''s 1.3 notes + knowledge.yaml):
+
       canonical LiveStatus home stays src/lib/build-log/derive-live-status.ts;
+
       3.1 Hero imports LiveStatus from @/lib/build-log/derive-live-status.
+
       CompletedSectionEntry + concurrentJobs DID land in build-log.ts as planned.
 
+
       Audits clean: 0 ESLint warnings, tsc --noEmit clean, npm run build pass.
+
       Full suite: 2376 passed / 60 skipped / 0 failed (vs preflight 2360 / 60 / 0;
+
       net +16 = exactly the new tests). Refactor produced ZERO source changes
+
       (the LiveStatus rework happened at finish per the 1.3 knowledge note).
 
+
       WORKTREE mode (CLAIM 6 done + provision_test_db N/A — fabled10x static, no
+
       Postgres). Slot section-build-log-overhaul-1.4 on branch
+
       section/build-log-overhaul-1.4 from origin/main 312098c. node_modules
+
       bind-mounted; .env.local symlinked.
 
+
       Phase 1 COMPLETE (1.1 phase-labels + 1.2 relative-time + 1.3 derive-live-status
+
       + 1.4 schema additions). Next: build-log-overhaul-2.1 (<PhaseStepper> primitive,
+
       Phase 2 Display primitives).
 
+      '
   - id: styling-overhaul-7.6
     name: About + auth + error pages
     completed_at: '2026-06-09'
     commit_hash: pending
-    commit_message: 'Add about/auth/error pages brand reskin with 52 tests (styling-overhaul-7.6)'
+    commit_message: Add about/auth/error pages brand reskin with 52 tests (styling-overhaul-7.6)
     tests: 52
     files_new: 1
     files_modified: 10
     pushed: false
     posture: ui-only-reskin
-    notes: |
-      Final section of phase 7 (Page Surfaces) of the styling-overhaul (so)
+    notes: 'Final section of phase 7 (Page Surfaces) of the styling-overhaul (so)
+
       job. Reskinned the 5 quiet pages — /about, /login, /login/verify,
+
       not-found, error — off the placeholder palette (text-muted/border-mist/
+
       hover:accent/font-display) onto the editorial brand surface: Marble >
+
       Section rhythm=lg > Container width=prose, .label eyebrow, .display-1/2
-      Cinzel heading with DropAccent ('.' about, '✓' verify, '✕' not-found +
+
+      Cinzel heading with DropAccent (''.'' about, ''✓'' verify, ''✕'' not-found +
+
       error), .build-log-prose body (about), oxblood return-home link
+
       (not-found), Button ghost retry (error). SignInForm callbackUrl wiring +
-      error.tsx unstable_retry/console.error/'use client' all preserved.
+
+      error.tsx unstable_retry/console.error/''use client'' all preserved.
+
       Imports consolidated onto the @/components/brand barrel (refactor).
+
       52 tests across 6 files (1 new brand-class source-scan guard, 5 page
+
       test files rewritten). UI-only — no API/schema/hooks/serializers/perms.
+
       Next: styling-overhaul-8.1 (Logo SVG suite + favicon set, phase 8).
+
+      '
   - id: build-log-overhaul-1.3
     name: derive-live-status helper + LiveStatus type (pure state-machine)
     completed_at: '2026-06-08'
     commit_hash: pending
-    commit_message: 'Add derive-live-status helper with 40 tests (build-log-overhaul-1.3)'
+    commit_message: Add derive-live-status helper with 40 tests (build-log-overhaul-1.3)
     tests: 40
     files_new: 2
     files_modified: 0
     pushed: false
     posture: zero-source-change-refactor
-    notes: |
-      Third section of build-log-overhaul (blo) job. Single pure
+    notes: 'Third section of build-log-overhaul (blo) job. Single pure
+
       deriveLiveStatus({ session, worktrees, completedSections, nowIso })
+
       function at src/lib/build-log/derive-live-status.ts mapping inputs to
-      a LiveStatus union ('active' | 'idle' | 'paused' | 'stale' | 'unknown').
+
+      a LiveStatus union (''active'' | ''idle'' | ''paused'' | ''stale'' | ''unknown'').
+
       Decision tree precedence-ordered: null session => unknown; currentAgent
+
       === pending OR currentStage endsWith -failed => paused; worktree matches
+
       currentSection => active; no work + <=72h since last completion => idle;
+
       older or never => stale; session.currentSection set but no matching
+
       worktree (mid-pipeline race) => idle fallback. Inline mostRecentCompletedAt
+
       private helper handles raw SessionStatus.completedSections union (string |
+
       object) via typeof-entry-is-string discrimination — self-contained, NO
+
       dependency on toEntry from 2.3 normalize (not yet shipped) or
+
       CompletedSectionEntry from 1.4 schemas (not yet shipped). _thresholds
+
       re-exports { IDLE_WINDOW_HOURS=24, STALE_WINDOW_HOURS=72 } for tunability
+
       + test visibility.
 
+
       40 tests: 14 unit, 2 integration, 5 infrastructure, 12 edge case,
+
       3 error recovery, 4 data integrity. Categories N/A: security (pure
+
       helper — STRIDE addressed section-level), accessibility (no UI),
+
       contract (no HTTP endpoints), permission (no roles).
 
+
       Refactor produced ZERO source-code changes — 26th consecutive
+
       zero-source-change refactor section. Type safety: 0 any/as/@ts-ignore.
+
       Cross-section DRY: Date.parse + Number.isNaN pattern at 2 sites
+
       (derive-live-status + relative-time); below 3-site extraction threshold
+
       per so-7.3 cases formatEngagement precedent.
 
+
       Audits clean: 0 ESLint warnings, baseline 1 pre-existing tsc error
+
       (JobsRollupTable.test.tsx slated for 4.3 deletion; section 1.3
+
       introduced 0 new tsc errors), npm run build pass (53 routes prerender).
+
       Full suite at green-end: 2367 passed / 60 skipped / 0 failed (vs
+
       preflight 2327 / 60 / 0; net +40 = exactly the new tests).
 
+
       Pipeline run in WORKTREE mode (CLAIM beats 1-7: 6 done + 1 N/A for
+
       provision_test_db; slot at /home/travis/Projects/fabled10x-worktrees/
+
       section-build-log-overhaul-1.3 on branch section/build-log-overhaul-1.3
+
       from origin/main 6c2fb9c, rebased onto c1020fb during release as
+
       styling-overhaul-7.5 landed concurrently). Rebase resolver dropped this
+
       completed_sections entry — manually restored at FIN-23 per never-halt rule.
+
       PWTC N/A (fabled10x is static — no Postgres). node_modules bind-mounted
+
       from main; .env.local symlinked.
 
+
       Forward-dependency resolution captured to knowledge.yaml#build_log_overhaul_1_3:
+
       LiveStatus stays in derive-live-status.ts per 1.3 spec (NOT moved to
+
       build-log.ts as 1.4 originally said — 1.4 discovery should adopt this);
+
       inline typeof-string discrimination is the canonical pre-2.3 pattern;
+
       paused-precedence-over-active semantic; both IDLE/STALE branches return
+
       idle by design (IDLE_WINDOW_HOURS unused in fn body intentional).
 
+
       Blocker cleared: build-log-overhaul Phase 1 (Foundation utilities)
+
       is now 3/4 shipped (1.1 phase-labels + 1.2 relative-time +
+
       1.3 derive-live-status). 1.4 (schema additions: concurrentJobs +
+
       discriminated CompletedSectionEntry union) is the canonical next
+
       blo section.
 
+      '
   - id: build-log-overhaul-1.2
     name: Relative-time formatter (formatRelativeTime SSR-safe pure function)
     completed_at: '2026-06-08'
@@ -189,73 +314,131 @@ completed_sections:
     files_new: 0
     files_modified: 13
     pushed: false
-    notes: |
-      Fourth feature of styling-overhaul Phase 7 (Page Surfaces). All four
+    notes: 'Fourth feature of styling-overhaul Phase 7 (Page Surfaces). All four
+
       /build-log/* pages + JobsRollupTable + PhaseNav reskinned onto brand
+
       primitives. 13 files modified (6 source + 6 test + planning README),
+
       0 new. NO content schema / TypeScript types / API endpoints /
+
       serializers / DB.
 
+
       Pages: Bone primary surface; Section rhythm=md on index+status,
+
       rhythm=lg on detail pages; Container width=wide on index+status,
+
       width=prose on detail pages. .label kicker + .display-1 title +
+
       .body-1 subtitle pattern repeated. Detail pages add Parchment
+
       edge=strong p-(--space-6) inner panel wrapping MarkdownDocument
+
       (the "live document on the workbench" metaphor per planning §7.4).
+
       No DropAccent — build-log voice is documentary, not editorial.
 
+
       JobsRollupTable wrapped in Marble edge=strong overflow-hidden;
+
       thead bg-(--color-bone) with .label utility for th text; tbody
+
       hover:bg-(--color-parchment); numeric cols use font-mono
+
       tabular-nums; progressbar restyled to bg-(--color-bone) track +
+
       bg-(--color-oxblood) fill (replaces placeholder bg-mist/bg-accent).
+
       Prop contract preserved (rows: readonly JobRollupEntry[]).
+
       StatusBadge data-testid cross-consumer pin preserved.
 
-      PhaseNav restyled as Oxblood chip rail. Outer 'Phases' hint via
+
+      PhaseNav restyled as Oxblood chip rail. Outer ''Phases'' hint via
+
       .label. <ol inline-flex flex-wrap gap-(--space-3)>. Active chip:
+
       aria-current=page + border-b-2 border-(--color-oxblood) +
+
       text-(--color-ink). Inactive: text-(--color-muted)
-      hover:text-(--color-oxblood). Planning doc's 3-state design
+
+      hover:text-(--color-oxblood). Planning doc''s 3-state design
+
       (with Verdigris ✓ completed) deferred because JobPhase has no
-      completion field — out of scope. Existing test's bg-accent
+
+      completion field — out of scope. Existing test''s bg-accent
+
       className pin REWRITTEN during red to assert /oxblood/ instead
+
       (intent preserved, assertion updated to brand chrome).
 
+
       Hybrid red posture (so-5.3/7.1/7.2/7.3 precedent) — 156 tests =
+
       ~70 preserved-behavior pins (data flow, JSON-LD, metadata,
+
       generateMetadata/StaticParams/dynamicParams, notFound, prop
+
       contracts, aria-current, StatusBadge cross-consumer testid) +
+
       ~61 new brand-aware tests (Bone/Marble/Parchment mounts, Section,
+
       Container, .label/.display-N/.body-N utilities, Parchment-panel-
+
       wraps-markdown integration test, source-grep sentinels,
+
       forbidden-pattern re-check, Oxblood active indicator on PhaseNav).
 
+
       Refactor produced ZERO source-code changes — 25th consecutive
+
       zero-source-change refactor section. One deferred finding —
+
       back-link className composition at 4 sites within section.
+
       Per 24-section precedent, deferred. Re-evaluate at so-7.5.
 
+
       All audits clean. Full suite at green-end: 2277 passed | 60
+
       skipped | 0 failed (+21 net vs preflight). Post-rebase onto
+
       build-log-overhaul-1.1 (which landed during release): 2258
+
       passed | 60 skipped | 0 failed.
 
+
       Pipeline run in WORKTREE mode. Slot at
+
       $WORKTREES/section-styling-overhaul-7.4 on branch
+
       section/styling-overhaul-7.4 from origin/main d9096eb. Rebased
+
       THREE times during release as concurrent peers landed
+
       email-funnel-1.1 (601ae42), email-funnel-1.5 (af45888), and
+
       build-log-overhaul-1.1 (2430ec4). Final rebase done via
+
       reset-to-main + checkout-section-files approach to avoid the
+
       conflict-replay storm. Resolver shortcomings flagged for future
+
       worktree-release iterations: additive-merge resolver loses
+
       newly-prepended completed_sections entries.
 
+
       Blocker cleared: styling-overhaul Phase 7 (Page Surfaces) is
+
       now 4/6 complete. so-7.5 (Storefront reskin) and so-7.6
+
       (About/auth/error quiet marble) remain. so-7.5 is the canonical
+
       next so section.
+
+      '
   - id: email-funnel-1.5
     name: Add NEXT_PUBLIC_SUBSTACK_EMBED_URL to .env.example
     completed_at: '2026-06-07'
