@@ -45,6 +45,12 @@ next-env.d.ts
 # project-specific
 .claude/
 
+# private (off-repo) work — strategy/internal jobs that must not ship publicly
+/private-work/
+/pipeline/private/
+/pipeline/active/session-private.yaml
+/pipeline/active/knowledge-private.yaml
+
 # product assets — placeholder stubs are tracked; replace with real content
 # before shipping. Revisit with git-lfs if any single asset exceeds a few MB.
 # private/products/*.zip
