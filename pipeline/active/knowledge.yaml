@@ -7079,23 +7079,90 @@ styling-overhaul-8.3:
 build-log-overhaul-3.1:
   completed_at: '2026-06-09'
   patterns_established:
-    - description: Hero block — pure RSC renderer of a derived LiveStatus + 3 stat tiles
+    - description: Hero block — pure RSC renderer of a derived LiveStatus + 3 stat
+        tiles
       file: src/components/build-log/Hero.tsx
-      reusable_for: 3.2/3.3/3.4/3.5 sibling blocks (same RSC-pure, prop-driven, data-attr-selector shape); 4.1 page composition
-    - description: liveStatus is a REQUIRED prop (page calls deriveLiveStatus once, passes down) — Hero stays a one-input-per-variant pure renderer
+      reusable_for: 3.2/3.3/3.4/3.5 sibling blocks (same RSC-pure, prop-driven, data-attr-selector
+        shape); 4.1 page composition
+    - description: liveStatus is a REQUIRED prop (page calls deriveLiveStatus once,
+        passes down) — Hero stays a one-input-per-variant pure renderer
       file: src/components/build-log/Hero.tsx
-      reusable_for: any block that visualizes derived pipeline state without recomputing it
+      reusable_for: any block that visualizes derived pipeline state without recomputing
+        it
   gotchas:
-    - 'CRITICAL IMPORT OVERRIDE: planning doc phase-3-blocks.md line 52 imports LiveStatus from @/content/schemas, but LiveStatus is NOT exported there. Per the 1.4 knowledge decision its canonical home is @/lib/build-log/derive-live-status. Hero imports `import type { LiveStatus } from @/lib/build-log/derive-live-status`. Pinned by infra_live_status_import_source source-regex test. 3.4 LiveWorktreesPanel must do the same.'
-    - 'Stat-tile toLocaleString() renders the en-US thousands separator (1500 -> "1,500"). Test data_/unit asserts the comma form — depends on full-ICU Node default locale (matches existing JobCard tests).'
-    - 'testing-library getByText matches DIRECT text-node children only (getNodeText), so a substring-regex on the sentence <p> does not also match the parent <section>. Multi-assertion on one sentence is safe.'
+    - 'CRITICAL IMPORT OVERRIDE: planning doc phase-3-blocks.md line 52 imports LiveStatus
+      from @/content/schemas, but LiveStatus is NOT exported there. Per the 1.4 knowledge
+      decision its canonical home is @/lib/build-log/derive-live-status. Hero imports
+      `import type { LiveStatus } from @/lib/build-log/derive-live-status`. Pinned
+      by infra_live_status_import_source source-regex test. 3.4 LiveWorktreesPanel
+      must do the same.'
+    - Stat-tile toLocaleString() renders the en-US thousands separator (1500 -> "1,500").
+      Test data_/unit asserts the comma form — depends on full-ICU Node default locale
+      (matches existing JobCard tests).
+    - testing-library getByText matches DIRECT text-node children only (getNodeText),
+      so a substring-regex on the sentence <p> does not also match the parent <section>.
+      Multi-assertion on one sentence is safe.
   reusable_utilities:
     - function: 'buildSentence({liveStatus, session, worktrees, nowIso}): string'
       file: src/components/build-log/Hero.tsx
-      purpose: Maps the 5 LiveStatus variants (+ plural-agent) to layperson copy. Private to Hero; promote only if 3.2/3.4 need the same templates.
+      purpose: Maps the 5 LiveStatus variants (+ plural-agent) to layperson copy.
+        Private to Hero; promote only if 3.2/3.4 need the same templates.
     - function: 'mostRecentTimestamp(session, nowIso): string'
       file: src/components/build-log/Hero.tsx
-      purpose: Latest detailed completedAt -> formatRelativeTime string. DUP of an inline helper in derive-live-status.ts (2 sites, below 3-site extraction threshold).
+      purpose: Latest detailed completedAt -> formatRelativeTime string. DUP of an
+        inline helper in derive-live-status.ts (2 sites, below 3-site extraction threshold).
   deferred_followups:
-    - 'cross-section DRY: mostRecentTimestamp (Hero) ~ inline most-recent-completedAt (derive-live-status.ts). 2 sites, deferred per 3-site threshold + planning note (shared computation = over-engineering for one render). Re-evaluate when RecentActivity 3.3 adds a 3rd consumer.'
-    - 'Hero ships UNMOUNTED by design (Phase 3 preamble). 4.1 page rewrite mounts it at /build-log/page.tsx#current and supplies liveStatus/session/worktrees/rollup/nowIso. Barrel-exported now for that consumer.'
+    - 'cross-section DRY: mostRecentTimestamp (Hero) ~ inline most-recent-completedAt
+      (derive-live-status.ts). 2 sites, deferred per 3-site threshold + planning note
+      (shared computation = over-engineering for one render). Re-evaluate when RecentActivity
+      3.3 adds a 3rd consumer.'
+    - Hero ships UNMOUNTED by design (Phase 3 preamble). 4.1 page rewrite mounts it
+      at /build-log/page.tsx#current and supplies liveStatus/session/worktrees/rollup/nowIso.
+      Barrel-exported now for that consumer.
+styling-overhaul-8.4:
+  completed_at: '2026-06-09'
+  summary: 'Final section of styling-overhaul Phase 8. Pure docs section — finalized
+    docs/fabled10x-design-system.md with the real shipped asset paths, the off-site
+    brand surfaces (og:image routes + thumb-preview), and regeneration notes. No production
+    code; the only non-doc artifact is 23 new tests appended to the existing brand
+    docs harness.
+
+    '
+  patterns_established:
+    - description: Doc-finalize tests that assert BOTH content presence AND on-disk
+        existence of every path/route the doc names
+      file: src/__tests__/brand/docs.test.ts
+      reusable_for: Any reference-doc section. Extend the existing safeRead + designSystemSection(heading)
+        harness; scope assertions to a `## {heading}` block. For each documented path,
+        regex-extract `public/...` or `src/app/...tsx` tokens from the section and
+        assert existsSync(join(process.cwd(), p)). This catches doc drift (a documented
+        asset that was never committed) at test time. Skip brace-expansion globs (`{A,B}.tsx`)
+        when existence-checking — match only literal paths.
+    - description: Whole-doc dangling-path guard — scan the entire doc for `public/...ext`
+        tokens and assert each resolves; plus a negative guard that the doc never
+        references a known-nonexistent asset (marble-column.jpg).
+      file: src/__tests__/brand/docs.test.ts
+      reusable_for: Preventing a planning-doc's stale example path from leaking into
+        shipped reference docs.
+  gotchas:
+    - Planning doc §8.4 (and §8.3) defaulted the hero texture to public/hero/marble-column.jpg
+      which DOES NOT EXIST — the real asset is public/hero/floatbg.png (also the thumb-preview
+      DEFAULTS.photo). Documented floatbg.png; added an edge test that fails if marble-column
+      reappears. Always document the SHIPPED path, not the planning-doc placeholder.
+    - The (internal) route-group path src/app/(internal)/thumb-preview/page.tsx is
+      safely IGNORED by an og-route existence regex anchored at `src/app/[class]+\.tsx`
+      because the literal `(` is outside the char class — so listing the thumb-preview
+      file path in the Off-site section does not trip the 3-og-route existence check.
+    - The 1.3 skeleton already named sentinels {forbidden-patterns,contrast,legibility}
+      but contrast.test.ts / legibility.test.ts never existed. Corrected the Implementation
+      references line to the actually-present sentinels {forbidden-patterns,tokens,type-scale,fonts,spacing}.
+      The impl-ref existence test skips brace-globs, so the stale line had passed
+      silently — fixed for accuracy.
+    - A few new "red" tests (favicon.svg present, android-chrome present, current
+      paths exist, no marble-column yet) are green from the skeleton — they are legitimate
+      regression guards, not failures. 17 of 23 failed pre-green.
+  reusable_utilities: []
+  deferred_followups:
+    - README status table still lists 8.3 as "Planned" though it shipped (commit bf6302d).
+      Left untouched — finish is section-scoped to 8.4. A future /docs or 9.x section
+      should reconcile 8.3 → Complete.

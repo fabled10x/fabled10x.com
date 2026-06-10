@@ -2,15 +2,34 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-8.4
+  current_section: styling-overhaul-9.1
   current_agent: pending
-  current_stage: styling-overhaul-8.3-complete
+  current_stage: styling-overhaul-8.4-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-8.4
+    name: Design-system doc finalize
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add design-system doc finalize with 23 tests (styling-overhaul-8.4)
+    tests: 23
+    files_new: 0
+    files_modified: 2
+    pushed: true
+    posture: docs-only
+    notes: >
+      Final section of styling-overhaul Phase 8 (Asset Pipeline). Finalized
+      docs/fabled10x-design-system.md with real shipped asset paths (individual
+      font rows, apple 180×180, hero floatbg.png), an Off-site brand surfaces
+      section (3 og:image routes @1200×630 + Satori clip-path note + /thumb-preview
+      @1280×720 + accent glyphs), Regeneration notes, and expanded Implementation
+      references. 23 tests appended to the brand docs harness assert both content
+      presence AND on-disk existence of every documented path/route. Hero path
+      gotcha: documented floatbg.png (plan's marble-column.jpg never existed).
   - id: build-log-overhaul-3.1
     name: Hero block
     completed_at: '2026-06-09'
@@ -21,40 +40,76 @@ completed_sections:
     files_modified: 1
     pushed: true
     posture: ui-presentational-unmounted
-    notes: |
-      First section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
-      src/components/build-log/Hero.tsx — pure RSC renderer (no 'use client') of a
+    notes: 'First section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+
+      src/components/build-log/Hero.tsx — pure RSC renderer (no ''use client'') of
+      a
+
       derived LiveStatus into a "right now" sentence + three stat tiles + the
+
       id="current" redirect anchor. buildSentence() maps all 5 LiveStatus variants
+
       (active/paused/idle/stale/unknown) plus a plural-agent variant (worktrees.length>1).
-      Stat tiles: Sections shipped (completedSections.length), Tests written (sum of
-      detailed entries' tests via toEntry — string/minimal entries contribute 0), Jobs
-      in progress (rollup status==='in-progress'); values via toLocaleString(). Imports
+
+      Stat tiles: Sections shipped (completedSections.length), Tests written (sum
+      of
+
+      detailed entries'' tests via toEntry — string/minimal entries contribute 0),
+      Jobs
+
+      in progress (rollup status===''in-progress''); values via toLocaleString().
+      Imports
+
       phaseLabel/isPhaseName (1.1), formatRelativeTime (1.2), toEntry (2.3).
 
+
       CRITICAL IMPORT OVERRIDE: planning doc line 52 imports LiveStatus from
-      @/content/schemas, but LiveStatus is NOT exported there — its canonical home is
+
+      @/content/schemas, but LiveStatus is NOT exported there — its canonical home
+      is
+
       @/lib/build-log/derive-live-status (1.4 decision). Hero imports it from there;
-      pinned by infra_live_status_import_source source-regex test. 3.4 must do the same.
+
+      pinned by infra_live_status_import_source source-regex test. 3.4 must do the
+      same.
+
 
       32 tests (1 new file Hero.test.tsx): 11 unit, 3 integration, 2 security, 3 a11y,
+
       4 infra, 5 edge, 2 error-recovery, 2 data; contract + permission N/A (no API).
+
       Barrel-exported (Hero + HeroProps) from components/build-log/index.ts. SHIPS
+
       UNMOUNTED by design (Phase 3 preamble — Phase 4.1 page rewrite mounts it);
+
       page.tsx untouched. First-pass green, zero implementation churn; zero-source-change
+
       refactor. Full suite 2577 passed | 60 skipped | 0 failed (+32 exact). tsc/lint/build
+
       clean.
 
+
       WORKTREE mode. Slot section-build-log-overhaul-3.1 from origin/main d5e29de,
+
       rebased onto bf6302d during release as styling-overhaul-8.3 landed concurrently.
-      Session-yaml conflict resolved manually (additive): took main's base, prepended
+
+      Session-yaml conflict resolved manually (additive): took main''s base, prepended
+
       this entry, kept concurrent_jobs []. PWTC N/A (fabled10x static). node_modules
+
       bind-mounted; .env.local symlinked.
 
+
       DEFERRED: mostRecentTimestamp (Hero) ~ inline most-recent-completedAt
+
       (derive-live-status.ts) — 2 sites, below 3-site threshold. Re-evaluate at 3.3.
-      Next blo: 3.2 PipelineExplainer / 3.3 RecentActivity / 3.4 LiveWorktreesPanel /
+
+      Next blo: 3.2 PipelineExplainer / 3.3 RecentActivity / 3.4 LiveWorktreesPanel
+      /
+
       3.5 KnowledgeDigest (all Phase 3, parallel).
+
+      '
   - id: build-log-overhaul-2.2
     name: Enriched JobCard (progress bar + last-activity + live-dot)
     completed_at: '2026-06-10'
@@ -132,38 +187,61 @@ completed_sections:
     name: Dev-only /thumb-preview route
     completed_at: '2026-06-09'
     commit_hash: pending
-    commit_message: 'Add /thumb-preview dev route with 29 tests (styling-overhaul-8.3)'
+    commit_message: Add /thumb-preview dev route with 29 tests (styling-overhaul-8.3)
     tests: 29
     files_new: 5
     files_modified: 0
     pushed: false
     posture: dev-only-rsc-page
-    notes: |
-      Third section of phase 8 (Asset Pipeline). Dev-only YouTube-thumbnail
+    notes: 'Third section of phase 8 (Asset Pipeline). Dev-only YouTube-thumbnail
+
       composer: src/app/(internal)/thumb-preview/page.tsx renders a 1280x720
+
       brand composition (BrushstrokeSeam direction=left + decorative next/image
+
       floatbg + tier/series header + single h1 DropAccent size=thumbnail +
+
       fabled10x.com footer) driven by ?title&series&tier&accent&photo. Gated by
-      `if (process.env.NODE_ENV !== 'development') return notFound();` (FIRST
-      NODE_ENV gate in the repo) + export const dynamic='force-dynamic'. Sibling
+
+      `if (process.env.NODE_ENV !== ''development'') return notFound();` (FIRST
+
+      NODE_ENV gate in the repo) + export const dynamic=''force-dynamic''. Sibling
+
       index/page.tsx lists copy-pasteable example URLs + accent legend, same gate.
+
       Shared glyphs.ts (ALLOWED_GLYPHS: AccentGlyph[] + toAccentGlyph via
+
       find ?? default — NO `as` cast) imported by both pages. (internal) route
+
       group adds no URL segment (serves /thumb-preview + /thumb-preview/index,
+
       both build as f Dynamic). Page writes only var() tokens -> forbidden-patterns
+
       sentinel green with NO new SKIP_PATHS entry.
 
+
       29 tests across 2 new test files (13 functional, 4 security, 2 permission,
+
       4 edge, 1 error, 3 a11y, 2 infra; contract + data_integrity N/A — no API,
+
       no models). Two corrections over plan pseudocode: default photo
+
       /hero/floatbg.png (marble-column.jpg absent) and decorative <Image> needs
-      alt='' AND aria-hidden='true'. ZERO production refactor change. Full suite
+
+      alt='''' AND aria-hidden=''true''. ZERO production refactor change. Full suite
+
       2518 passed | 60 skipped (+29). Implementation audit ui-only, 0 orphans.
 
+
       WORKTREE mode. Slot section-styling-overhaul-8.3 from origin/main e343e52,
+
       rebased onto 592c783 during release as build-log-overhaul-2.2/2.3 landed
+
       concurrently. Resolver dropped this completed_sections entry — manually
+
       restored at FIN-23 per never-halt rule.
+
+      '
   - id: styling-overhaul-8.2
     name: Dynamic og:images
     completed_at: '2026-06-10'

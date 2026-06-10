@@ -294,3 +294,182 @@ describe('brand docs — data integrity (palette hex ↔ globals.css)', () => {
     }
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// styling-overhaul-8.4 — Design-system doc finalize
+// Asset paths (final), Off-site brand surfaces, Regeneration notes,
+// Implementation references. Doc must reflect what 8.1-8.3 actually shipped.
+// ───────────────────────────────────────────────────────────────────────────
+
+const allowedGlyphsSource = safeRead(
+  join(process.cwd(), 'src/app/(internal)/thumb-preview/glyphs.ts'),
+);
+const thumbPreviewSource = safeRead(
+  join(process.cwd(), 'src/app/(internal)/thumb-preview/page.tsx'),
+);
+// Mirrors ALLOWED_GLYPHS in src/app/(internal)/thumb-preview/glyphs.ts —
+// the data_ test below asserts this set stays a subset of that source.
+const ACCENT_GLYPHS = ['?', '.', '!', '→', '✕', '✓', '—'];
+
+describe('design system doc — Asset paths finalize (styling-overhaul-8.4)', () => {
+  const section = (): string => designSystemSection('Asset paths');
+
+  it('unit_design_system_asset_paths_favicon: Asset paths reference public/favicon.svg', () => {
+    expect(section()).toMatch(/public\/favicon\.svg/);
+  });
+
+  it('unit_design_system_asset_paths_apple_touch: references public/apple-touch-icon.png at 180×180', () => {
+    const s = section();
+    expect(s).toMatch(/public\/apple-touch-icon\.png/);
+    expect(s).toMatch(/180\s*[×x]\s*180/);
+  });
+
+  it('unit_design_system_asset_paths_android_chrome: references android-chrome-192.png and android-chrome-512.png', () => {
+    const s = section();
+    expect(s).toMatch(/public\/android-chrome-192\.png/);
+    expect(s).toMatch(/public\/android-chrome-512\.png/);
+  });
+
+  it('unit_design_system_asset_paths_fonts_individual: names each TTF on its own full path', () => {
+    const s = section();
+    expect(s).toMatch(/public\/fonts\/Cinzel-Black\.ttf/);
+    expect(s).toMatch(/public\/fonts\/Inter-Regular\.ttf/);
+    expect(s).toMatch(/public\/fonts\/Inter-SemiBold\.ttf/);
+    expect(s).toMatch(/public\/fonts\/Inter-Bold\.ttf/);
+  });
+
+  it('unit_design_system_asset_paths_hero_texture: references the hero texture public/hero/floatbg.png', () => {
+    expect(section()).toMatch(/public\/hero\/floatbg\.png/);
+  });
+
+  it('integration_design_system_asset_paths_exist_on_disk: every public/ asset named in Asset paths exists on disk', () => {
+    const s = section();
+    const paths = [...s.matchAll(/public\/[A-Za-z0-9._/-]+/g)].map((m) => m[0]);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const p of new Set(paths)) {
+      expect(existsSync(join(process.cwd(), p))).toBe(true);
+    }
+  });
+});
+
+describe('design system doc — Off-site brand surfaces (styling-overhaul-8.4)', () => {
+  const section = (): string => designSystemSection('Off-site brand surfaces');
+
+  it('unit_design_system_offsite_section_exists: doc contains an "## Off-site brand surfaces" heading', () => {
+    expect(designSystem).toMatch(/##\s+Off-site brand surfaces/);
+  });
+
+  it('unit_design_system_offsite_og_routes_named: names all three opengraph-image routes', () => {
+    const s = section();
+    expect(s).toMatch(/src\/app\/opengraph-image\.tsx/);
+    expect(s).toMatch(/src\/app\/episodes\/\[slug\]\/opengraph-image\.tsx/);
+    expect(s).toMatch(/src\/app\/cases\/\[slug\]\/opengraph-image\.tsx/);
+  });
+
+  it('unit_design_system_offsite_og_dimensions: documents 1200×630 OG dimensions', () => {
+    expect(section()).toMatch(/1200\s*[×x]\s*630/);
+  });
+
+  it('unit_design_system_offsite_satori_clip_path: documents the Satori clip-path brushstroke workaround', () => {
+    const s = section();
+    expect(s).toMatch(/Satori/i);
+    expect(s).toMatch(/clip-path|clip path/i);
+  });
+
+  it('unit_design_system_offsite_thumb_preview: documents /thumb-preview at 1280×720 that 404s in production', () => {
+    const s = section();
+    expect(s).toMatch(/thumb-preview/);
+    expect(s).toMatch(/1280\s*[×x]\s*720/);
+    expect(s).toMatch(/404|production/i);
+  });
+
+  it('unit_design_system_offsite_accent_glyphs: lists the allowed accent glyphs', () => {
+    const s = section();
+    for (const glyph of ACCENT_GLYPHS) {
+      expect(s).toContain(glyph);
+    }
+  });
+
+  it('integration_design_system_og_routes_exist_on_disk: every opengraph-image route named exists on disk', () => {
+    const s = section();
+    const routes = [...s.matchAll(/src\/app\/[A-Za-z0-9.\[\]/_-]+\.tsx/g)].map((m) => m[0]);
+    expect(routes.length).toBeGreaterThanOrEqual(3);
+    for (const r of new Set(routes)) {
+      expect(existsSync(join(process.cwd(), r))).toBe(true);
+    }
+  });
+
+  it('data_design_system_accent_glyphs_match_source: documented glyphs are a subset of ALLOWED_GLYPHS in glyphs.ts', () => {
+    const s = section();
+    const documented = ACCENT_GLYPHS.filter((g) => s.includes(g));
+    expect(documented.length).toBeGreaterThan(0);
+    for (const g of documented) {
+      expect(allowedGlyphsSource).toContain(`'${g}'`);
+    }
+  });
+
+  it('data_design_system_hero_default_matches_thumb_preview: documented hero path matches thumb-preview DEFAULTS.photo', () => {
+    expect(designSystem).toMatch(/\/hero\/floatbg\.png/);
+    expect(thumbPreviewSource).toContain('/hero/floatbg.png');
+  });
+});
+
+describe('design system doc — Regeneration notes (styling-overhaul-8.4)', () => {
+  const section = (): string => designSystemSection('Regeneration notes');
+
+  it('unit_design_system_regeneration_section_exists: doc contains a "## Regeneration notes" heading', () => {
+    expect(designSystem).toMatch(/##\s+Regeneration notes/);
+  });
+
+  it('unit_design_system_regeneration_icons_from_svg: explains regenerating raster icons from favicon.svg', () => {
+    const s = section();
+    expect(s).toMatch(/favicon\.svg/);
+    expect(s).toMatch(/apple-touch-icon|android-chrome|icon/i);
+  });
+
+  it('unit_design_system_regeneration_fonts_google: explains updating TTFs from Google Fonts', () => {
+    const s = section();
+    expect(s).toMatch(/Google Fonts/i);
+    expect(s).toMatch(/public\/fonts|\.ttf/i);
+  });
+});
+
+describe('design system doc — Implementation references finalize (styling-overhaul-8.4)', () => {
+  const section = (): string => designSystemSection('Implementation references');
+
+  it('unit_design_system_impl_refs_new_components: refs include Button, Section/SectionDivider, DropAccent', () => {
+    const s = section();
+    expect(s).toMatch(/Button\.tsx/);
+    expect(s).toMatch(/Section\.tsx|SectionDivider\.tsx/);
+    expect(s).toMatch(/DropAccent\.tsx/);
+  });
+
+  it('integration_design_system_impl_ref_files_exist: every literal src/ path in Implementation references exists on disk', () => {
+    const s = section();
+    const paths = [...s.matchAll(/src\/[A-Za-z0-9.\[\]/_{}-]+\.(?:tsx?|css)/g)].map((m) => m[0]);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const p of new Set(paths)) {
+      if (p.includes('{')) continue; // skip brace-expansion globs like {Marble,Parchment}.tsx
+      expect(existsSync(join(process.cwd(), p))).toBe(true);
+    }
+  });
+});
+
+describe('design system doc — finalize edge + infra (styling-overhaul-8.4)', () => {
+  it('edge_design_system_no_nonexistent_marble_column: doc never references the nonexistent marble-column asset', () => {
+    expect(designSystem).not.toMatch(/marble-column/i);
+  });
+
+  it('edge_design_system_no_dangling_asset_paths: every public/ path anywhere in the doc resolves to a real file', () => {
+    const paths = [...designSystem.matchAll(/public\/[A-Za-z0-9._/-]+\.[A-Za-z0-9]+/g)].map((m) => m[0]);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const p of new Set(paths)) {
+      expect(existsSync(join(process.cwd(), p))).toBe(true);
+    }
+  });
+
+  it('infra_design_system_doc_nonempty_after_finalize: doc is substantially larger than the 1.3 skeleton', () => {
+    // 1.3 skeleton was ~3958 bytes / 96 lines; finalize adds 3 sections.
+    expect(designSystem.length).toBeGreaterThan(4500);
+  });
+});
