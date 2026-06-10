@@ -1,0 +1,462 @@
+version: 1
+section:
+  id: "cohort-enrollment-3.2"
+  name: "Apply Page + ApplicationForm + submitApplication + Applicant Email"
+  planning_file: "/home/travis/Projects/fabled10x/currentwork/cohort-enrollment/phase-3-application-flow.md"
+  line_range: [173, 1019]
+  complexity: L
+  merged_from: "old 3.2 (Auth-Gated Page + Middleware) + old 3.3 (Form + Submit Action) + old 3.4 (Applicant Confirmation Email)"
+
+divergences_from_planning_doc:
+  - id: middleware_is_proxy_ts
+    summary: "Planning doc says MODIFY middleware.ts; actual file is proxy.ts (Next.js 16 renamed middleware → proxy per sa-2.3)."
+    impact: "Implementation will modify /home/travis/Projects/fabled10x/proxy.ts. Tests file is src/__tests__/proxy.cohort.test.ts (NOT middleware.cohort.test.ts as planning doc shows). Existing proxy.ts uses path-prefix check (startsWith), not a literal matcher list — extension adds '/cohorts/' + '/apply' check rather than appending '/cohorts/:slug/apply' to matcher."
+    captured_in: "knowledge.yaml#storefront-auth-2.3.next16_proxy_convention"
+  - id: form_field_validation_split
+    summary: "ApplicationForm uses HTML5 native validation (required, minLength, max) on the client and Zod CohortApplicationInputSchema on the server."
+    impact: "Tests assert per-field error rendering from state.fieldErrors, not from client-side validation; client validation is HTML5 native and not asserted in unit tests."
+  - id: error_code_23505_unique_violation
+    summary: "Action catches PostgreSQL unique-violation error code 23505 from (cohort_slug, user_id) constraint."
+    impact: "Test must shape thrown error with .code = '23505'. Plain Error throws should propagate, not be caught."
+  - id: redirect_test_pattern
+    summary: "submitApplication calls redirect(`/cohorts/${slug}/apply?submitted=...`) on success. redirect() in next/navigation THROWS to short-circuit — vitest treats it as a thrown error caught by the action runtime."
+    impact: "Tests mock redirect() to a throw or capture the call before throw. Action test expects throw or asserts redirect was called with correct URL."
+  - id: middleware_matcher_test_pattern_inapplicable
+    summary: "Planning doc test sketch checks 'matcher includes /cohorts/foo/apply' but proxy.ts uses path-prefix logic, not a literal matcher list."
+    impact: "Tests instead invoke proxy(request) with a NextRequest fixture and assert redirect-to-login for unauthenticated /cohorts/foo/apply, /cohorts/foo/checkout, /admin/cohorts/applications; pass-through for /cohorts and /cohorts/foo (non-gated detail page)."
+
+checklist_items:
+  - id: 1
+    text: "NEW src/app/cohorts/[slug]/apply/page.tsx — server component with auth + cohort lookup + status check + existing-application check + form mount"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 2
+    text: "NEW src/app/cohorts/[slug]/apply/__tests__/page.test.tsx — 7 page tests (unknown slug, no session, status≠open, existing application, render+form, robots metadata)"
+    status: pending
+    priority: P0
+    dependencies: [1]
+  - id: 3
+    text: "MODIFY proxy.ts — extend gated paths to include /cohorts/:slug/apply, /cohorts/:slug/checkout, /admin/:path*, /products/account/cohorts"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 4
+    text: "NEW src/__tests__/proxy.cohort.test.ts — 4 proxy tests (cohort apply gated, checkout gated, admin gated, public cohort routes pass through)"
+    status: pending
+    priority: P0
+    dependencies: [3]
+  - id: 5
+    text: "MODIFY src/app/cohorts/[slug]/page.tsx — replace 'open' status placeholder copy with Link to /cohorts/[slug]/apply"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 6
+    text: "MODIFY src/components/cohorts/actions.ts — append submitApplication action with auth gate, Zod parse, cohort lookup, status check, waitlist link, DB insert with unique-violation catch, best-effort email, redirect on success"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 7
+    text: "NEW src/components/cohorts/__tests__/actions.submitApplication.test.ts — 11 action tests covering auth gate, validation, cohort + status, waitlist link, DB insert, dedupe via 23505, email best-effort"
+    status: pending
+    priority: P0
+    dependencies: [6]
+  - id: 8
+    text: "NEW src/components/cohorts/ApplicationForm.tsx — 'use client' form with useActionState, 7 fields (5 required + 1 optional + hidden slug), auto-timezone via Intl in useEffect, per-field errors, pending state"
+    status: pending
+    priority: P0
+    dependencies: [6]
+  - id: 9
+    text: "NEW src/components/cohorts/__tests__/ApplicationForm.test.tsx — 7+ form tests (initial render, selects, timezone autofill, fieldErrors, _form alert, pending state)"
+    status: pending
+    priority: P0
+    dependencies: [8]
+  - id: 10
+    text: "NEW src/lib/email/cohort-application-received.ts — sendCohortApplicationReceived(to, cohort) Resend helper with HTML escape + inline HTML + text body + account URL"
+    status: pending
+    priority: P0
+    dependencies: []
+  - id: 11
+    text: "NEW src/lib/email/__tests__/cohort-application-received.test.ts — 4 email tests (env-gated send, missing env no-op, HTML escape on quotes, text body contains tracking URL)"
+    status: pending
+    priority: P0
+    dependencies: [10]
+
+analysis:
+  total_items: 11
+  complexity: L
+  estimated_tests: 50  # 7 page + 4 proxy + 11 action + 8 form + 4 email + sec/edge/data/perm/contract additions
+  notes: |
+    Cross-cutting wiring section. Three new files (page, ApplicationForm, email
+    helper), three modifications (proxy, cohort detail page, actions). All
+    pieces are interdependent — the apply page mounts ApplicationForm which
+    posts to submitApplication which fires the email. None ship in isolation.
+
+implementation_order:
+  - group: 1
+    label: "Schema & Types (none — ce-3.1 already shipped schema)"
+    items: []
+    parallel: true
+    note: "ce-3.1 already shipped CohortApplicationInputSchema, ApplicationCommitmentLevel, APPLICATION_COMMITMENT_LEVELS, APPLICATION_COMMITMENT_LEVEL_LABELS, CohortApplicationInputType. ce-3.2 IMPORTS these — no schema work this section."
+  - group: 2
+    label: "Logic (server action + email helper)"
+    items:
+      - "submitApplication action in src/components/cohorts/actions.ts"
+      - "sendCohortApplicationReceived in src/lib/email/cohort-application-received.ts"
+    parallel: true
+    depends_on: [1]
+  - group: 3
+    label: "UI (ApplicationForm + apply page)"
+    items:
+      - "ApplicationForm.tsx (client form)"
+      - "/cohorts/[slug]/apply/page.tsx (server page mounting ApplicationForm)"
+    parallel: true
+    depends_on: [2]
+  - group: 4
+    label: "Integration (proxy gating + cohort detail CTA)"
+    items:
+      - "proxy.ts extension for /cohorts/:slug/apply + /cohorts/:slug/checkout + /admin/* + /products/account/cohorts"
+      - "src/app/cohorts/[slug]/page.tsx CTA replacement (open status branch)"
+    parallel: true
+    depends_on: [3]
+
+dependencies:
+  npm_packages:
+    - name: "resend"
+      version: "^6.1.2"
+      dev: false
+      purpose: "Email sending — sendCohortApplicationReceived helper. Already in package.json from wf 4.1 / sa-2.2 / ce-2.2."
+      exists: true
+    - name: "zod"
+      version: "^4.0.0"
+      dev: false
+      purpose: "Server-action input validation via CohortApplicationInputSchema (imported, not declared here). Already in package.json."
+      exists: true
+    - name: "drizzle-orm"
+      version: "^0.36.0"
+      dev: false
+      purpose: "db.insert/select via schema.cohortApplications and schema.cohortWaitlist. Already in package.json from sa-2.1."
+      exists: true
+    - name: "next-auth"
+      version: "5.0.0-beta.25"
+      dev: false
+      purpose: "auth() called in apply page + submitApplication. Already in package.json from sa-2.2."
+      exists: true
+  content_schemas:
+    - name: "Cohort"
+      exists: true
+      file: "src/content/schemas/cohort.ts"
+      fields: ["slug", "title", "status", "startDate", "durationWeeks", "commitmentHoursPerWeek"]
+      note: "Used by apply page (status check) + email helper (formatted lines)."
+    - name: "CohortApplicationInput"
+      exists: true
+      file: "src/content/schemas/cohort-application.ts"
+      fields: ["cohortSlug", "background", "goals", "commitmentLevel", "commitmentHours", "timezone", "pillarInterest", "referralSource?"]
+      note: "Already shipped by ce-3.1. ce-3.2 imports CohortApplicationInputSchema from validators."
+    - name: "ContentPillar / CONTENT_PILLARS / CONTENT_PILLAR_QUESTIONS"
+      exists: true
+      file: "src/content/schemas/content-pillar.ts"
+      fields: ["delivery", "workflow", "business", "future"]
+      note: "ApplicationForm pillarInterest select reads CONTENT_PILLARS tuple + CONTENT_PILLAR_QUESTIONS label map."
+  internal_dependencies:
+    - module: "@/auth"
+      imports: ["auth"]
+      exists: true
+      sources: ["src/app/cohorts/[slug]/apply/page.tsx", "src/components/cohorts/actions.ts (already imported)"]
+    - module: "@/db/client"
+      imports: ["db", "schema"]
+      exists: true
+      sources: ["page.tsx (cohortApplications select)", "actions.ts (already imported; will add cohortApplications + cohortWaitlist references)"]
+      schema_refs: ["cohortApplications", "cohortWaitlist"]
+    - module: "@/lib/content/cohorts"
+      imports: ["getCohortBySlug"]
+      exists: true
+      sources: ["page.tsx", "actions.ts (already imported)"]
+    - module: "@/components/site/Container"
+      imports: ["Container"]
+      exists: true
+      sources: ["page.tsx"]
+    - module: "@/components/cohorts/CohortDetailHero"
+      imports: ["CohortDetailHero"]
+      exists: true
+      file: "src/components/cohorts/CohortDetailHero.tsx (ce-1.3)"
+      sources: ["page.tsx (renders hero above form / above already-applied / above closed copy)"]
+    - module: "@/components/cohorts/ApplicationForm"
+      imports: ["ApplicationForm"]
+      exists: false
+      will_create: true
+      sources: ["page.tsx"]
+    - module: "@/content/schemas"
+      imports:
+        - "APPLICATION_COMMITMENT_LEVELS"
+        - "APPLICATION_COMMITMENT_LEVEL_LABELS"
+        - "CONTENT_PILLARS"
+        - "CONTENT_PILLAR_QUESTIONS"
+        - "type Cohort"
+      exists: true
+      sources: ["ApplicationForm.tsx (selects + labels)", "cohort-application-received.ts (Cohort type)"]
+    - module: "@/content/schemas/validators"
+      imports: ["CohortApplicationInputSchema"]
+      exists: true
+      sources: ["actions.ts (will add this import)"]
+    - module: "@/lib/email/cohort-application-received"
+      imports: ["sendCohortApplicationReceived"]
+      exists: false
+      will_create: true
+      sources: ["actions.ts (best-effort post-insert call)"]
+    - module: "@/lib/content/loader"
+      imports: ["type LoadedEntry"]
+      exists: true
+      sources: ["cohort-application-received.ts (SendOptions type)"]
+    - module: "drizzle-orm"
+      imports: ["eq", "and"]
+      exists: true
+      sources: ["page.tsx (existing-application select)", "actions.ts (waitlist select)"]
+    - module: "next/navigation"
+      imports: ["notFound", "redirect"]
+      exists: true
+      sources: ["page.tsx (notFound + redirect)", "actions.ts (redirect on success)"]
+    - module: "next/link"
+      imports: ["default as Link"]
+      exists: true
+      sources: ["page.tsx (back link + account link)", "src/app/cohorts/[slug]/page.tsx (CTA link to apply)"]
+  env_vars_required:
+    - name: "AUTH_SECRET"
+      purpose: "auth() session decoding — already wired by sa-2.2"
+      provider: "operator"
+    - name: "AUTH_URL"
+      purpose: "Email helper builds {AUTH_URL}/products/account/cohorts tracking link"
+      provider: "operator"
+      fallback: "'https://fabled10x.com' when unset"
+    - name: "DATABASE_URL"
+      purpose: "Drizzle client — page query + action insert + waitlist link"
+      provider: "operator"
+    - name: "RESEND_API_KEY"
+      purpose: "Applicant email send"
+      provider: "operator"
+      degraded_when_unset: "Email skipped, application still persisted"
+    - name: "RESEND_FROM_COHORTS"
+      purpose: "Applicant email From header (same sender as waitlist + decision emails)"
+      provider: "operator"
+      degraded_when_unset: "Email skipped, application still persisted"
+  missing_dependencies: []  # All deps shipped by prior sections
+
+patterns:
+  component_pattern:
+    example_file: "src/components/cohorts/WaitlistForm.tsx"
+    example_lines: [1, 200]
+    key_aspects:
+      - "'use client' directive at top"
+      - "useActionState hook for action wiring"
+      - "Hidden input for stable form-level identifier (cohortSlug)"
+      - "isPending drives disabled state on inputs + button label swap"
+      - "form action={formAction} attribute"
+      - "Conditional sourceTag input via prop (analogous to referralSource conditional rendering)"
+    template_application_form: |
+      'use client';
+      import { useActionState, useEffect, useRef, useState } from 'react';
+      import { APPLICATION_COMMITMENT_LEVELS, APPLICATION_COMMITMENT_LEVEL_LABELS, CONTENT_PILLARS, CONTENT_PILLAR_QUESTIONS } from '@/content/schemas';
+      import { submitApplication, type ApplicationState } from './actions';
+      const INITIAL: ApplicationState = { status: 'idle' };
+      export function ApplicationForm({ cohortSlug }: { cohortSlug: string }) {
+        const [state, formAction, isPending] = useActionState(submitApplication, INITIAL);
+        const [autoTimezone, setAutoTimezone] = useState('');
+        useEffect(() => { try { setAutoTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { setAutoTimezone(''); } }, []);
+        const fieldErrors = state.status === 'error' ? state.fieldErrors : {};
+        return <form action={formAction}>...{/* 7 Field subcomponents */}...</form>;
+      }
+  hook_pattern:
+    not_applicable: "ce-3.2 introduces no custom hooks. useActionState is React's built-in hook; useState/useEffect are inline. Hook mocking via vi.mock('react') with importActual + override is used in tests (see WaitlistForm.test.tsx)."
+  api_route_pattern:
+    not_applicable: "ce-3.2 introduces no /api/* routes. Server action submitApplication takes its place. Action pattern (auth gate → safeParse → DB → email → redirect) mirrors submitWaitlist in src/components/cohorts/actions.ts."
+  server_action_pattern:
+    example_file: "src/components/cohorts/actions.ts"
+    example_lines: [24, 88]
+    key_aspects:
+      - "'use server' module-level directive"
+      - "Discriminated-union return type ({status:'idle'|'success'|'error', ...})"
+      - "Zod safeParse on FormData early, return error state on parse failure"
+      - "auth() called once; userId pulled from session.user.id"
+      - "Cohort lookup via getCohortBySlug (manifest pattern from ce-1.2)"
+      - "Best-effort Resend wrapped in try/swallow (DB row is canonical)"
+      - "onConflictDoNothing or unique-violation catch for dedupe"
+    template_action: |
+      // submitApplication appended to actions.ts:
+      export type ApplicationFieldErrors = Partial<Record<'background'|'goals'|'commitmentLevel'|'commitmentHours'|'timezone'|'pillarInterest'|'referralSource'|'cohortSlug'|'_form', string>>;
+      export type ApplicationState = { status: 'idle' } | { status: 'error'; fieldErrors: ApplicationFieldErrors } | { status: 'success'; applicationId: string };
+      export async function submitApplication(_prev: ApplicationState, formData: FormData): Promise<ApplicationState> {
+        const session = await auth();
+        if (!session?.user?.id || !session.user.email) return { status: 'error', fieldErrors: { _form: 'You must be signed in to apply.' } };
+        const parsed = CohortApplicationInputSchema.safeParse({ ... });
+        if (!parsed.success) { /* per-field errors via path[0] */ return { status: 'error', fieldErrors }; }
+        const cohort = await getCohortBySlug(parsed.data.cohortSlug);
+        if (!cohort) return { status: 'error', fieldErrors: { cohortSlug: 'Cohort not found.' } };
+        if (cohort.meta.status !== 'open') return { status: 'error', fieldErrors: { _form: 'Applications for this cohort are closed.' } };
+        const [waitlist] = await db.select(...).from(schema.cohortWaitlist).where(and(eq(...), eq(...))).limit(1);
+        try {
+          const [inserted] = await db.insert(schema.cohortApplications).values({ ..., waitlistId: waitlist?.id ?? null }).returning({ id: schema.cohortApplications.id });
+          try { await sendCohortApplicationReceived({ to: session.user.email, cohort }); } catch {}
+          redirect(`/cohorts/${parsed.data.cohortSlug}/apply?submitted=${inserted.id}`);
+        } catch (err) {
+          if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === '23505') {
+            return { status: 'error', fieldErrors: { _form: "You've already applied to this cohort." } };
+          }
+          throw err;
+        }
+      }
+  email_helper_pattern:
+    example_file: "src/lib/email/cohort-waitlist-confirmation.ts"
+    example_lines: [1, 100]
+    key_aspects:
+      - "Resend client constructed inside the function (per-call), not module-level singleton"
+      - "Env read inside function body (apiKey, from, appUrl) for testability"
+      - "Silent return if RESEND_API_KEY or RESEND_FROM_COHORTS unset (degraded mode, not throw)"
+      - "escapeHtml helper for any cohort-supplied prose in HTML body"
+      - "formatDate with timeZone: 'UTC' to avoid jsdom timezone drift"
+      - "Inline HTML template; text + html sent together"
+      - "AUTH_URL fallback to 'https://fabled10x.com' when unset"
+    template_email_helper: |
+      // sendCohortApplicationReceived shape:
+      export async function sendCohortApplicationReceived({ to, cohort }: { to: string; cohort: LoadedEntry<Cohort> }): Promise<void> {
+        const apiKey = process.env.RESEND_API_KEY;
+        const from = process.env.RESEND_FROM_COHORTS;
+        const appUrl = process.env.AUTH_URL ?? 'https://fabled10x.com';
+        if (!apiKey || !from) return;
+        const accountUrl = `${appUrl}/products/account/cohorts`;
+        const meta = cohort.meta;
+        const text = [...].join('\n');
+        const html = `<!doctype html>...${escapeHtml(meta.title)}...`;
+        const resend = new Resend(apiKey);
+        await resend.emails.send({ from, to, subject: `Application received — ${meta.title}`, text, html });
+      }
+  page_pattern:
+    example_file: "src/app/cohorts/[slug]/page.tsx"
+    example_lines: [1, 200]
+    key_aspects:
+      - "async function Page({ params }: { params: Promise<{ slug: string }> })"
+      - "await params first, then awaited content loader call"
+      - "notFound() + early return guard pattern (knowledge.yaml#notfound_return_guard)"
+      - "Static metadata export (Metadata typed); apply page adds robots: { index: false, follow: false }"
+      - "Container with as='main' className='py-16' wrapper"
+    template_apply_page: |
+      // src/app/cohorts/[slug]/apply/page.tsx
+      import type { Metadata } from 'next';
+      import Link from 'next/link';
+      import { notFound, redirect } from 'next/navigation';
+      import { eq, and } from 'drizzle-orm';
+      import { Container } from '@/components/site/Container';
+      import { auth } from '@/auth';
+      import { db, schema } from '@/db/client';
+      import { getCohortBySlug } from '@/lib/content/cohorts';
+      import { CohortDetailHero } from '@/components/cohorts/CohortDetailHero';
+      import { ApplicationForm } from '@/components/cohorts/ApplicationForm';
+      export const metadata: Metadata = { title: 'Apply', robots: { index: false, follow: false } };
+      export default async function ApplyPage({ params }: { params: Promise<{ slug: string }> }) {
+        const { slug } = await params;
+        const entry = await getCohortBySlug(slug);
+        if (!entry) { notFound(); return; }
+        const session = await auth();
+        if (!session?.user?.id || !session.user.email) redirect(`/login?callbackUrl=%2Fcohorts%2F${encodeURIComponent(slug)}%2Fapply`);
+        if (entry.meta.status !== 'open') return <NotOpenView entry={entry} />;
+        const [existing] = await db.select({ id: schema.cohortApplications.id }).from(schema.cohortApplications).where(and(eq(schema.cohortApplications.cohortSlug, slug), eq(schema.cohortApplications.userId, session.user.id))).limit(1);
+        if (existing) return <AlreadyAppliedView entry={entry} />;
+        return <ApplyView entry={entry} email={session.user.email} slug={slug} />;
+      }
+  proxy_pattern:
+    example_file: "proxy.ts"
+    example_lines: [1, 32]
+    key_aspects:
+      - "NextRequest-typed function exported as 'proxy' (Next.js 16 convention, not 'middleware')"
+      - "config.matcher array of path globs"
+      - "Path-prefix check via startsWith() inside function body; not literal matcher comparison"
+      - "Session cookie name dual-check (authjs.session-token + __Secure-authjs.session-token for HTTPS)"
+      - "Redirect to /login with ?callbackUrl=<pathname+search> for unauthed gated paths"
+    template_proxy_extension: |
+      // proxy.ts (existing sa-2.3 + ce-3.2 additions):
+      export function proxy(request: NextRequest) {
+        const { pathname } = request.nextUrl;
+        const isGated =
+          pathname.startsWith('/products/account') ||
+          pathname.startsWith('/api/products/downloads') ||
+          // ADDED BY ce-3.2:
+          (pathname.startsWith('/cohorts/') && (pathname.endsWith('/apply') || pathname.endsWith('/checkout'))) ||
+          pathname.startsWith('/admin/');
+        if (!isGated) return NextResponse.next();
+        if (hasSessionCookie(request)) return NextResponse.next();
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('callbackUrl', pathname + request.nextUrl.search);
+        return NextResponse.redirect(loginUrl);
+      }
+      export const config = {
+        matcher: [
+          '/products/account/:path*',
+          '/api/products/downloads/:path*',
+          // ADDED BY ce-3.2:
+          '/cohorts/:slug/apply',
+          '/cohorts/:slug/checkout',
+          '/admin/:path*',
+        ],
+      };
+  test_pattern_action:
+    example_file: "src/components/cohorts/__tests__/actions.test.ts"
+    example_lines: [1, 549]
+    key_aspects:
+      - "vi.hoisted() for all mocked refs"
+      - "vi.mock('@/db/client', ...) with chained insert/values/onConflictDoNothing/returning"
+      - "vi.mock('@/auth', () => ({ auth: mockAuth }))"
+      - "vi.mock('@/lib/content/cohorts', ...)"
+      - "vi.mock('@/lib/email/cohort-application-received', ...)"
+      - "vi.mock('next/navigation', () => ({ redirect: vi.fn(() => { throw new Error('NEXT_REDIRECT'); }) })) — redirect throws"
+      - "Test fixture object COHORT_FIXTURE with .meta + .slug + .Component for LoadedEntry shape"
+      - "beforeEach resets all mocks; afterEach restores process.env"
+  test_pattern_form:
+    example_file: "src/components/cohorts/__tests__/WaitlistForm.test.tsx"
+    example_lines: [1, 200]
+    key_aspects:
+      - "useActionState mocked via vi.mock('react') with importActual + override (knowledge.yaml#useActionState_mock_pattern from ce-2.2)"
+      - "useActionStateMock.mockReturnValue([state, formAction, isPending]) drives every render"
+      - "Action import mocked: vi.mock('../actions', () => ({ submitApplication: vi.fn() }))"
+      - "render(<ApplicationForm cohortSlug='...' />) + screen.getByRole/getByLabelText"
+      - "Pending-state test sets isPending=true, asserts disabled+spinner copy"
+      - "FieldErrors-state test sets state={status:'error', fieldErrors:{background:'...'}}, asserts role='alert' contains message"
+  test_pattern_email:
+    example_file: "src/lib/email/__tests__/cohort-waitlist-confirmation.test.ts"
+    example_lines: [1, 200]
+    key_aspects:
+      - "vi.hoisted Resend mock with emails.send fn"
+      - "vi.mock('resend', () => ({ Resend: ResendSpy }))"
+      - "process.env.RESEND_API_KEY + RESEND_FROM_COHORTS set in beforeEach; restored in afterEach"
+      - "Missing-env test deletes one env var, asserts emails.send not called"
+      - "HTML escape test passes title with quotes/&/< — asserts no broken markup, asserts escaped entities present"
+      - "Plain-text body assertion via mockSendCalls[0][0].text.includes(trackingUrl)"
+  test_pattern_page:
+    example_file: "src/app/cohorts/[slug]/__tests__/page.test.tsx (existing ce-1.3 + ce-2.2 modifications)"
+    example_lines: [1, 200]
+    key_aspects:
+      - "async server component testing pattern (knowledge.yaml#async_server_component_testing)"
+      - "vi.mock for auth, db/client, content/cohorts, ApplicationForm, CohortDetailHero, next/navigation (notFound, redirect)"
+      - "renderPage helper: const jsx = await Page({ params: Promise.resolve({slug:'...'}) }); return render(jsx);"
+      - "notFound + redirect mocked to track calls (knowledge.yaml#notfound_return_guard)"
+      - "Existing-application select chain mocked: db.select().from().where().limit() → resolves to []"
+
+cross_section_patterns:
+  - source: "knowledge.yaml#useActionState_mock_pattern (ce-2.2)"
+    description: "useActionState driven via vi.mock('react') + importActual + override — reusable for ApplicationForm tests"
+  - source: "knowledge.yaml#server_action_with_degraded_env (wf-4.1)"
+    description: "Env reads INSIDE action body (not module scope) — sendCohortApplicationReceived follows pattern"
+  - source: "knowledge.yaml#async_server_component_testing (wf-3.1)"
+    description: "renderPage helper + Promise<{slug}> params mocking — applies to apply page tests"
+  - source: "knowledge.yaml#notfound_return_guard (wf-3.2)"
+    description: "notFound() + explicit return prevents test code from executing past guard"
+  - source: "knowledge.yaml#next_link_test_mock (wf-1.4)"
+    description: "next/link mock with typed props — applies to apply page (account link, back link)"
+  - source: "knowledge.yaml#next16_proxy_convention (sa-2.3)"
+    description: "proxy.ts NOT middleware.ts; function name 'proxy'; matcher config identical"
+  - source: "knowledge.yaml#db_client_eager_guard (sa-2.2)"
+    description: "DATABASE_URL/AUTH_SECRET vi.hoisted() stubs so @/auth + @/db/client module load without real DB"
+  - source: "knowledge.yaml#formdata_empty_string_preprocess (ce-3.1)"
+    description: "FormData '' → undefined coercion in CohortApplicationInputSchema (referralSource handling)"
+  - source: "knowledge.yaml#zod4_coerce_number_for_formdata (ce-3.1)"
+    description: "z.coerce.number() handles FormData string-to-number for commitmentHours"
+  - source: "knowledge.yaml#db_zod_tuple_invariant (ce-3.1)"
+    description: "APPLICATION_COMMITMENT_LEVELS tuple is DB CHECK + Zod enum source of truth"

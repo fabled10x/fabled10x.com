@@ -1,0 +1,286 @@
+version: 1
+section_id: "cohort-enrollment-3.2"
+
+typescript_types:
+  - name: "ApplicationFieldErrors"
+    file: "src/components/cohorts/actions.ts"
+    kind: type_alias
+    declaration: |
+      Partial<Record<
+        | 'background'
+        | 'goals'
+        | 'commitmentLevel'
+        | 'commitmentHours'
+        | 'timezone'
+        | 'pillarInterest'
+        | 'referralSource'
+        | 'cohortSlug'
+        | '_form',
+        string
+      >>
+    fields:
+      - { name: "background", type: "string", optional: true, sensitivity: public }
+      - { name: "goals", type: "string", optional: true, sensitivity: public }
+      - { name: "commitmentLevel", type: "string", optional: true, sensitivity: public }
+      - { name: "commitmentHours", type: "string", optional: true, sensitivity: public }
+      - { name: "timezone", type: "string", optional: true, sensitivity: public }
+      - { name: "pillarInterest", type: "string", optional: true, sensitivity: public }
+      - { name: "referralSource", type: "string", optional: true, sensitivity: public }
+      - { name: "cohortSlug", type: "string", optional: true, sensitivity: public }
+      - { name: "_form", type: "string", optional: true, sensitivity: public }
+  - name: "ApplicationState"
+    file: "src/components/cohorts/actions.ts"
+    kind: discriminated_union
+    declaration: |
+      | { status: 'idle' }
+      | { status: 'error'; fieldErrors: ApplicationFieldErrors }
+      | { status: 'success'; applicationId: string }
+    fields:
+      - { name: "status", type: "'idle' | 'error' | 'success'", optional: false, sensitivity: public }
+      - { name: "fieldErrors", type: "ApplicationFieldErrors", optional: "discriminated (error only)", sensitivity: public }
+      - { name: "applicationId", type: "string", optional: "discriminated (success only)", sensitivity: internal }
+  - name: "ApplicationFormProps"
+    file: "src/components/cohorts/ApplicationForm.tsx"
+    kind: interface
+    declaration: |
+      interface ApplicationFormProps {
+        cohortSlug: string;
+      }
+    fields:
+      - { name: "cohortSlug", type: "string", optional: false, sensitivity: public }
+  - name: "FieldProps"
+    file: "src/components/cohorts/ApplicationForm.tsx (internal subcomponent)"
+    kind: interface
+    declaration: |
+      interface FieldProps {
+        id: string;
+        label: string;
+        hint?: string;
+        error?: string;
+        children: React.ReactNode;
+      }
+    fields:
+      - { name: "id", type: "string", optional: false, sensitivity: public }
+      - { name: "label", type: "string", optional: false, sensitivity: public }
+      - { name: "hint", type: "string", optional: true, sensitivity: public }
+      - { name: "error", type: "string", optional: true, sensitivity: public }
+      - { name: "children", type: "React.ReactNode", optional: false, sensitivity: public }
+  - name: "SendOptions"
+    file: "src/lib/email/cohort-application-received.ts (internal)"
+    kind: interface
+    declaration: |
+      interface SendOptions {
+        to: string;
+        cohort: LoadedEntry<Cohort>;
+      }
+    fields:
+      - { name: "to", type: "string (email)", optional: false, sensitivity: confidential }
+      - { name: "cohort", type: "LoadedEntry<Cohort>", optional: false, sensitivity: public }
+  - name: "RouteParams (apply page)"
+    file: "src/app/cohorts/[slug]/apply/page.tsx (internal)"
+    kind: type_alias
+    declaration: |
+      type RouteParams = { params: Promise<{ slug: string }> };
+    fields:
+      - { name: "params", type: "Promise<{ slug: string }>", optional: false, sensitivity: public }
+
+zod_schemas:
+  not_applicable: |
+    ce-3.2 introduces NO new Zod schemas. submitApplication imports
+    CohortApplicationInputSchema from @/content/schemas/validators, shipped
+    by ce-3.1 (validators.ts lines 122-158). All field validations
+    (cohortSlug regex, background/goals min/max lengths, commitmentLevel
+    enum, commitmentHours z.coerce.number().int().min(1).max(80), timezone
+    string, pillarInterest enum, referralSource optional max 200) are
+    consumed from the shipped schema, not redefined here.
+
+api_endpoints:
+  not_applicable: |
+    ce-3.2 introduces NO /api/* route handlers. Server actions
+    (submitApplication, sendCohortApplicationReceived helper) take the
+    place of API routes. STRIDE analysis below is documented at the
+    server-action and page boundary instead.
+
+server_actions:
+  - name: "submitApplication"
+    file: "src/components/cohorts/actions.ts"
+    handler: "submitApplication"
+    request_type: "(prev: ApplicationState, formData: FormData)"
+    response_type: "Promise<ApplicationState>"
+    transport: "React Server Action ('use server' module + form action attribute)"
+    invoked_from: "src/components/cohorts/ApplicationForm.tsx via useActionState"
+    side_effects:
+      - "INSERT into cohort_applications row"
+      - "Best-effort SELECT from cohort_waitlist for waitlistId link"
+      - "Best-effort sendCohortApplicationReceived (Resend emails.send)"
+      - "redirect() to /cohorts/[slug]/apply?submitted=<id> on success"
+    security:
+      authentication: required
+      authorization: "session.user.id + session.user.email must both be present (matches schema.cohortApplications.userId not-null fk to users)"
+      rate_limit: "Implicit via unique (cohort_slug, user_id) constraint — one application per user per cohort"
+    stride:
+      spoofing: "auth() verifies session.user.id + session.user.email; userId persisted from session, NOT from form input (form has hidden cohortSlug only — no userId field can be tampered)"
+      tampering: "CohortApplicationInputSchema.safeParse rejects malformed FormData. cohortSlug constrained to /^[a-z0-9-]+$/ regex via shipped schema. commitmentHours integer 1-80. commitmentLevel + pillarInterest closed enums. background/goals min/max length. waitlistId derived server-side from session.user.email lookup, NOT from form input."
+      repudiation: "DB row carries createdAt timestamp + userId (via existing cohortApplications schema from ce-2.1). Application is durable evidence of submission."
+      information_disclosure: "Action returns only { status, fieldErrors? | applicationId? } — no PII or DB internals leak. Resend errors swallowed (sensitive API keys never reflected). Page existing-application check selects only { id } — does not expose other applicants' data."
+      denial_of_service: "Unique (cohort_slug, user_id) constraint prevents application spam by single user. Redirect on success means re-submit via browser back rendering 'already applied' view, not a new insert. Form has HTML5 maxLength on textareas (2000/1500) — server safeParse double-enforces."
+      elevation_of_privilege: "userId pulled from session.user.id (no client override possible). cohort.meta.status !== 'open' rejects writes against announced/closed/enrolled/shipped cohorts. Status pulled from MDX content (not from request) — operator-controlled."
+  - name: "sendCohortApplicationReceived"
+    file: "src/lib/email/cohort-application-received.ts"
+    handler: "sendCohortApplicationReceived"
+    request_type: "({ to: string; cohort: LoadedEntry<Cohort> })"
+    response_type: "Promise<void>"
+    transport: "Internal helper called from submitApplication (not exposed to client)"
+    invoked_from: "src/components/cohorts/actions.ts (try/swallow wrapped)"
+    side_effects:
+      - "Resend emails.send (HTTP call to api.resend.com)"
+      - "No DB writes, no redirects"
+    security:
+      authentication: "n/a: internal helper, not exposed"
+      authorization: "n/a: called only after submitApplication auth gate"
+      rate_limit: "Resend platform side; per-call instantiation matches sa-3.2 + ce-2.2 pattern"
+    stride:
+      spoofing: "n/a: internal helper. Resend SDK uses RESEND_API_KEY env (operator-controlled)."
+      tampering: "cohort.meta fields rendered via escapeHtml() — title/etc. with quotes or HTML are escaped. iso date passed through formatDate with timeZone:'UTC' — deterministic."
+      repudiation: "Resend logs every send on the platform side; subject + to + from are durable in Resend dashboard."
+      information_disclosure: "Recipient email (`to`) is the user's session email — already known to the caller. AUTH_URL fallback to public production URL when unset. RESEND_API_KEY never reflected in error messages — function returns void on env-missing, throws raw on send error (caller swallows)."
+      denial_of_service: "Caller wraps in try/swallow, so email failure does not block application submission. Resend has platform-side rate limiting."
+      elevation_of_privilege: "n/a: pure email helper, no privilege boundaries."
+
+pages:
+  - name: "ApplyPage"
+    file: "src/app/cohorts/[slug]/apply/page.tsx"
+    route: "/cohorts/[slug]/apply"
+    component_kind: async_server_component
+    dynamic_params: "Promise<{ slug: string }>"
+    side_effects:
+      - "auth() session lookup"
+      - "getCohortBySlug content load (cached after first call per ce-1.2 manifest pattern)"
+      - "db.select existing-application probe (single-row query)"
+      - "redirect() to /login if unauthenticated (defense-in-depth — proxy.ts gates first)"
+      - "notFound() if slug invalid"
+    metadata:
+      title: "Apply"
+      robots: "{ index: false, follow: false }"
+      generate_static_params: "NOT EXPORTED — apply page is dynamic + gated, should not be prerendered"
+      dynamic_params_setting: "default (true) — any slug routes to this page; getCohortBySlug + notFound handle invalids"
+    security:
+      authentication: required (via proxy.ts + page-body double-check)
+      authorization: "Any authenticated user. cohort.meta.status check rejects render of form for non-open statuses."
+      rate_limit: "n/a (read-only page)"
+    stride:
+      spoofing: "Proxy.ts gates the route; page-body auth() second-checks session.user.id + email. callbackUrl on /login redirect preserves intended destination."
+      tampering: "Slug param validated by getCohortBySlug match against shipped manifest (closed set of valid slugs). Existing-application select uses eq() with sanitized userId from session."
+      repudiation: "n/a: read-only page"
+      information_disclosure: "Existing-application probe selects only { id } — does not expose application body. CohortDetailHero renders only public meta fields."
+      denial_of_service: "Static content (Cohort manifest) + single-row indexed DB query; build-time caching via module-level cache from ce-1.2."
+      elevation_of_privilege: "robots: noindex stops search engines from leaking the URL as discoverable; only known to authenticated users."
+
+proxy_gating:
+  file: "proxy.ts (project root)"
+  approach: "Path-prefix logic in proxy() function body (per existing sa-2.3 shape). Matcher config array is widened with cohort + admin paths."
+  added_gates:
+    - path_pattern: "/cohorts/[slug]/apply"
+      matcher_glob: "/cohorts/:slug/apply"
+      body_check: "pathname.startsWith('/cohorts/') && pathname.endsWith('/apply')"
+      added_by: "ce-3.2"
+    - path_pattern: "/cohorts/[slug]/checkout"
+      matcher_glob: "/cohorts/:slug/checkout"
+      body_check: "pathname.startsWith('/cohorts/') && pathname.endsWith('/checkout')"
+      added_by: "ce-3.2 (forward — actual route lands in ce-4.1)"
+    - path_pattern: "/admin/**"
+      matcher_glob: "/admin/:path*"
+      body_check: "pathname.startsWith('/admin/')"
+      added_by: "ce-3.2 (forward — actual admin routes land in ce-4.x)"
+  preserved_gates:
+    - "/products/account/:path* (sa-2.3)"
+    - "/api/products/downloads/:path* (sa-2.3)"
+  rationale: |
+    Adding /admin and /cohorts/[slug]/checkout matchers in 3.2 is a forward-decl
+    pattern — the routes themselves land in ce-4.x. Including them now means
+    proxy.ts only needs to be modified ONCE for the entire ce job. Mirrors the
+    forward-decl pattern from ce-2.1 (cohort-application.ts shipped before
+    ce-3.1 needed it).
+
+serializers:
+  not_applicable: |
+    ce-3.2 has NO API responses that return content types. The submitApplication
+    server action returns a discriminated-union state object (ApplicationState) —
+    no Drizzle row objects ever leave the action. The apply page selects only
+    { id } from cohortApplications (existence probe), never renders the row.
+    sendCohortApplicationReceived consumes LoadedEntry<Cohort> (already public
+    content) and renders escaped HTML only — no DB row leakage.
+
+response_contracts:
+  not_applicable: |
+    No /api/* routes. submitApplication's return shape is documented under
+    typescript_types#ApplicationState. Apply page renders HTML (no JSON
+    contract). Email helper returns void (fire-and-forget).
+
+permission_matrix:
+  not_applicable: |
+    No /api/* routes. Page-level + action-level gating is documented per-surface
+    in stride blocks above. The effective permission matrix for ce-3.2 surfaces:
+
+      Surface                          | Anonymous | Authenticated | Owner |
+      -------------------------------- | --------- | ------------- | ----- |
+      GET /cohorts/[slug]              | allow     | allow         | n/a   | (existing ce-1.3 route — modified CTA only)
+      GET /cohorts/[slug]/apply        | deny (→/login) | allow    | allow |
+      submitApplication action         | deny (returns _form err) | allow (own application row only) | n/a |
+      sendCohortApplicationReceived    | n/a (internal helper, called only from authed action)         |
+
+    Status-based filtering: apply page renders 'not currently open' for
+    announced/closed/enrolled/shipped cohorts; submitApplication rejects writes
+    against non-open cohorts (server-side defense).
+
+edge_cases:
+  input:
+    - "Empty FormData for required field (background, goals, commitmentLevel, commitmentHours, timezone, pillarInterest) → fieldErrors.{field}"
+    - "commitmentHours = '0' or '-1' → fieldErrors.commitmentHours (schema min 1)"
+    - "commitmentHours = '81' or '100' → fieldErrors.commitmentHours (schema max 80)"
+    - "commitmentHours = 'abc' → coerce.number() fails → fieldErrors.commitmentHours"
+    - "commitmentHours = '8.5' → coerce passes, .int() fails → fieldErrors.commitmentHours"
+    - "background length 79 chars → fieldErrors.background (min 80)"
+    - "background length 80 chars → success"
+    - "background length 2000 chars → success"
+    - "background length 2001 chars → fieldErrors.background (max 2000)"
+    - "goals length 39 chars → fieldErrors.goals (min 40)"
+    - "goals length 40 chars → success"
+    - "goals length 1500 chars → success"
+    - "goals length 1501 chars → fieldErrors.goals"
+    - "commitmentLevel = '' or 'serious' → fieldErrors.commitmentLevel (enum mismatch)"
+    - "pillarInterest = '' or 'random' → fieldErrors.pillarInterest"
+    - "timezone empty string → fieldErrors.timezone"
+    - "cohortSlug with traversal '../admin' → fieldErrors.cohortSlug (regex)"
+    - "cohortSlug with XSS '<script>alert(1)</script>' → fieldErrors.cohortSlug (regex)"
+    - "referralSource empty string → preprocess → undefined → success (optional)"
+    - "referralSource 200 chars → success"
+    - "referralSource 201 chars → fieldErrors.referralSource"
+  state:
+    - "Anonymous user (no session) → fieldErrors._form 'must be signed in'"
+    - "Authenticated user, cohort not found → fieldErrors.cohortSlug 'Cohort not found'"
+    - "Authenticated user, cohort status announced → fieldErrors._form 'Applications closed'"
+    - "Authenticated user, cohort status closed → fieldErrors._form 'closed'"
+    - "Authenticated user, cohort status enrolled → fieldErrors._form 'closed'"
+    - "Authenticated user, cohort status shipped → fieldErrors._form 'closed'"
+    - "Authenticated user, cohort open, no existing application → insert succeeds → redirect"
+    - "Authenticated user, cohort open, existing application (DB row exists) → page renders 'already applied' view (action NEVER reached)"
+    - "Authenticated user, cohort open, no existing per page, but race-condition duplicate insert (23505) → fieldErrors._form 'already applied'"
+    - "Authenticated user, matching waitlist row exists (same email + slug) → inserted row.waitlistId points at waitlist.id"
+    - "Authenticated user, no matching waitlist row → inserted row.waitlistId = null"
+    - "Authenticated user, matching waitlist row with DIFFERENT email (only slug matches) → waitlistId = null (lookup keys on session.user.email)"
+    - "Cohort title with HTML special chars (e.g., 'AI & ML' or 'Q3 \"intensive\"') → email body escapes properly"
+  temporal:
+    - "Form submitted at exact midnight UTC: meta.startDate field formatted via UTC anchor — deterministic regardless of server TZ"
+    - "User in non-browser-detectable timezone → autoTimezone defaults to '' → user must fill manually (validation rejects empty)"
+    - "Application submitted milliseconds before status flips from 'open' to 'closed' (operator edits MDX): cohort.meta.status check uses snapshot — race possible but operator MDX changes require rebuild, not runtime"
+  error_recovery:
+    - "Resend API key missing → email skipped, application still persisted, redirect still called"
+    - "Resend emails.send rejects (500/network) → application still persisted, redirect still called"
+    - "DB unavailable during action → action throws, redirect not called, form stays mounted (re-submittable)"
+    - "redirect() throws in test env → caught by test harness, asserted via mock call args"
+    - "auth() returns valid session but session.user.email is null → fieldErrors._form 'must be signed in' (treated as missing auth)"
+    - "Existing-application probe on apply page returns multiple rows (impossible per UNIQUE constraint) → defensive .limit(1) + array destructure handles either count"
+
+migrations_required: []  # cohort_applications + cohort_waitlist tables shipped by ce-2.1
+schema_changes_required: []  # No DB schema changes; uses existing tables

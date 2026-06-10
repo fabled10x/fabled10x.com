@@ -1,0 +1,258 @@
+version: 1
+section_id: "cohort-enrollment-3.2"
+section_name: "Apply Page + ApplicationForm + submitApplication + Applicant Email"
+started_at: "2026-06-06T00:00:00Z"
+current_phase: red
+
+preflight:
+  npm_test: { status: pass_with_concurrent_baseline, at: "2026-06-06T11:24:29Z", note: "Baseline: 34 fails all in src/__tests__/brand/type-scale.test.ts (so-2.2 concurrent red-phase). 1147 passing | 60 skipped. ce-3.2 must not regress passing count; so-2.2 fails are out-of-scope." }
+  npm_lint: { status: pass, at: "2026-06-06T11:25:00Z" }
+  tsc_noEmit: { status: skipped, at: "2026-06-06T11:25:00Z", reason: "VPS OOM policy" }
+  git_clean: { status: pass, at: "2026-06-06T11:25:00Z", note: "Known concurrent-work modifications (so-2.2 red-phase + previously-noted untracked dirs) per ce-3.1 precedent" }
+
+discovery:
+  status: done
+  beats:
+    - { id: read_session, status: done }
+    - { id: read_planning_docs, status: done }
+    - { id: deep_codebase_research, status: done }
+    - { id: cross_section_pattern_lookup, status: done }
+    - { id: parse_checklist_items, status: done }
+    - { id: analyze_dependencies, status: done }
+    - { id: define_interfaces, status: done }
+    - { id: find_existing_patterns, status: done }
+    - { id: stride_threat_modeling, status: done }
+    - { id: edge_case_enumeration, status: done }
+    - { id: serializer_inventory, status: na, reason: "No API responses return content types. Server actions return typed state objects; pages render HTML. Documented in interfaces.yaml#serializers.not_applicable." }
+    - { id: response_contract_spec, status: na, reason: "No /api/* routes. Server action return shape documented in interfaces.yaml#typescript_types#ApplicationState instead." }
+    - { id: permission_matrix, status: na, reason: "No /api/* routes. Page-level + action-level gating documented per-surface in interfaces.yaml#server_actions.stride and #pages.stride blocks. Effective matrix table included in interfaces.yaml#permission_matrix.not_applicable note." }
+    - { id: specify_test_cases, status: done }
+    - { id: dependency_graph, status: done }
+    - { id: write_discovery_yaml, status: done }
+    - { id: write_interfaces_yaml, status: done }
+    - { id: write_test_cases_yaml, status: done }
+    - { id: verify_zero_coverage_gaps, status: done }
+    - { id: update_session_yaml, status: done }
+  tests_specified: 85
+  coverage_gaps: 0
+
+red:
+  status: pending
+  beats:
+    - { id: read_discovery_yamls, status: pending }
+    - { id: study_test_patterns, status: pending }
+    - { id: batch_1_functional, status: pending, tests_written: 0 }
+    - { id: batch_1_verify, status: pending }
+    - { id: batch_2_security, status: pending, tests_written: 0 }
+    - { id: batch_2_verify, status: pending }
+    - { id: batch_3_permission_matrix, status: pending, tests_written: 0 }
+    - { id: batch_3_verify, status: pending }
+    - { id: batch_4_contract, status: pending, tests_written: 0 }
+    - { id: batch_4_verify, status: pending }
+    - { id: batch_5_edge_error_data, status: pending, tests_written: 0 }
+    - { id: batch_5_verify, status: pending }
+    - { id: batch_6_a11y_infra, status: pending, tests_written: 0 }
+    - { id: batch_6_verify, status: pending }
+    - { id: full_suite_verification, status: pending }
+    - { id: coverage_matrix_check, status: pending }
+    - { id: update_red_progress, status: pending }
+  total_tests: 0
+  coverage_gaps: 0
+
+green:
+  status: pending
+  beats:
+    - { id: analyze_failing_tests, status: pending }
+    - { id: plan_implementation_order, status: pending }
+    - { id: group_1_schema_types, status: pending }
+    - { id: group_1_verify, status: pending }
+    - { id: group_2_logic_hooks_serializers, status: pending }
+    - { id: group_2_verify, status: pending }
+    - { id: group_3_ui_components, status: pending }
+    - { id: group_3_verify, status: pending }
+    - { id: group_4_api_routes_wiring, status: pending }
+    - { id: group_4_full_suite, status: pending }
+    - { id: wiring_components, status: pending, items: "0/6" }
+    - { id: wiring_navigation, status: pending, items: "0/3" }
+    - { id: wiring_form_api, status: pending, items: "0/6" }
+    - { id: wiring_data_flow, status: pending, items: "0/4" }
+    - { id: wiring_database, status: pending, items: "0/4" }
+    - { id: wiring_feature_reconciliation, status: pending }
+    - { id: wiring_interactive_behaviors, status: pending }
+    - { id: wiring_cross_component_flows, status: pending }
+    - { id: serializer_enforcement, status: pending }
+    - { id: error_response_consistency, status: pending }
+    - { id: zero_skipped_verification, status: pending }
+    - { id: npm_build_passes, status: pending }
+    - { id: update_green_progress, status: pending }
+  tests_passing: 0
+  tests_total: 0
+
+refactor:
+  status: pending
+  beats:
+    - { id: baseline_all_tests_pass, status: pending }
+    - { id: dry_analysis_within_section, status: pending }
+    - { id: cross_section_dry_analysis, status: pending }
+    - { id: type_safety_audit, status: pending }
+    - { id: error_consistency_audit, status: pending }
+    - { id: serializer_completeness_audit, status: pending }
+    - { id: performance_review, status: pending }
+    - { id: code_quality_naming_structure, status: pending }
+    - { id: eslint_clean, status: pending }
+    - { id: barrel_exports_check, status: pending }
+    - { id: hardcoded_values_check, status: pending }
+    - { id: loading_error_empty_states, status: pending }
+    - { id: final_npm_test, status: pending }
+    - { id: final_npm_lint, status: pending }
+    - { id: final_npm_build, status: pending }
+    - { id: update_refactor_progress, status: pending }
+  improvements_identified: 0
+  improvements_completed: 0
+
+finish:
+  status: pending
+  beats:
+    - { id: cleanup_dead_code, status: pending }
+    - { id: cleanup_verify_tests, status: pending }
+    - { id: nav_sync_verification, status: pending }
+    - { id: audit_file_inventory, status: pending }
+    - { id: audit_api_routes, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_hook_consumers, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_component_mounts, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: audit_feature_reconciliation, status: pending, pass: 0, fail: 0, na: 0 }
+    - { id: update_session_yaml, status: pending }
+    - { id: update_planning_checklist, status: pending }
+    - { id: knowledge_capture, status: pending }
+    - { id: security_checklist, status: pending }
+    - { id: git_stage_files, status: pending }
+    - { id: git_commit, status: pending }
+    - { id: git_push, status: pending }
+    - { id: delete_section_directory, status: pending }
+    - { id: update_session_next_section, status: pending }
+
+postflight:
+  npm_test: { status: pending }
+  npm_build: { status: pending }
+  npm_lint: { status: pending }
+  tsc_noEmit: { status: pending }
+  git_log: { status: pending }
+  git_diff_stat: { status: pending }
+
+task_id_mapping:
+  preflight: { PRE-01: "1", PRE-02: "2", PRE-03: "3", PRE-04: "4" }
+  discovery:
+    DISC-01: "5"
+    DISC-02: "6"
+    DISC-03: "7"
+    DISC-04: "8"
+    DISC-05: "9"
+    DISC-06: "10"
+    DISC-07: "11"
+    DISC-08: "12"
+    DISC-09: "13"
+    DISC-10: "14"
+    DISC-11: "15"
+    DISC-12: "16"
+    DISC-13: "17"
+    DISC-14: "18"
+    DISC-15: "19"
+    DISC-16: "20"
+    DISC-18: "21"
+    DISC-20: "22"
+    DISC-21: "23"
+    DISC-22: "24"
+  red:
+    RED-01: "25"
+    RED-02: "26"
+    RED-03: "27"
+    RED-04: "28"
+    RED-05: "29"
+    RED-06: "30"
+    RED-07: "31"
+    RED-08: "32"
+    RED-09: "33"
+    RED-10: "34"
+    RED-11: "35"
+    RED-12: "36"
+    RED-13: "37"
+    RED-14: "38"
+    RED-15: "39"
+    RED-16: "40"
+    RED-17: "41"
+  green:
+    GRN-01: "42"
+    GRN-02: "43"
+    GRN-03: "44"
+    GRN-04: "45"
+    GRN-05: "46"
+    GRN-06: "47"
+    GRN-07: "48"
+    GRN-08: "49"
+    GRN-09: "50"
+    GRN-10: "51"
+    GRN-11: "52"
+    GRN-12: "53"
+    GRN-13: "54"
+    GRN-14: "55"
+    GRN-15: "56"
+    GRN-16: "57"
+    GRN-17: "58"
+    GRN-18: "59"
+    GRN-19: "60"
+    GRN-20: "61"
+    GRN-21: "62"
+    GRN-22: "63"
+    GRN-23: "64"
+  refactor:
+    REF-01: "65"
+    REF-02: "66"
+    REF-03: "67"
+    REF-04: "68"
+    REF-05: "69"
+    REF-06: "70"
+    REF-07: "71"
+    REF-08: "72"
+    REF-09: "73"
+    REF-10: "74"
+    REF-11: "75"
+    REF-12: "76"
+    REF-13: "77"
+    REF-14: "78"
+    REF-15: "79"
+    REF-16: "80"
+  finish:
+    FIN-01: "81"
+    FIN-02: "82"
+    FIN-03: "83"
+    FIN-04: "84"
+    FIN-05: "85"
+    FIN-06: "86"
+    FIN-07: "87"
+    FIN-08: "88"
+    FIN-09: "89"
+    FIN-10: "90"
+    FIN-11: "91"
+    FIN-12: "92"
+    FIN-13: "93"
+    FIN-14: "94"
+    FIN-15: "95"
+    FIN-16: "96"
+    FIN-17: "97"
+  postflight:
+    POST-01: "98"
+    POST-02: "99"
+    POST-03: "100"
+    POST-04: "101"
+    POST-05: "102"
+    POST-06: "103"
+
+stats:
+  total_tests_specified: 0
+  total_tests_written: 0
+  total_tests_passing: 0
+  total_files_created: 0
+  total_files_modified: 0
+  total_improvements: 0
+  commit_hash: null
+  commit_message: null
