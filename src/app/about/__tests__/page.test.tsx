@@ -9,149 +9,117 @@ vi.mock('next/link', () => ({
 import { render, screen } from '@testing-library/react';
 import About, { metadata } from '../page';
 
-describe('About', () => {
+// styling-overhaul-7.6 — About reskinned to the editorial brand system:
+// Marble surface, Section rhythm, Container width="prose", DropAccent ".",
+// .build-log-prose body, LLL crosslink preserved.
+
+describe('About (brand reskin 7.6)', () => {
   // --- Unit ---
 
-  it('unit_h1_about', () => {
+  it('unit_about_h1_renders', () => {
     render(<About />);
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'About' }),
-    ).toBeInTheDocument();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent(/the fabled 10x developer/i);
   });
 
-  it('unit_premise_paragraph_one', () => {
+  it('unit_about_eyebrow_label', () => {
+    const { container } = render(<About />);
+    const label = container.querySelector('.label');
+    expect(label).toBeInTheDocument();
+    expect(label).toHaveTextContent(/the channel/i);
+  });
+
+  it('unit_about_premise_copy', () => {
     render(<About />);
-    // "Fabled10X" appears in both premise and LLL card — use getAllByText
-    const fabledMatches = screen.getAllByText(/Fabled10X/);
-    expect(fabledMatches.length).toBeGreaterThan(0);
     expect(screen.getByText(/one person/i)).toBeInTheDocument();
-  });
-
-  it('unit_premise_paragraph_two', () => {
-    render(<About />);
     expect(screen.getByText(/agent workflow/i)).toBeInTheDocument();
   });
 
-  it('unit_lll_card_heading', () => {
+  it('unit_about_lll_heading_and_link', () => {
     render(<About />);
     expect(
-      screen.getByRole('heading', { level: 2, name: 'The Large Language Library' }),
+      screen.getByRole('heading', { level: 2, name: /large language library/i }),
     ).toBeInTheDocument();
-  });
-
-  it('unit_lll_outbound_link_present', () => {
-    render(<About />);
-    const link = screen.getByRole('link', {
-      name: 'The Large Language Library',
-    });
-    expect(link).toBeInTheDocument();
-  });
-
-  it('unit_lll_outbound_link_href', () => {
-    render(<About />);
-    const link = screen.getByRole('link', {
-      name: 'The Large Language Library',
-    });
+    const link = screen.getByRole('link', { name: 'The Large Language Library' });
     expect(link).toHaveAttribute('href', 'https://largelanguagelibrary.ai');
   });
 
-  it('unit_lll_copy_sister_project_language', () => {
-    render(<About />);
-    expect(screen.getByText(/Fabled10X built/)).toBeInTheDocument();
-  });
+  // --- Integration (brand surface) ---
 
-  // --- Integration ---
-
-  it('int_uses_container_wrapper', () => {
+  it('int_about_marble_prose_surface', () => {
     const { container } = render(<About />);
-    const wrapper = container.querySelector('.mx-auto.max-w-5xl');
-    expect(wrapper).toBeInTheDocument();
+    expect(
+      container.querySelector('[class*="bg-(--color-marble)"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[class*="max-w-prose"]'),
+    ).toBeInTheDocument();
   });
 
-  it('int_two_sections_rendered', () => {
+  it('int_about_build_log_prose_body', () => {
     const { container } = render(<About />);
-    const sections = container.querySelectorAll('section');
-    expect(sections).toHaveLength(2);
-  });
-
-  it('int_static_sync_component', () => {
-    // Synchronous render should complete without awaiting. If About becomes
-    // async, render would return a thenable rather than a RenderResult.
-    const result = render(<About />);
-    expect(result.container).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.build-log-prose')).toBeInTheDocument();
   });
 
   // --- Accessibility ---
 
-  it('a11y_exactly_one_h1', () => {
+  it('a11y_about_exactly_one_h1', () => {
     render(<About />);
-    const h1s = screen.getAllByRole('heading', { level: 1 });
-    expect(h1s).toHaveLength(1);
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  it('a11y_heading_hierarchy_no_skip', () => {
+  it('a11y_about_heading_hierarchy_no_skip', () => {
     const { container } = render(<About />);
-    const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    const levels = Array.from(headings).map((h) =>
-      Number(h.tagName.substring(1)),
-    );
+    const levels = Array.from(
+      container.querySelectorAll('h1, h2, h3, h4, h5, h6'),
+    ).map((h) => Number(h.tagName.substring(1)));
     expect(levels).toContain(1);
     expect(levels).toContain(2);
-    // No h3+ on this page — premise + LLL card only.
     expect(levels.every((lv) => lv <= 2)).toBe(true);
   });
 
-  it('a11y_article_landmark', () => {
-    const { container } = render(<About />);
-    const article = container.querySelector('article');
-    expect(article).toBeInTheDocument();
+  it('a11y_about_dropaccent_decorative', () => {
+    render(<About />);
+    const h1 = screen.getByRole('heading', { level: 1 });
+    const hidden = h1.querySelector('[aria-hidden="true"]');
+    expect(hidden).toBeInTheDocument();
+    expect(hidden).toHaveTextContent('.');
   });
 
-  it('a11y_lll_link_accessible_name', () => {
-    render(<About />);
-    const link = screen.getByRole('link', {
-      name: 'The Large Language Library',
-    });
-    expect(link.textContent!.trim().length).toBeGreaterThan(0);
+  it('a11y_about_article_landmark', () => {
+    const { container } = render(<About />);
+    expect(container.querySelector('article')).toBeInTheDocument();
   });
 
   // --- Infrastructure (metadata) ---
 
-  it('infra_metadata_export_title', () => {
-    expect(metadata).toBeDefined();
+  it('infra_about_metadata_title_desc', () => {
     expect(metadata.title).toBe('About');
-  });
-
-  it('infra_metadata_export_description', () => {
-    expect(metadata.description).toBeDefined();
-    expect(typeof metadata.description).toBe('string');
     const desc = metadata.description as string;
+    expect(typeof desc).toBe('string');
     expect(desc.length).toBeGreaterThan(0);
-    expect(desc).toMatch(/Large Language Library|sister/i);
+    expect(desc).toMatch(/large language library|sister/i);
   });
 
   // --- Edge case ---
 
-  it('edge_outbound_link_is_absolute_https', () => {
+  it('edge_about_lll_link_absolute_https', () => {
     render(<About />);
-    const link = screen.getByRole('link', {
-      name: 'The Large Language Library',
-    });
-    const href = link.getAttribute('href');
+    const href = screen
+      .getByRole('link', { name: 'The Large Language Library' })
+      .getAttribute('href');
     expect(href).toMatch(/^https:\/\//);
     expect(href).toContain('largelanguagelibrary.ai');
   });
 
-  it('edge_max_w_3xl_class_applied', () => {
-    const { container } = render(<About />);
-    const article = container.querySelector('article');
-    expect(article).toBeInTheDocument();
-    expect(article!.className).toContain('max-w-3xl');
+  it('edge_about_sync_render', () => {
+    const result = render(<About />);
+    expect(result.container).toBeInstanceOf(HTMLElement);
   });
 
   // --- Data integrity ---
 
-  it('data_metadata_shape_consistency', () => {
+  it('data_about_metadata_shape', () => {
     expect(typeof metadata).toBe('object');
     expect(metadata).not.toBeNull();
     expect(typeof metadata.title).toBe('string');

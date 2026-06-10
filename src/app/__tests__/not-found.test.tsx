@@ -1,38 +1,66 @@
 import { vi } from 'vitest';
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
 import { render, screen } from '@testing-library/react';
 import NotFound from '../not-found';
 
-describe('NotFound', () => {
+// styling-overhaul-7.6 — NotFound reskinned to the editorial brand system:
+// Marble surface, Container width="prose", "404" eyebrow, display-1 heading
+// with DropAccent "✕", oxblood return-home link.
+
+describe('NotFound (brand reskin 7.6)', () => {
   // --- Unit ---
 
-  it('unit_notfound_404_text', () => {
-    render(<NotFound />);
+  it('unit_notfound_404_label', () => {
+    const { container } = render(<NotFound />);
+    const label = container.querySelector('.label');
+    expect(label).toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();
   });
 
   it('unit_notfound_heading', () => {
     render(<NotFound />);
-    expect(screen.getByRole('heading')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
-  it('unit_notfound_home_link', () => {
+  it('unit_notfound_home_link_href', () => {
     render(<NotFound />);
-    const link = screen.getByRole('link', { name: /homepage/i });
+    const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/');
+  });
+
+  // --- Integration (brand surface) ---
+
+  it('int_notfound_marble_prose_surface', () => {
+    const { container } = render(<NotFound />);
+    expect(
+      container.querySelector('[class*="bg-(--color-marble)"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[class*="max-w-prose"]'),
+    ).toBeInTheDocument();
   });
 
   // --- Accessibility ---
 
-  it('a11y_notfound_heading_hierarchy', () => {
+  it('a11y_notfound_h1_and_link_name', () => {
     render(<NotFound />);
-    const heading = screen.getByRole('heading');
-    expect(heading.tagName).toBe('H1');
+    expect(screen.getByRole('heading', { level: 1 }).tagName).toBe('H1');
+    const link = screen.getByRole('link');
+    expect(link.textContent!.trim().length).toBeGreaterThan(0);
   });
 });

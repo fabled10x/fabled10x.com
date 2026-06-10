@@ -6694,3 +6694,18 @@ build_log_overhaul_1_3:
       observes this race genuinely produces stale data (rather than just a moment
       of misalignment), revisit the decision — could promote to a stale return or
       add a transitioning variant to the LiveStatus union.
+styling-overhaul-7.6:
+  completed_at: "2026-06-09"
+  patterns_established:
+    - description: "Quiet editorial page scaffold — Marble > Section rhythm=lg > Container width=prose, eyebrow .label + .display-1/2 heading with DropAccent + body. Inlined per-page (no shared wrapper) to match products/episodes/cases/cohorts convention."
+      file: "src/app/about/page.tsx"
+      reusable_for: "Any future quiet reading/utility page (no brushstroke); copy the inline scaffold rather than extracting a wrapper"
+    - description: "Brand-class regression scan — a section-local test reads the reskinned source files and asserts absence of legacy placeholder classes (text-muted/border-mist/hover:border-accent/hover:text-accent/font-display) + presence of Marble. Catches drift the global forbidden-patterns sentinel misses (it only targets gradients/shadows/pure-hex/numbered-tailwind)."
+      file: "src/app/__tests__/brand-reskin-7-6.test.ts"
+      reusable_for: "Locking any palette migration where the off-brand tokens aren't in the global sentinel's FORBIDDEN list"
+  gotchas:
+    - "error.tsx error boundary takes unstable_retry (NOT reset) in this Next.js 16 build — keep the prop name; the existing error.test.tsx already encodes it."
+    - "DropAccent renders {children} THEN the glyph span (aria-hidden). The glyph is excluded from the heading's accessible name but IS in textContent — assert decorative glyphs via querySelector('[aria-hidden=\"true\"]'), and assert headline text via toHaveTextContent."
+    - "Brand surface assertions: use attribute-substring selectors [class*=\"bg-(--color-marble)\"] / [class*=\"max-w-prose\"] to avoid escaping the Tailwind-v4 arbitrary-value parentheses in querySelector."
+    - "SignInForm is still allow-listed for legacy red-* error styling in the forbidden-patterns SKIP_PATHS (deferred); 7.6 scope is the 5 page files only, not the form component."
+  reusable_utilities: []

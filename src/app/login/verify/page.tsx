@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Marble, Section, DropAccent } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 
 export const metadata: Metadata = {
@@ -8,20 +9,22 @@ export const metadata: Metadata = {
 
 export default function VerifyPage() {
   return (
-    <Container as="section" className="py-24">
-      <div className="mx-auto max-w-md text-center">
-        <p className="text-sm uppercase tracking-wide text-muted">Check your email</p>
-        <h1 className="mt-3 font-display text-3xl font-semibold">
-          Sign-in link sent.
-        </h1>
-        <p className="mt-6 text-muted">
-          We just sent you a one-time sign-in link. Click it from the same
-          browser to continue to your account.
-        </p>
-        <p className="mt-4 text-sm text-muted">
-          The link expires in 24 hours. If you don&rsquo;t see it, check spam.
-        </p>
-      </div>
-    </Container>
+    <Marble>
+      <Section rhythm="lg">
+        <Container width="prose">
+          <span className="label">Check your email</span>
+          <h1 className="display-2 mt-(--space-3)">
+            <DropAccent glyph="✓">A sign-in link is on its way</DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-4) text-(--color-muted)">
+            Open the message we just sent and click the link from the same
+            browser to continue to your account.
+          </p>
+          <p className="body-1 mt-(--space-3) text-(--color-muted)">
+            The link expires in 24 hours. If you don&rsquo;t see it, check spam.
+          </p>
+        </Container>
+      </Section>
+    </Marble>
   );
 }

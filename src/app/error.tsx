@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Marble, Section, DropAccent, Button } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 
 export default function RootError({
@@ -15,20 +16,27 @@ export default function RootError({
   }, [error]);
 
   return (
-    <Container as="section" className="py-24 text-center">
-      <p className="text-sm uppercase tracking-wide text-muted">
-        Something broke
-      </p>
-      <h1 className="mt-4 font-display text-3xl font-semibold">
-        We hit an unexpected error.
-      </h1>
-      <button
-        type="button"
-        onClick={unstable_retry}
-        className="mt-8 rounded-md border border-mist px-4 py-2 text-sm hover:border-accent hover:text-accent"
-      >
-        Try again
-      </button>
-    </Container>
+    <Marble>
+      <Section rhythm="lg">
+        <Container width="prose" className="text-center">
+          <span className="label">Something broke</span>
+          <h1 className="display-1 mt-(--space-3)">
+            <DropAccent glyph="✕">We hit an unexpected error</DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-5) text-(--color-muted)">
+            Something on our side failed. Try again, or head back to the
+            homepage.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={unstable_retry}
+            className="mt-(--space-6)"
+          >
+            Try again
+          </Button>
+        </Container>
+      </Section>
+    </Marble>
   );
 }

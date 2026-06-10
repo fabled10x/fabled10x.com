@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Marble, Section } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 import { SignInForm } from '@/components/auth/SignInForm';
 
@@ -15,20 +16,19 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const { callbackUrl } = await searchParams;
 
   return (
-    <Container as="section" className="py-24">
-      <div className="mx-auto max-w-md">
-        <header>
-          <p className="text-sm uppercase tracking-wide text-muted">Storefront</p>
-          <h1 className="mt-3 font-display text-3xl font-semibold">Sign in</h1>
-          <p className="mt-4 text-muted">
-            Enter your email and we&rsquo;ll send you a one-time sign-in link.
-            No password, no account setup.
+    <Marble>
+      <Section rhythm="lg">
+        <Container width="prose">
+          <span className="label">Account</span>
+          <h1 className="display-2 mt-(--space-3)">Sign in to the library</h1>
+          <p className="body-1 mt-(--space-4) text-(--color-muted)">
+            We send a one-time link to your email — no password needed.
           </p>
-        </header>
-        <div className="mt-10">
-          <SignInForm callbackUrl={callbackUrl ?? '/products/account'} />
-        </div>
-      </div>
-    </Container>
+          <div className="mt-(--space-7)">
+            <SignInForm callbackUrl={callbackUrl ?? '/products/account'} />
+          </div>
+        </Container>
+      </Section>
+    </Marble>
   );
 }

@@ -1,22 +1,27 @@
 import Link from 'next/link';
+import { Marble, Section, DropAccent } from '@/components/brand';
 import { Container } from '@/components/site/Container';
 
 export default function NotFound() {
   return (
-    <Container as="section" className="py-24 text-center">
-      <p className="text-sm uppercase tracking-wide text-muted">404</p>
-      <h1 className="mt-4 font-display text-3xl font-semibold">
-        This page is not part of the story.
-      </h1>
-      <p className="mt-4 text-muted">
-        The page you were looking for doesn&apos;t exist.
-      </p>
-      <Link
-        href="/"
-        className="mt-8 inline-block rounded-md border border-mist px-4 py-2 text-sm hover:border-accent hover:text-accent"
-      >
-        Back to the homepage
-      </Link>
-    </Container>
+    <Marble>
+      <Section rhythm="lg">
+        <Container width="prose" className="text-center">
+          <span className="label">404</span>
+          <h1 className="display-1 mt-(--space-3)">
+            <DropAccent glyph="✕">No entry by that name</DropAccent>
+          </h1>
+          <p className="body-1 mt-(--space-5) text-(--color-muted)">
+            The page you asked for isn&apos;t in the library.
+          </p>
+          <Link
+            href="/"
+            className="label text-(--color-oxblood) mt-(--space-6) inline-block border-b border-(--color-oxblood) pb-(--space-1)"
+          >
+            Return home →
+          </Link>
+        </Container>
+      </Section>
+    </Marble>
   );
 }
