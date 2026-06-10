@@ -45,8 +45,9 @@ when the jobbuild runs, so every future context window auto-picks it up.
 | 10 | `search`              | —     | M          | `wf` + enough content volume to justify         | low priority  |
 
 Rule of thumb: once `wf` ships, the only hard dependency chain is
-`wf → storefront-auth → {email-funnel, cohort-enrollment}`. Everything else is
-independently schedulable based on business priority.
+`wf → storefront-auth → cohort-enrollment`. Everything else (including the
+rewritten Substack-based `email-funnel`) is independently schedulable based on
+business priority.
 
 ---
 
@@ -167,34 +168,40 @@ No subscriptions, no cohort flows in this job.
 
 ## 4. `email-funnel` — Substack embed swap
 
-**Status:** planned, see `currentwork/email-funnel/README.md` (alias `ef`).
-
 ### Source
-Originally Phase 2 "email sequence" under the Monetization Layer. On
-2026-06-07 the operator superseded the self-hosted plan with **Substack**,
-which delivers sending, templates, list management, RFC 8058 unsubscribe,
-deliverability, and basic analytics natively.
+2026-06-07 decision: the self-hosted Resend nurture funnel originally scoped
+for §4 is deferred indefinitely in favor of Substack. See
+`currentwork/email-funnel/README.md` for the rewritten plan.
 
 ### Scope
-Replace the native email capture from `website-foundation` Phase 4.1 with a
-Substack embed iframe wrapped in the same brand `Bone` surface. The
-`source` taxonomy survives as a UTM dimension
-(`utm_campaign=pillar:{pillar}`, `utm_content={source}`) so Substack
-publication analytics can still break signups down by surface and pillar.
+Replace the native email capture form shipped in `wf` Phase 4.1 with a
+brand-wrapped Substack embed iframe. Preserve the `source` prop on every call
+site and forward it as UTM params on the iframe `src` so Substack publication
+analytics can break signups down by pillar (delivery / workflow / business /
+future) and by surface (homepage, episode, case).
 
-### Out of scope (handled by Substack)
-- Sending, templates, list management, deliverability
-- RFC 8058 unsubscribe + List-Unsubscribe headers
-- Per-subscriber tagging (replaced by UTM source breakdown)
-- Branching welcome flows by pillar (operator uses Substack sections)
+**Concrete deliverables:**
+- Delete `src/components/capture/actions.ts` and its tests
+- Replace `src/components/capture/EmailCapture.tsx` body with a Substack
+  iframe component (Bone-wrapped, UTM params encoding the pillar)
+- Add `src/components/capture/sourceToPillar.ts` helper
+- Add `NEXT_PUBLIC_SUBSTACK_EMBED_URL` env var
+
+### Out of scope (handled by Substack itself)
+- Email templates, sending, deliverability, list management
+- RFC 8058 unsubscribe + List-Unsubscribe header
+- Per-subscriber tagging at signup (Substack Pro feature; we use UTM + sections instead)
+- HMAC tokens, webhooks, cron, admin dashboard, suppression vs purchases
+- A/B testing, SMS/push, CRM integration
 
 ### Dependencies
-- `website-foundation` Phase 4.1 capture (replaced, not extended)
-- Substack publication + `NEXT_PUBLIC_SUBSTACK_EMBED_URL` env var
-- No dependency on `storefront-auth` (was prerequisite under old plan)
+- `website-foundation` Phase 4.1 (shipped)
+- Operator creates a Substack publication and provides the embed URL
 
 ### Suggested jobbuild prompt
-Already planned — see `currentwork/email-funnel/`.
+N/A — this job IS the rewrite. The plan already lives at
+`currentwork/email-funnel/{README.md,phase-1-substack-swap.md}`; invoke
+`/pipeline ef email-funnel-1.1` (or any 1.x section) directly.
 
 ---
 
