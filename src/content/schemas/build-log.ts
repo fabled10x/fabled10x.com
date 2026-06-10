@@ -32,6 +32,38 @@ export interface Job {
   readmeBody: string;
 }
 
+/**
+ * Detailed entry — the shape `/finish` writes for every completed section.
+ * Fields beyond `id` are optional because backfilled / historical entries may
+ * omit them; `kind` is set during normalization (src/lib/build-log/normalize.ts, 2.3).
+ */
+export interface DetailedCompletedSection {
+  kind: 'detailed';
+  id: string;
+  name?: string;
+  completedAt?: string;
+  commitHash?: string;
+  commitMessage?: string;
+  tests?: number;
+  filesNew?: number;
+  filesModified?: number;
+  pushed?: boolean;
+  notes?: string;
+}
+
+/**
+ * Minimal entry — what string-only legacy entries normalize to. Carries only
+ * the section id; consumers degrade their UI accordingly.
+ */
+export interface MinimalCompletedSection {
+  kind: 'minimal';
+  id: string;
+}
+
+export type CompletedSectionEntry =
+  | DetailedCompletedSection
+  | MinimalCompletedSection;
+
 export interface SessionStatus {
   id: string;
   startedAt?: string;
@@ -39,14 +71,33 @@ export interface SessionStatus {
   currentSection?: string;
   currentAgent?: string;
   currentStage?: string;
+  /** Mirror of session.concurrent_jobs — empty array when no concurrent work. */
+  concurrentJobs?: readonly string[];
   contextWindow?: {
     iteration?: number;
     totalItems?: number;
     completedItems?: number;
   };
+  /**
+   * Raw entries as they appear in the YAML — union of string + legacy-object
+   * shapes for backward compatibility. Use `toEntry()` (src/lib/build-log/
+   * normalize.ts, 2.3) to get the discriminated `CompletedSectionEntry`.
+   */
   completedSections: readonly (
     | string
-    | { section: string; completedAt?: string }
+    | {
+        section: string;
+        completedAt?: string;
+        // string | number: YAML coerces all-digit / float-looking hashes to numbers.
+        commit_hash?: string | number;
+        commit_message?: string;
+        tests?: number;
+        files_new?: number;
+        files_modified?: number;
+        pushed?: boolean;
+        notes?: string;
+        name?: string;
+      }
   )[];
   notes?: string;
 }

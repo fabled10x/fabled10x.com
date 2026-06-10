@@ -203,6 +203,16 @@ const CompletedSectionEntrySchema = z.union([
     .object({
       section: z.string().regex(SECTION_ID),
       completedAt: z.string().optional(),
+      // YAML coerces all-digit / float-looking short hashes (e.g. `68914.0`,
+      // `123e4`) to numbers, so accept both rather than reject real data.
+      commit_hash: z.union([z.string(), z.number()]).optional(),
+      commit_message: z.string().optional(),
+      tests: z.number().optional(),
+      files_new: z.number().optional(),
+      files_modified: z.number().optional(),
+      pushed: z.boolean().optional(),
+      notes: z.string().optional(),
+      name: z.string().optional(),
     })
     .passthrough(),
 ]);
@@ -214,6 +224,7 @@ export const SessionStatusSchema = z.object({
   currentSection: z.string().optional(),
   currentAgent: z.string().optional(),
   currentStage: z.string().optional(),
+  concurrentJobs: z.array(z.string()).optional(),
   contextWindow: z
     .object({
       iteration: z.number().int().nonnegative().optional(),

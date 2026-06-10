@@ -41,6 +41,9 @@ import type {
   ProductLicenseType,
   CohortInput,
   CohortStatus,
+  CompletedSectionEntry,
+  DetailedCompletedSection,
+  MinimalCompletedSection,
 } from '@/content/schemas';
 
 import {
@@ -730,6 +733,250 @@ describe('SessionStatusSchema', () => {
     const result = SessionStatusSchema.parse(LIVE_SESSION_FIXTURE);
     expect(result.id).toBe('2026-04-11-001');
     expect(Array.isArray(result.completedSections)).toBe(true);
+  });
+});
+
+// ── 1.4 additions: concurrentJobs + detailed completedSections + new types ──
+
+// Hand-built fixture exercising the 1.4 schema additions: a populated
+// concurrentJobs list and a detailed completedSections entry carrying the
+// snake_case fields /finish writes.
+const SESSION_FIXTURE_14 = {
+  id: '2026-06-09-001',
+  startedAt: '2026-06-09T00:00:00Z',
+  currentPhase: 'build-log-overhaul',
+  currentSection: 'build-log-overhaul-1.4',
+  currentAgent: 'red',
+  currentStage: 'build-log-overhaul-1.4-red-complete',
+  concurrentJobs: ['build-log-overhaul-3.2', 'styling-overhaul-7.5'],
+  completedSections: [
+    'website-foundation-1.1',
+    {
+      section: 'build-log-overhaul-1.3',
+      completedAt: '2026-06-09',
+      commit_hash: '312098c',
+      commit_message: 'Add derive-live-status helper with 40 tests',
+      tests: 40,
+      files_new: 2,
+      files_modified: 1,
+      pushed: true,
+      notes: 'shipped clean',
+      name: 'derive-live-status helper',
+    },
+  ],
+  notes: 'fabled10x build-log-overhaul in flight.',
+};
+
+describe('SessionStatusSchema — 1.4 concurrentJobs', () => {
+  it('unit_session_concurrent_jobs_accepted: accepts and preserves a concurrentJobs array', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [],
+      concurrentJobs: ['build-log-overhaul-3.2'],
+    });
+    expect(result.concurrentJobs).toEqual(['build-log-overhaul-3.2']);
+  });
+
+  it('unit_session_concurrent_jobs_omitted: parses with concurrentJobs omitted (optional → undefined)', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [],
+    });
+    expect(result.concurrentJobs).toBeUndefined();
+  });
+
+  it('edge_input_concurrent_jobs_empty_array: accepts and preserves concurrentJobs: [] (production default)', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [],
+      concurrentJobs: [],
+    });
+    expect(result.concurrentJobs).toEqual([]);
+  });
+
+  it('sec_tampering_concurrent_jobs_must_be_string_array: rejects non-string members and non-arrays', () => {
+    for (const bad of [[123], [{}], 'not-an-array', [null]]) {
+      expect(() =>
+        SessionStatusSchema.parse({
+          id: 'x',
+          completedSections: [],
+          concurrentJobs: bad,
+        }),
+      ).toThrow();
+    }
+  });
+});
+
+describe('SessionStatusSchema — 1.4 detailed completedSections', () => {
+  it('unit_session_detailed_snake_case_fields: accepts a detailed entry with all snake_case fields', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [
+        {
+          section: 'build-log-overhaul-1.3',
+          completedAt: '2026-06-09',
+          commit_hash: '312098c',
+          commit_message: 'Add derive-live-status helper',
+          tests: 40,
+          files_new: 2,
+          files_modified: 1,
+          pushed: true,
+          notes: 'shipped clean',
+          name: 'derive-live-status helper',
+        },
+      ],
+    });
+    const entry = result.completedSections[0] as Record<string, unknown>;
+    expect(entry.commit_hash).toBe('312098c');
+    expect(entry.tests).toBe(40);
+    expect(entry.pushed).toBe(true);
+  });
+
+  it('edge_input_mixed_string_and_detailed_entries: accepts an array mixing string and detailed forms', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [
+        'website-foundation-1.1',
+        { section: 'website-foundation-1.2', tests: 10, pushed: true },
+      ],
+    });
+    expect(result.completedSections).toHaveLength(2);
+    expect(result.completedSections[0]).toBe('website-foundation-1.1');
+  });
+
+  it('edge_input_detailed_entry_partial_fields: accepts a detailed entry with only some optional fields', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [{ section: 'website-foundation-1.1', tests: 3 }],
+    });
+    const entry = result.completedSections[0] as Record<string, unknown>;
+    expect(entry.tests).toBe(3);
+    expect(entry.commit_hash).toBeUndefined();
+  });
+
+  it('sec_tampering_section_id_still_rejected_in_detailed: SECTION_ID regex enforced even with detail fields', () => {
+    for (const bad of ['not-a-section', '../etc', 'wf-1', 'wf-1.1.2']) {
+      expect(() =>
+        SessionStatusSchema.parse({
+          id: 'x',
+          completedSections: [{ section: bad, tests: 5, commit_hash: 'x' }],
+        }),
+      ).toThrow();
+    }
+  });
+
+  it('sec_tampering_numeric_fields_reject_strings: numeric/boolean detail fields reject wrong types', () => {
+    const baseSection = 'website-foundation-1.1';
+    expect(() =>
+      SessionStatusSchema.parse({
+        id: 'x',
+        completedSections: [{ section: baseSection, tests: '99' }],
+      }),
+    ).toThrow();
+    expect(() =>
+      SessionStatusSchema.parse({
+        id: 'x',
+        completedSections: [{ section: baseSection, files_new: '<script>' }],
+      }),
+    ).toThrow();
+    expect(() =>
+      SessionStatusSchema.parse({
+        id: 'x',
+        completedSections: [{ section: baseSection, files_modified: 'NaN' }],
+      }),
+    ).toThrow();
+    expect(() =>
+      SessionStatusSchema.parse({
+        id: 'x',
+        completedSections: [{ section: baseSection, pushed: 'yes' }],
+      }),
+    ).toThrow();
+  });
+
+  it('edge_input_numeric_commit_hash_accepted: accepts a YAML-coerced numeric commit_hash (e.g. 68914.0)', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [{ section: 'website-foundation-1.1', commit_hash: 68914 }],
+    });
+    const entry = result.completedSections[0] as Record<string, unknown>;
+    expect(entry.commit_hash).toBe(68914);
+  });
+
+  it('err_safeparse_malformed_detailed_entry: safeParse returns success:false without throwing', () => {
+    const result = SessionStatusSchema.safeParse({
+      id: 'x',
+      completedSections: [{ section: 'website-foundation-1.1', tests: 'not-a-number' }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('data_passthrough_preserves_unknown_keys: .passthrough() retains future/unknown detail fields', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [
+        { section: 'website-foundation-1.1', coverage_delta: '+2.3%' },
+      ],
+    });
+    const entry = result.completedSections[0] as Record<string, unknown>;
+    expect(entry.coverage_delta).toBe('+2.3%');
+  });
+
+  it('data_numeric_fields_preserve_value: numeric detail fields round-trip as numbers with exact value', () => {
+    const result = SessionStatusSchema.parse({
+      id: 'x',
+      completedSections: [
+        { section: 'website-foundation-1.1', tests: 42, files_new: 3, files_modified: 5 },
+      ],
+    });
+    const entry = result.completedSections[0] as Record<string, unknown>;
+    expect(entry.tests).toBe(42);
+    expect(typeof entry.tests).toBe('number');
+    expect(entry.files_new).toBe(3);
+    expect(entry.files_modified).toBe(5);
+  });
+
+  it('integration_live_session_fixture_with_concurrent_and_detailed: extended live fixture round-trips', () => {
+    const result = SessionStatusSchema.parse(SESSION_FIXTURE_14);
+    expect(result.concurrentJobs).toEqual([
+      'build-log-overhaul-3.2',
+      'styling-overhaul-7.5',
+    ]);
+    const detailed = result.completedSections[1] as Record<string, unknown>;
+    expect(detailed.commit_hash).toBe('312098c');
+    expect(detailed.tests).toBe(40);
+  });
+});
+
+describe('build-log 1.4 types — CompletedSectionEntry', () => {
+  it('unit_completed_section_entry_discriminated_kinds: narrows by kind tag', () => {
+    const detailed: DetailedCompletedSection = {
+      kind: 'detailed',
+      id: 'build-log-overhaul-1.3',
+      tests: 40,
+      pushed: true,
+    };
+    const minimal: MinimalCompletedSection = {
+      kind: 'minimal',
+      id: 'website-foundation-1.1',
+    };
+    const entries: CompletedSectionEntry[] = [detailed, minimal];
+
+    for (const entry of entries) {
+      if (entry.kind === 'detailed') {
+        expect(entry.id).toBeTruthy();
+      } else {
+        expect(entry.kind).toBe('minimal');
+        expect(entry.id).toBeTruthy();
+      }
+    }
+    expect(entries).toHaveLength(2);
+  });
+
+  it('integration_barrel_reexports_new_types: new types are usable via the @/content/schemas barrel', () => {
+    const entry: CompletedSectionEntry = { kind: 'minimal', id: 'wf-1.1' };
+    const detailed: DetailedCompletedSection = { kind: 'detailed', id: 'wf-1.2', tests: 5 };
+    expect(entry.kind).toBe('minimal');
+    expect(detailed.kind).toBe('detailed');
   });
 });
 

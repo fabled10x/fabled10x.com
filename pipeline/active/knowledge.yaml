@@ -6709,3 +6709,52 @@ styling-overhaul-7.6:
     - "Brand surface assertions: use attribute-substring selectors [class*=\"bg-(--color-marble)\"] / [class*=\"max-w-prose\"] to avoid escaping the Tailwind-v4 arbitrary-value parentheses in querySelector."
     - "SignInForm is still allow-listed for legacy red-* error styling in the forbidden-patterns SKIP_PATHS (deferred); 7.6 scope is the 5 page files only, not the form component."
   reusable_utilities: []
+
+build-log-overhaul-1.4:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: Discriminated union via `kind` string-literal tag (DetailedCompletedSection
+        | MinimalCompletedSection = CompletedSectionEntry). First tag-discriminated
+        union in src/content/schemas/build-log.ts. The TYPE lives in build-log.ts;
+        the runtime normalizer `toEntry()` that produces it ships in 2.3 (normalize.ts).
+        Until 2.3, consumers still read the raw string|object union via
+        SessionStatus.completedSections.
+      file: src/content/schemas/build-log.ts
+      reusable_for: Any schema that mirrors two YAML shapes (legacy string + detailed
+        object) and wants tag-narrowing instead of `typeof`/`'field' in entry` checks.
+    - description: Keep the raw Zod union loose + .passthrough(), validate only declared
+        fields. CompletedSectionEntrySchema's object branch declares snake_case detail
+        fields (commit_message/notes/name as z.string, tests/files_new/files_modified
+        as z.number, pushed as z.boolean) but retains .passthrough() so future /finish
+        fields survive. SECTION_ID regex still gates `section`.
+      file: src/content/schemas/validators.ts
+      reusable_for: Mirroring evolving YAML state files where /finish may add fields
+        the schema doesn't know yet — declare-what-you-validate, passthrough the rest.
+  gotchas:
+    - 'YAML COERCION TRAP (high-value): the yaml loader parses all-digit / float- or
+      sci-notation-looking git short hashes as NUMBERS, not strings. Real session.yaml
+      entry 61 had commit_hash 68914.0 loaded as number 68914, which a strict z.string()
+      rejects and silently breaks getSessionStatus on the live file. Fix:
+      commit_hash z.union([z.string(), z.number()]) in the Zod schema AND
+      commit_hash?: string | number in the SessionStatus interface. Downstream consumers
+      (2.3 toEntry, 3.3 RecentActivity GitHub-link builder) MUST String() the value
+      before use. Caught only by the pipeline-state integration test that parses the
+      real file — quoted-hash unit fixtures hid it. Lesson: when widening a Zod field
+      that maps to YAML, run the real-file integration test, not just hand-built fixtures.'
+    - 'CROSS-SECTION DECISION (resolves 1.3 deferred_followup): LiveStatus was NOT added
+      to build-log.ts in 1.4, despite the original README/phase plan listing it. 1.3 had
+      already shipped export type LiveStatus in derive-live-status.ts and locked it with
+      a source-regex infra test (derive-live-status.test.ts:256 asserts
+      /export\s+type\s+LiveStatus\b/ in that file). Adding it to build-log.ts created a
+      duplicate; honoring 1.3 knowledge note, 1.4 dropped the add-LiveStatus item.
+      CANONICAL LiveStatus home = src/lib/build-log/derive-live-status.ts. 3.1 (Hero)
+      must import LiveStatus from @/lib/build-log/derive-live-status, NOT from
+      @/content/schemas. CompletedSectionEntry and concurrentJobs DID land in build-log.ts
+      as planned.'
+  reusable_utilities: []
+  deferred_followups:
+    - 'README New Content Types table (currentwork/build-log-overhaul/README.md) and
+      phase-1-foundation.md Feature 1.4 still say LiveStatus lands in build-log.ts. That
+      is stale — actual home is derive-live-status.ts (see gotcha above). Not corrected
+      in-place to avoid rewriting historical plan prose; this knowledge entry is the
+      source of truth. 3.1 discovery should read THIS for the LiveStatus import path.'

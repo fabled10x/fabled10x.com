@@ -1,16 +1,75 @@
 session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
-  current_phase: styling-overhaul
-  current_section: styling-overhaul-8.1
+  current_phase: build-log-overhaul
+  current_section: build-log-overhaul-2.1
   current_agent: pending
-  current_stage: styling-overhaul-7.6-complete
+  current_stage: build-log-overhaul-1.4-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: build-log-overhaul-1.4
+    name: 'Schema additions — concurrentJobs + discriminated CompletedSectionEntry union'
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: 'Add SessionStatus schema additions with 16 tests (build-log-overhaul-1.4)'
+    tests: 16
+    files_new: 0
+    files_modified: 2
+    pushed: false
+    posture: schema-only
+    notes: |
+      Fourth section of build-log-overhaul (blo) job, completing Phase 1
+      (Foundation utilities) at 4/4. Pure type + Zod schema additions to
+      src/content/schemas/build-log.ts + validators.ts — zero runtime logic,
+      no UI, no API.
+
+      Added: SessionStatus.concurrentJobs?: readonly string[] (mirrors
+      session.concurrent_jobs); DetailedCompletedSection / MinimalCompletedSection
+      / CompletedSectionEntry discriminated union (kind-tagged) for 2.3 normalize
+      + 3.3 RecentActivity to drill into completed sections without typeof guards;
+      widened the raw completedSections object union + CompletedSectionEntrySchema
+      with snake_case detail fields (commit_hash, commit_message, tests, files_new,
+      files_modified, pushed, notes, name) keeping .passthrough() for forward-compat.
+
+      16 tests: 5 unit, 2 integration, 3 security (tampering), 3 edge case,
+      1 error recovery, 2 data integrity. Categories N/A: accessibility (no UI),
+      infrastructure (no cors/rate-limit/headers), contract + permission (no HTTP
+      endpoints).
+
+      GREEN-DISCOVERED REAL-DATA FIX: live session.yaml entry had
+      commit_hash 68914.0 — YAML coerces all-digit/float-looking short hashes to
+      NUMBERS, which strict z.string() rejected and silently broke getSessionStatus
+      on the real file (caught by pipeline-state integration test). Widened
+      commit_hash to z.union([z.string(), z.number()]) + string | number on the
+      interface; locked with a regression unit test. Downstream (2.3 toEntry,
+      3.3 GitHub-link builder) must String() the hash.
+
+      CROSS-SECTION DECISION (resolves 1.3 deferred): did NOT add LiveStatus to
+      build-log.ts despite the original plan — 1.3 already shipped it in
+      derive-live-status.ts and locked it with a source-regex infra test. Honored
+      1.3's recorded guidance (also in this session.yaml's 1.3 notes + knowledge.yaml):
+      canonical LiveStatus home stays src/lib/build-log/derive-live-status.ts;
+      3.1 Hero imports LiveStatus from @/lib/build-log/derive-live-status.
+      CompletedSectionEntry + concurrentJobs DID land in build-log.ts as planned.
+
+      Audits clean: 0 ESLint warnings, tsc --noEmit clean, npm run build pass.
+      Full suite: 2376 passed / 60 skipped / 0 failed (vs preflight 2360 / 60 / 0;
+      net +16 = exactly the new tests). Refactor produced ZERO source changes
+      (the LiveStatus rework happened at finish per the 1.3 knowledge note).
+
+      WORKTREE mode (CLAIM 6 done + provision_test_db N/A — fabled10x static, no
+      Postgres). Slot section-build-log-overhaul-1.4 on branch
+      section/build-log-overhaul-1.4 from origin/main 312098c. node_modules
+      bind-mounted; .env.local symlinked.
+
+      Phase 1 COMPLETE (1.1 phase-labels + 1.2 relative-time + 1.3 derive-live-status
+      + 1.4 schema additions). Next: build-log-overhaul-2.1 (<PhaseStepper> primitive,
+      Phase 2 Display primitives).
+
   - id: styling-overhaul-7.6
     name: About + auth + error pages
     completed_at: '2026-06-09'
