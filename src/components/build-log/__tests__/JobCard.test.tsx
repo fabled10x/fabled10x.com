@@ -9,7 +9,7 @@ vi.mock('next/link', () => ({
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { JobCard } from '../JobCard';
@@ -200,8 +200,8 @@ describe('JobCard (post-EditorialCard refactor)', () => {
     // Props interface must still expose { rollup, excerpt }
     expect(src).toMatch(/JobCardProps[\s\S]{0,400}rollup:\s*JobRollupEntry/);
     expect(src).toMatch(/JobCardProps[\s\S]{0,400}excerpt:\s*string/);
-    // Function signature must accept both
-    expect(src).toMatch(/function JobCard\(\s*\{\s*rollup,\s*excerpt\s*\}/);
+    // Function signature must accept both (rollup + excerpt first; 2.2 adds optional props after)
+    expect(src).toMatch(/function JobCard\(\s*\{\s*rollup,\s*excerpt,/);
   });
 
   // ─── Security ──────────────────────────────────────────────────────────
@@ -351,5 +351,383 @@ describe('JobCard (post-EditorialCard refactor)', () => {
     const src = readSource(JOBCARD_SOURCE);
     expect(src).toMatch(/JobCardProps[\s\S]{0,400}rollup:\s*JobRollupEntry/);
     expect(src).toMatch(/JobCardProps[\s\S]{0,400}excerpt:\s*string/);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Section 2.2: Enriched JobCard — progress bar + last-activity + live-dot.
+// Hybrid posture: new enrichment behavior tests fail until /green; preserved
+// absence/guard tests stay green. Enrichments flow through EditorialCard's
+// `footer` ReactNode slot (do NOT modify EditorialCard).
+// ════════════════════════════════════════════════════════════════════════════
+
+const NOW_2_2 = '2026-06-07T12:00:00Z';
+const NINE_AM_2_2 = '2026-06-07T09:00:00Z'; // 3h before NOW → "3h ago"
+const FUTURE_2_2 = '2026-06-07T15:00:00Z'; // after NOW → "just now"
+
+describe('JobCard (enriched 2.2)', () => {
+  // ─── Unit ──────────────────────────────────────────────────────────────
+  it('unit_job_card_renders_live_dot_when_count_positive', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" liveWorktreeCount={1} />);
+    expect(screen.getByTestId('live-dot')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toHaveClass('sr-only');
+  });
+
+  it('unit_job_card_no_live_dot_when_count_zero', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    expect(screen.queryByTestId('live-dot')).toBeNull();
+  });
+
+  it('unit_job_card_renders_last_activity_when_iso_and_now', () => {
+    render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={NINE_AM_2_2}
+        nowIso={NOW_2_2}
+      />,
+    );
+    const node = screen.getByTestId('last-activity');
+    expect(node).toHaveTextContent(/Last shipped/);
+    expect(node).toHaveTextContent(/3h ago/);
+  });
+
+  it('unit_job_card_omits_last_activity_when_iso_missing', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" nowIso={NOW_2_2} />);
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+  });
+
+  it('unit_job_card_renders_progress_bar_with_aria_valuenow', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow', '50');
+  });
+
+  it('unit_job_card_hides_progress_bar_when_percent_null', () => {
+    render(
+      <JobCard rollup={{ ...baseRollup, percentComplete: null }} excerpt="x" />,
+    );
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('unit_job_card_progress_fill_width_matches_percent', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    const fill = bar.firstElementChild as HTMLElement | null;
+    expect(fill).not.toBeNull();
+    expect(fill!.style.width).toBe('50%');
+  });
+
+  it('unit_job_card_feature_count_text_preserved_alongside_bar', () => {
+    const { container } = render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const article = findArticle(container);
+    expect(article.textContent).toMatch(/3 \/ 6 features/);
+    expect(article.textContent).toMatch(/50%/);
+  });
+
+  // ─── Integration ───────────────────────────────────────────────────────
+  it('integration_job_card_renders_all_enrichments_together', () => {
+    render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        liveWorktreeCount={2}
+        lastActivityIso={NINE_AM_2_2}
+        nowIso={NOW_2_2}
+      />,
+    );
+    expect(screen.getByTestId('live-dot')).toBeInTheDocument();
+    expect(screen.getByTestId('last-activity')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it.each([
+    [0, false, false],
+    [0, false, true],
+    [0, true, false],
+    [0, true, true],
+    [2, false, false],
+    [2, false, true],
+    [2, true, false],
+    [2, true, true],
+  ])(
+    'integration_job_card_eight_combinations_render_without_crashing (live=%d, activity=%s, progress=%s)',
+    (liveWorktreeCount, hasActivity, hasProgress) => {
+      const { container } = render(
+        <JobCard
+          rollup={hasProgress ? baseRollup : { ...baseRollup, percentComplete: null }}
+          excerpt="x"
+          liveWorktreeCount={liveWorktreeCount}
+          lastActivityIso={hasActivity ? NINE_AM_2_2 : null}
+          nowIso={NOW_2_2}
+        />,
+      );
+      expect(container.querySelector('article')).toBeInTheDocument();
+    },
+  );
+
+  it('integration_job_card_backward_compatible_default_props', () => {
+    // The /build-log/page.tsx:165 call site: <JobCard rollup excerpt />
+    const { container } = render(<JobCard rollup={baseRollup} excerpt="x" />);
+    expect(container.querySelector('article')).toBeInTheDocument();
+    expect(screen.queryByTestId('live-dot')).toBeNull();
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+  });
+
+  // ─── Security ──────────────────────────────────────────────────────────
+  it('sec_tampering_last_activity_renders_as_escaped_text', () => {
+    const { container } = render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={'<script>alert(1)</script>'}
+        nowIso={NOW_2_2}
+      />,
+    );
+    // Unparseable ISO → formatRelativeTime returns '' → no last-activity line,
+    // and crucially no script element is ever created.
+    expect(container.querySelector('script')).toBeNull();
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+  });
+
+  it('sec_tampering_progress_width_is_numeric_no_css_injection', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    const fill = bar.firstElementChild as HTMLElement;
+    // percent derives from typed number percentComplete (?? 0) → numeric percent only
+    expect(fill.style.width).toMatch(/^\d+%$/);
+  });
+
+  // ─── Accessibility ─────────────────────────────────────────────────────
+  it('a11y_progress_bar_has_role_and_aria_value_attributes', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow');
+    expect(bar).toHaveAttribute('aria-valuemin', '0');
+    expect(bar).toHaveAttribute('aria-valuemax', '100');
+  });
+
+  it('a11y_progress_bar_has_descriptive_aria_label', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-label', '3 of 6 features complete');
+  });
+
+  it('a11y_live_dot_is_aria_hidden_with_sr_only_text', () => {
+    render(<JobCard rollup={baseRollup} excerpt="x" liveWorktreeCount={1} />);
+    const dot = screen.getByTestId('live-dot');
+    expect(dot).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText('Active')).toHaveClass('sr-only');
+  });
+
+  it('a11y_enriched_card_no_nested_interactive', () => {
+    const { container } = render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        liveWorktreeCount={2}
+        lastActivityIso={NINE_AM_2_2}
+        nowIso={NOW_2_2}
+      />,
+    );
+    const root = rootElement(container);
+    expect(root.tagName).toBe('A');
+    expect(root.querySelectorAll('a').length).toBe(0);
+    expect(root.querySelectorAll('button').length).toBe(0);
+  });
+
+  // ─── Infrastructure ────────────────────────────────────────────────────
+  it('infra_job_card_no_use_client_after_enrichment', () => {
+    const src = readSource(JOBCARD_SOURCE);
+    expect(src).not.toMatch(/^['"]use client['"]/m);
+  });
+
+  it('infra_job_card_source_has_no_text_xs_or_deprecated', () => {
+    const src = readSource(JOBCARD_SOURCE);
+    const DEPRECATED = [
+      /\btext-xs\b/,
+      /\btext-sm\b/,
+      /\bline-clamp-\d+\b/,
+      /\bfont-display\b/,
+      /\brounded(?:-\w+)?\b/,
+      /bg-marble-texture/,
+      /border-mist/,
+    ];
+    for (const re of DEPRECATED) {
+      expect(src, `JobCard source contains forbidden pattern ${re}`).not.toMatch(re);
+    }
+  });
+
+  it('infra_job_card_imports_relative_time_formatter', () => {
+    const src = readSource(JOBCARD_SOURCE);
+    expect(src).toMatch(
+      /import\s*\{[^}]*\bformatRelativeTime\b[^}]*\}\s*from\s+['"]@\/lib\/build-log\/relative-time['"]/,
+    );
+  });
+
+  it('infra_job_card_progress_uses_brand_tokens', () => {
+    const src = readSource(JOBCARD_SOURCE);
+    expect(src).toMatch(/bg-\(--color-bone\)/);
+    expect(src).toMatch(/bg-\(--color-ink\)/);
+    // No bare bg-bone / bg-ink utility (must use paren-token syntax)
+    expect(src).not.toMatch(/\bbg-bone\b/);
+    expect(src).not.toMatch(/\bbg-ink\b/);
+  });
+
+  it('infra_job_card_tokens_resolve_in_globals', () => {
+    const required = ['--color-bone', '--color-ink', '--color-muted', '--color-oxblood'];
+    for (const token of required) {
+      expect(GLOBALS_CSS, `globals.css missing token ${token}`).toMatch(
+        new RegExp(`${token}\\s*:`),
+      );
+    }
+  });
+
+  // ─── Edge Cases ────────────────────────────────────────────────────────
+  it('edge_input_percent_complete_zero', () => {
+    render(<JobCard rollup={{ ...baseRollup, percentComplete: 0 }} excerpt="x" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow', '0');
+    expect((bar.firstElementChild as HTMLElement).style.width).toBe('0%');
+  });
+
+  it('edge_input_percent_complete_hundred', () => {
+    render(
+      <JobCard
+        rollup={{ ...baseRollup, percentComplete: 100, completedFeatures: 6 }}
+        excerpt="x"
+      />,
+    );
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow', '100');
+    expect((bar.firstElementChild as HTMLElement).style.width).toBe('100%');
+  });
+
+  it('edge_input_live_worktree_count_large', () => {
+    const { container } = render(
+      <JobCard rollup={baseRollup} excerpt="x" liveWorktreeCount={99} />,
+    );
+    expect(container.querySelectorAll('[data-testid="live-dot"]').length).toBe(1);
+  });
+
+  it('edge_input_now_iso_empty_with_activity_iso', () => {
+    render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={NINE_AM_2_2}
+        nowIso=""
+      />,
+    );
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+  });
+
+  it('edge_input_invalid_last_activity_iso', () => {
+    const { container } = render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={'not-a-date'}
+        nowIso={NOW_2_2}
+      />,
+    );
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+    expect(container.querySelector('article')).toBeInTheDocument();
+  });
+
+  it('edge_input_zero_total_features_no_percent', () => {
+    const { container } = render(
+      <JobCard
+        rollup={{
+          ...baseRollup,
+          totalFeatures: 0,
+          completedFeatures: 0,
+          percentComplete: null,
+        }}
+        excerpt="x"
+      />,
+    );
+    const article = findArticle(container);
+    expect(article.textContent).toMatch(/0 \/ 0 features/);
+    expect(article.textContent).not.toMatch(/%/);
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('edge_input_very_long_title_with_enrichments', () => {
+    const long = 'A'.repeat(500);
+    const { container } = render(
+      <JobCard
+        rollup={{ ...baseRollup, title: long }}
+        excerpt="x"
+        liveWorktreeCount={1}
+        lastActivityIso={NINE_AM_2_2}
+        nowIso={NOW_2_2}
+      />,
+    );
+    const h3 = container.querySelector('h3') as HTMLElement;
+    expect(h3.textContent!.length).toBeGreaterThanOrEqual(500);
+    expect(container.querySelector('article')).toBeInTheDocument();
+  });
+
+  // ─── Error Recovery ────────────────────────────────────────────────────
+  it('err_invalid_iso_degrades_to_no_activity_line', () => {
+    const { container } = render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={'garbage-not-iso'}
+        nowIso={NOW_2_2}
+      />,
+    );
+    expect(screen.queryByTestId('last-activity')).toBeNull();
+    expect(container.querySelector('article')).toBeInTheDocument();
+  });
+
+  it('err_future_activity_iso_renders_just_now', () => {
+    render(
+      <JobCard
+        rollup={baseRollup}
+        excerpt="x"
+        lastActivityIso={FUTURE_2_2}
+        nowIso={NOW_2_2}
+      />,
+    );
+    expect(screen.getByTestId('last-activity')).toHaveTextContent(/Last shipped just now/);
+  });
+
+  // ─── Data Integrity ────────────────────────────────────────────────────
+  it('data_consistency_enriched_classname_deterministic', () => {
+    const renders = Array.from({ length: 5 }, () =>
+      render(
+        <JobCard
+          rollup={baseRollup}
+          excerpt="x"
+          liveWorktreeCount={1}
+          lastActivityIso={NINE_AM_2_2}
+          nowIso={NOW_2_2}
+        />,
+      ),
+    );
+    const classNames = renders.map((r) => findArticle(r.container).className);
+    expect(new Set(classNames).size).toBe(1);
+    renders.forEach((r) => r.unmount());
+  });
+
+  it('data_progress_fill_width_string_format', () => {
+    for (const p of [0, 25, 50, 100]) {
+      const { container, unmount } = render(
+        <JobCard rollup={{ ...baseRollup, percentComplete: p }} excerpt="x" />,
+      );
+      const bar = container.querySelector('[role="progressbar"]') as HTMLElement;
+      const fill = bar.firstElementChild as HTMLElement;
+      expect(fill.style.width).toBe(`${p}%`);
+      unmount();
+    }
+  });
+
+  it('data_ssr_no_date_now_in_source', () => {
+    const src = readSource(JOBCARD_SOURCE);
+    expect(src).not.toMatch(/Date\.now\(\)/);
+    expect(src).not.toMatch(/new Date\(/);
   });
 });
