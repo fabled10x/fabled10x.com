@@ -5,3 +5,5 @@ export { PhaseNav } from './PhaseNav';
 export { JobsRollupTable } from './JobsRollupTable';
 export { PhaseStepper } from './PhaseStepper';
 export type { PhaseStepperProps } from './PhaseStepper';
+export { Hero } from './Hero';
+export type { HeroProps } from './Hero';

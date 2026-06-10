@@ -7076,3 +7076,26 @@ styling-overhaul-8.3:
       file: src/app/(internal)/thumb-preview/glyphs.ts
       purpose: Runtime AccentGlyph allowlist + cast-free validator (find ?? default);
         shared by page.tsx and index/page.tsx.
+build-log-overhaul-3.1:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: Hero block — pure RSC renderer of a derived LiveStatus + 3 stat tiles
+      file: src/components/build-log/Hero.tsx
+      reusable_for: 3.2/3.3/3.4/3.5 sibling blocks (same RSC-pure, prop-driven, data-attr-selector shape); 4.1 page composition
+    - description: liveStatus is a REQUIRED prop (page calls deriveLiveStatus once, passes down) — Hero stays a one-input-per-variant pure renderer
+      file: src/components/build-log/Hero.tsx
+      reusable_for: any block that visualizes derived pipeline state without recomputing it
+  gotchas:
+    - 'CRITICAL IMPORT OVERRIDE: planning doc phase-3-blocks.md line 52 imports LiveStatus from @/content/schemas, but LiveStatus is NOT exported there. Per the 1.4 knowledge decision its canonical home is @/lib/build-log/derive-live-status. Hero imports `import type { LiveStatus } from @/lib/build-log/derive-live-status`. Pinned by infra_live_status_import_source source-regex test. 3.4 LiveWorktreesPanel must do the same.'
+    - 'Stat-tile toLocaleString() renders the en-US thousands separator (1500 -> "1,500"). Test data_/unit asserts the comma form — depends on full-ICU Node default locale (matches existing JobCard tests).'
+    - 'testing-library getByText matches DIRECT text-node children only (getNodeText), so a substring-regex on the sentence <p> does not also match the parent <section>. Multi-assertion on one sentence is safe.'
+  reusable_utilities:
+    - function: 'buildSentence({liveStatus, session, worktrees, nowIso}): string'
+      file: src/components/build-log/Hero.tsx
+      purpose: Maps the 5 LiveStatus variants (+ plural-agent) to layperson copy. Private to Hero; promote only if 3.2/3.4 need the same templates.
+    - function: 'mostRecentTimestamp(session, nowIso): string'
+      file: src/components/build-log/Hero.tsx
+      purpose: Latest detailed completedAt -> formatRelativeTime string. DUP of an inline helper in derive-live-status.ts (2 sites, below 3-site extraction threshold).
+  deferred_followups:
+    - 'cross-section DRY: mostRecentTimestamp (Hero) ~ inline most-recent-completedAt (derive-live-status.ts). 2 sites, deferred per 3-site threshold + planning note (shared computation = over-engineering for one render). Re-evaluate when RecentActivity 3.3 adds a 3rd consumer.'
+    - 'Hero ships UNMOUNTED by design (Phase 3 preamble). 4.1 page rewrite mounts it at /build-log/page.tsx#current and supplies liveStatus/session/worktrees/rollup/nowIso. Barrel-exported now for that consumer.'
