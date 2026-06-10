@@ -158,7 +158,7 @@ this job composes. No prerequisite job is pending.
 | 2.2 | Enriched `<JobCard>` — progress bar + last-activity timestamp + live-dot indicator       | 2 - Display primitives         | M    | Shipped |
 | 2.3 | `normalize` lib — `extractSectionId(entry)` + `toEntry(raw)` discriminated-union accessor | 2 - Display primitives         | S    | Shipped |
 | 3.1 | `<Hero>` block — "right now" sentence + three stat tiles + `id="current"` anchor          | 3 - Composed UI blocks         | M    | Shipped |
-| 3.2 | `<PipelineExplainer>` block — "what is this?" copy + stepper legend in `<details open>`  | 3 - Composed UI blocks         | S    | Planned |
+| 3.2 | `<PipelineExplainer>` block — "what is this?" copy + stepper legend in `<details open>`  | 3 - Composed UI blocks         | S    | Shipped |
 | 3.3 | `<RecentActivity>` block — top-5 expanded section cards + compact tail (cap 25 + show-older) | 3 - Composed UI blocks      | L    | Planned |
 | 3.4 | `<LiveWorktreesPanel>` block — per-worktree card with stepper + agent + slot path        | 3 - Composed UI blocks         | M    | Planned |
 | 3.5 | `<KnowledgeDigest>` block — patterns + deferred-followups summary in `<details>`         | 3 - Composed UI blocks         | S    | Planned |

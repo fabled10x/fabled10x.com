@@ -7,3 +7,4 @@ export { PhaseStepper } from './PhaseStepper';
 export type { PhaseStepperProps } from './PhaseStepper';
 export { Hero } from './Hero';
 export type { HeroProps } from './Hero';
+export { PipelineExplainer } from './PipelineExplainer';

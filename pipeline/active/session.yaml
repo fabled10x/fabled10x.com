@@ -30,6 +30,50 @@ completed_sections:
       references. 23 tests appended to the brand docs harness assert both content
       presence AND on-disk existence of every documented path/route. Hero path
       gotcha: documented floatbg.png (plan's marble-column.jpg never existed).
+  - id: build-log-overhaul-3.2
+    name: PipelineExplainer block
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add PipelineExplainer block with 14 tests (build-log-overhaul-3.2)
+    tests: 14
+    files_new: 1
+    files_modified: 1
+    pushed: true
+    posture: ui-presentational-unmounted
+    notes: |
+      Second section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+      src/components/build-log/PipelineExplainer.tsx — zero-prop pure static RSC
+      (no 'use client', no useState/useEffect) wrapping a native <details
+      id="whatisthis" open> with <summary>"What is this?"</summary>, three
+      hand-written explainer paragraphs (code refs as <code> in oxblood mono),
+      and a <PhaseStepper currentPhase={null} size="md"> legend. Collapsible
+      without JS; open-by-default for first-time viewers. Implemented verbatim
+      from planning §3.2; brand classes match shipped Hero (3.1): border
+      border-bone, text-(--color-ink/muted/oxblood), text-link, font-display/mono.
+      &apos; for the apostrophe in "job's" (react/no-unescaped-entities).
+
+      14 tests (1 new file PipelineExplainer.test.tsx): 4 unit, 2 integration,
+      3 a11y, 2 infra, 3 edge; security/permission/contract/error-recovery/data
+      all N/A (pure static component, no input/API/data/async). Barrel-exported
+      (PipelineExplainer) from components/build-log/index.ts. SHIPS UNMOUNTED by
+      design (Phase 3 preamble — Phase 4.1 page rewrite mounts it); page.tsx
+      untouched. audit_component_mounts N/A with plan citation (same as 2.1/3.1).
+
+      GREEN test fix (in-bounds, intent-preserving): <details> exposes an implicit
+      ARIA role=group, so getByRole('group') collided with PhaseStepper's <ol
+      role="group">. Disambiguated via { name: 'Build phase legend' } — strengthens
+      the selector. First-pass green otherwise; zero-source-change refactor (27th
+      consecutive). Full suite 2620 passed | 60 skipped | 0 failed (+14 exact).
+      tsc/lint/build clean.
+
+      WORKTREE mode. Slot section-build-log-overhaul-3.2 from origin/main fbdcc79.
+      PWTC N/A (fabled10x static). node_modules bind-mounted; .env.local symlinked.
+
+      DEFERRED: <code className="font-mono text-(--color-oxblood)"> appears 3x
+      within PipelineExplainer (within-section static copy). <CodeRef> extraction
+      deferred until 3.3 RecentActivity / 3.5 KnowledgeDigest reuse the className
+      on commit hashes / section ids (crosses 3-consumer-FILE threshold). Next blo:
+      3.3 RecentActivity / 3.4 LiveWorktreesPanel / 3.5 KnowledgeDigest (Phase 3).
   - id: build-log-overhaul-3.1
     name: Hero block
     completed_at: '2026-06-09'

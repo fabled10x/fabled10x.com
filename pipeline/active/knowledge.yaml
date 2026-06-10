@@ -7166,3 +7166,17 @@ styling-overhaul-8.4:
     - README status table still lists 8.3 as "Planned" though it shipped (commit bf6302d).
       Left untouched — finish is section-scoped to 8.4. A future /docs or 9.x section
       should reconcile 8.3 → Complete.
+build-log-overhaul-3.2:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: 'PipelineExplainer — zero-prop pure static RSC: native <details id="whatisthis" open> + <summary>"What is this?"</summary> + 3 hand-written explainer paragraphs + <PhaseStepper currentPhase={null} size="md"> legend. No ''use client''/useState/useEffect. Collapsible without JS (browser remembers per-session); open-by-default so first-time viewers see context. Code refs use <code className="font-mono text-(--color-oxblood)"> — the "code = oxblood monospace" idiom planning §3.2 establishes for the page (3.3 commit hashes, 3.5 will inherit).'
+      file: src/components/build-log/PipelineExplainer.tsx
+      reusable_for: Any static no-JS collapsible explainer/disclosure block. The <details open> + <summary> pattern is the brand's no-client disclosure primitive (also used by RecentActivity notes 3.3, KnowledgeDigest 3.5).
+  gotchas:
+    - '<details> exposes an IMPLICIT ARIA role=group. A bare screen.getByRole("group") inside a component that also mounts PhaseStepper (<ol role="group">) throws "multiple elements" — disambiguate with { name: "Build phase legend" } (the PhaseStepper aria-label in legend mode). Caught in green; the fix STRENGTHENS the selector (intent unchanged).'
+    - 'SHIPS UNMOUNTED by design (Phase 3 preamble — same as 2.1 PhaseStepper / 3.1 Hero). audit_component_mounts marked N/A with plan citation, NOT failed: phase-3-blocks.md states the five blocks ship as importable modules; Phase 4.1 page rewrite mounts them. Barrel-exported now for that consumer. Same resolution applies to 3.3/3.4/3.5.'
+    - 'Brand-class convention matches shipped Hero (3.1): `border border-bone`, `text-(--color-ink|muted|oxblood)`, `text-link`, `font-display/font-mono` — all resolve via globals.css @theme tokens and pass forbidden-patterns sentinel. Use &apos; for apostrophes in JSX text ("job&apos;s") to satisfy react/no-unescaped-entities.'
+    - 'Source-regex infra test (no use client/useState/useEffect) uses REPO_ROOT=join(__dirname,"..","..","..","..") so readFileSync resolves inside worktree slots — same lesson as PhaseStepper 2.1 / StatusBadge. Barrel re-export test: import * as buildLogBarrel from ".."; expect(barrel).toHaveProperty("PipelineExplainer").'
+  reusable_utilities: []
+  deferred_followups:
+    - 'cross-section DRY: <code className="font-mono text-(--color-oxblood)"> appears 3x WITHIN PipelineExplainer (within-section, trivial static-copy spans). A <CodeRef> extraction is speculative until 3.3 RecentActivity + 3.5 KnowledgeDigest ship and reuse the same className on commit hashes / section ids — that crosses the genuine 3-consumer-FILE threshold. Re-evaluate at 3.3/3.5.'
