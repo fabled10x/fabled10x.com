@@ -2,15 +2,36 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-9.1
+  current_section: styling-overhaul-9.2
   current_agent: pending
-  current_stage: build-log-overhaul-3.3-complete
+  current_stage: styling-overhaul-9.1-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
   total_items: 0
   completed_items: 0
 completed_sections:
+  - id: styling-overhaul-9.1
+    name: Mobile-first legibility
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: Add mobile-first legibility sentinel with 11 tests (styling-overhaul-9.1)
+    tests: 11
+    files_new: 1
+    files_modified: 0
+    pushed: true
+    posture: test-only-sentinel
+    notes: >
+      Regression-guard section — sole artifact src/__tests__/brand/legibility.test.tsx
+      (11 tests: 4 unit + 2 integration + 2 a11y + 2 edge + 1 error_recovery). Guards
+      mobile-first headline legibility by extracting --text-display-1/2/3 tokens from
+      globals.css and asserting each meets the per-viewport floor (og 18px, youtube
+      24px, mobile 22px), plus EditorialCard/Logo render smokes. Token-floor idiom (not
+      render+getComputedStyle — jsdom can't resolve .display-3 to px). Green-on-arrival;
+      guard teeth proven via display-3->1rem mutation (5 fails) then restore. Header
+      mobile-width cases deferred to 9.5/9.6 (drawer not built). Re-inserted after a
+      FIN-23 session-resolver drop. Also reconciled the 8.4-deferred README drift:
+      flipped 8.3 -> Complete (shipped commit bf6302d).
   - id: build-log-overhaul-3.4
     name: LiveWorktreesPanel block
     completed_at: '2026-06-09'
@@ -41,18 +62,20 @@ completed_sections:
     files_modified: 1
     pushed: true
     posture: ui-presentational-unmounted
-    notes: >
-      Third section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
+    notes: 'Third section of build-log-overhaul Phase 3 (Composed UI blocks). NEW
       src/components/build-log/RecentActivity.tsx — pure static RSC reverse-chronological
-      feed of completedSections. Buckets normalized entries (toEntry + reverse) into top-5
-      expanded ActivityCards (commit links + collapsed notes preview), 6-25 compact mono
-      rows, and 25+ inside a "Show N older" <details>. Notes (up to 40KB) are NEVER
-      auto-expanded — closed <details> with a 1000-char flattened summary preview.
-      Discriminated CompletedSectionEntry drives minimal ("no detail recorded") vs detailed
-      cards; numeric commit hashes render via toEntry's String() coercion. 26 tests
-      (11 unit, 2 integration, 3 a11y, 2 infra, 5 edge, 1 err, 2 data) — security/permission/
-      contract N/A (UI-only). Ships UNMOUNTED by design (Phase 4.1 mounts it); barrel-exported.
-      Zero refactorings — verbatim realization of the planning doc, green on first run.
+      feed of completedSections. Buckets normalized entries (toEntry + reverse) into
+      top-5 expanded ActivityCards (commit links + collapsed notes preview), 6-25
+      compact mono rows, and 25+ inside a "Show N older" <details>. Notes (up to 40KB)
+      are NEVER auto-expanded — closed <details> with a 1000-char flattened summary
+      preview. Discriminated CompletedSectionEntry drives minimal ("no detail recorded")
+      vs detailed cards; numeric commit hashes render via toEntry''s String() coercion.
+      26 tests (11 unit, 2 integration, 3 a11y, 2 infra, 5 edge, 1 err, 2 data) —
+      security/permission/ contract N/A (UI-only). Ships UNMOUNTED by design (Phase
+      4.1 mounts it); barrel-exported. Zero refactorings — verbatim realization of
+      the planning doc, green on first run.
+
+      '
   - id: styling-overhaul-8.4
     name: Design-system doc finalize
     completed_at: '2026-06-09'

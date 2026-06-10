@@ -7307,3 +7307,70 @@ build-log-overhaul-3.3:
     - resolveJobName is a 1-site private helper; if 3.4 LiveWorktreesPanel or 4.1
       page need section-id -> job-title resolution, extract to src/lib/build-log/
       (crosses 2-3 site threshold then).
+styling-overhaul-9.1:
+  completed_at: '2026-06-09'
+  commit_message: Add mobile-first legibility sentinel with 11 tests (styling-overhaul-9.1)
+  patterns_established:
+    - description: 'Legibility sentinel via token-floor extraction, NOT render+getComputedStyle.
+        jsdom does not resolve Tailwind/@layer custom utilities (.display-3) to real
+        px, so getComputedStyle returns the 16px default and any headline-size assertion
+        on a rendered node is meaningless/flaky. Read the headline size TOKENS from
+        globals.css instead (the so-1.1/so-2.2 file-content idiom) and assert each
+        meets the per-viewport mobile floor.
+
+        '
+      file: src/__tests__/brand/legibility.test.tsx
+      reusable_for: 'Any future "does X render big/legible enough" brand guard. Pattern:
+        readFileSync(process.cwd()+globals.css) -> match @theme inline block -> regex
+        --text-{name} -> for clamp(min,..,..) take the MIN rem (the mobile-rendered
+        floor) -> *16 (no html font-size override) -> assert >= floor. Render smokes
+        (EditorialCard h3.display-3, Logo size=sm) assert STRUCTURE only (querySelector/className/tagName),
+        never computed px.
+
+        '
+  gotchas:
+    - 'File MUST be .tsx, not .ts — it contains JSX (render(<EditorialCard/>)). The
+      plan + 1.3 skeleton named it legibility.test.ts; esbuild only enables JSX for
+      .tsx/.jsx, so .ts would fail to parse. Shipped as src/__tests__/brand/legibility.test.tsx.
+
+      '
+    - 'Regression-guard section: tests are GREEN ON ARRIVAL (shipped tokens already
+      exceed every floor; display-3 = 1.5rem = 24px = the strictest youtube floor
+      exactly). red->green degenerates to verification — no production code. Guard
+      teeth proven by a controlled mutation: --text-display-3 -> 1rem failed 5 floor
+      assertions, restored to 1.5rem returned 11/11. Same shape as forbidden-patterns.
+
+      '
+    - 'Scope cut: the Phase-9.1 plan''s legibility.test.ts also sketched four Header
+      mobile-width cases (disclosure trigger aria-controls=primary-nav-drawer, min-h-11/min-w-11,
+      scrollWidth<=width). Those depend on the 9.5/9.6 mobile drawer which DOES NOT
+      EXIST and is NOT a tracked pipeline section (README workflow table stops at
+      9.4; Header.tsx is still the desktop-only Phase-4.2 nav). Deferred to 9.5/9.6.
+      Also: scrollWidth<=width is jsdom-meaningless (jsdom does no layout; scrollWidth
+      is 0), so those cases only become real once the drawer ships and a real browser
+      harness measures them.
+
+      '
+  reusable_utilities:
+    - function: tokenFloorPx(name) / remToPx(rem)
+      file: src/__tests__/brand/legibility.test.tsx
+      purpose: 'Extract a --text-{name} headline token from the globals.css @theme
+        block and return its mobile-rendered px floor (clamp-min for clamp tokens).
+        Local to the test; NOT extracted to a shared helper (over-engineering for
+        2 small fns across independent brand sentinels). Re-implement inline if a
+        sibling sentinel needs it.
+
+        '
+  deferred_followups:
+    - 'Header mobile-width legibility (4 cases) deferred to 9.5/9.6 — they need the
+      mobile drawer''s disclosure trigger. The phase-9 doc already carries the test
+      body under HEADER_MOBILE_WIDTHS; whoever ships 9.5/9.6 should append those cases
+      to legibility.test.tsx (they''re already authored in the plan).
+
+      '
+    - 'Reconciled the 8.4-deferred README drift: 8.3 (/thumb-preview, shipped commit
+      bf6302d) was still "Planned" in currentwork/styling-overhaul/README.md. Flipped
+      8.3 -> Complete alongside 9.1 -> Complete. No remaining "Planned" rows for shipped
+      sections in Phase 8.
+
+      '
