@@ -7023,3 +7023,56 @@ build_log_overhaul_2_2:
       completedAt), and nowIso (page render time) into each <JobCard> at /build-log/page.tsx.
       Until then live-dot + last-activity are dormant and the index shows a default
       progress bar.'
+styling-overhaul-8.3:
+  completed_at: '2026-06-09'
+  patterns_established:
+    - description: NODE_ENV dev-only route gate — `if (process.env.NODE_ENV !== 'development')
+        return notFound();` at the top of an RSC page. FIRST such gate in the repo.
+        Test via vi.stubEnv('NODE_ENV', 'development'|'production') + vi.unstubAllEnvs()
+        in afterEach; mock next/navigation notFound as a NON-throwing spy and assert
+        the page returns undefined (the explicit `return` is what short-circuits under
+        a non-throwing mock).
+      file: src/app/(internal)/thumb-preview/page.tsx
+      reusable_for: Any dev-only / preview / internal route; future (internal) tools.
+        Pair force-dynamic with the gate.
+    - description: (internal) route group — parentheses dir adds NO URL segment. src/app/(internal)/thumb-preview/page.tsx
+        serves /thumb-preview; index/page.tsx serves /thumb-preview/index. Both build
+        as f (Dynamic) with export const dynamic='force-dynamic'.
+      file: src/app/(internal)/thumb-preview/
+      reusable_for: Grouping non-product/dev routes without polluting the URL.
+    - description: RSC page test harness for brand-composition pages — mock the @/components/brand
+        barrel via importActual spread (double BrushstrokeSeam + DropAccent exposing
+        props as data-*, keep the rest real); mock next/image to a plain <img> because
+        next/image rewrites src to /_next/image?url=... even in jsdom (src otherwise
+        unreadable); strip fill/priority/sizes from the img mock to stay lint-clean.
+      file: src/app/(internal)/thumb-preview/__tests__/page.test.tsx
+      reusable_for: Any RSC page test asserting brand-component mount/props or next/image
+        src.
+    - description: 'Type-safe query-param allowlist with NO cast — ALLOWED_GLYPHS:
+        AccentGlyph[] (typed against DropAccent''s union so it can''t drift) + toAccentGlyph(raw)
+        = ALLOWED_GLYPHS.find(g => g === raw) ?? default. `.find(...) ?? default`
+        returns the union type without any `as` assertion.'
+      file: src/app/(internal)/thumb-preview/glyphs.ts
+      reusable_for: Validating any string query param against a typed literal union
+        without casts.
+  gotchas:
+    - Plan pseudocode defaulted the hero photo to /hero/marble-column.jpg which DOES
+      NOT EXIST — only public/hero/floatbg.png is present. Default to /hero/floatbg.png.
+    - Decorative <Image> needs BOTH alt='' AND aria-hidden='true' (plan pseudocode
+      omitted aria-hidden). next/image rewrites src in jsdom — select the decorative
+      img by alt=''/aria-hidden, never by src.
+    - notFound() must be `return notFound()` (not bare) so a non-throwing test mock
+      short-circuits; real Next notFound() throws so bare works at runtime, but tests
+      assert result === undefined which requires the explicit return.
+    - vitest default NODE_ENV is 'test' so an ungated render would 404; stub 'development'
+      for render tests, 'production' for the gate tests.
+    - thumb-preview imports BrushstrokeSeam/DropAccent from the @/components/brand
+      barrel (matches homepage convention); the page writes only var() tokens (no
+      gradient/shadow/pure-hex) so the forbidden-patterns sentinel stays green with
+      NO new SKIP_PATHS entry (BrushstrokeSeam.tsx already owns the mask-gradient
+      exemption).
+  reusable_utilities:
+    - function: toAccentGlyph / ALLOWED_GLYPHS
+      file: src/app/(internal)/thumb-preview/glyphs.ts
+      purpose: Runtime AccentGlyph allowlist + cast-free validator (find ?? default);
+        shared by page.tsx and index/page.tsx.

@@ -2,9 +2,9 @@ session:
   id: 2026-04-11-001
   started_at: '2026-04-11T00:00:00Z'
   current_phase: styling-overhaul
-  current_section: styling-overhaul-8.2
+  current_section: styling-overhaul-8.4
   current_agent: pending
-  current_stage: styling-overhaul-8.1-complete
+  current_stage: styling-overhaul-8.3-complete
   concurrent_jobs: []
 context_window:
   iteration: 0
@@ -15,45 +15,111 @@ completed_sections:
     name: Enriched JobCard (progress bar + last-activity + live-dot)
     completed_at: '2026-06-10'
     commit_hash: pending
-    commit_message: 'Add enriched JobCard with 34 tests (build-log-overhaul-2.2)'
+    commit_message: Add enriched JobCard with 34 tests (build-log-overhaul-2.2)
     tests: 34
     files_new: 0
     files_modified: 2
     pushed: true
     posture: ui-only-enrichment
-    notes: |
-      Second section of build-log-overhaul Phase 2 (Display primitives). Added
+    notes: 'Second section of build-log-overhaul Phase 2 (Display primitives). Added
+
       optional progress bar + last-activity timestamp + live-dot to the
+
       EditorialCard-composed <JobCard> (refactored onto EditorialCard in so-6.2).
-      All three enrichments flow through EditorialCard's existing footer ReactNode
+
+      All three enrichments flow through EditorialCard''s existing footer ReactNode
+
       slot via a single flex-col w-full wrapper child — EditorialCard itself
+
       UNTOUCHED (out of declared scope; shared by ProductCard/CohortCard). New
+
       props liveWorktreeCount?/lastActivityIso?/nowIso? are optional with no-op
+
       defaults so the existing /build-log/page.tsx:165 consumer keeps rendering.
+
       Imports formatRelativeTime (blo-1.2). Live-dot is a SQUARE micro-dot
+
       (w-1.5 h-1.5 bg-(--color-oxblood), NO rounded — JobCard sentinels forbid
+
       `rounded` source-wide per brand sharp-corner discipline) + sr-only "Active".
+
       Progress bar: role=progressbar + aria-valuenow/min/max + aria-label
+
       "{done} of {total} features complete"; track bg-(--color-bone), fill
+
       bg-(--color-ink) inline width. Renders when percentComplete !== null
+
       (NOT prop-gated, per authoritative planning tests) → existing index gains a
+
       thin progress bar now; live-dot + last-activity prop-gated, dormant until
+
       4.1 page rewrite threads them (deferred_followup in knowledge.yaml).
 
+
       34 new tests (8 unit, 3 integration, 2 security, 4 a11y, 5 infra, 7 edge,
+
       2 error-recovery, 3 data; contract + permission N/A) appended to
+
       JobCard.test.tsx; all 33 prior post-6.2 tests preserved (zero regression).
+
       One hybrid-posture pin loosened during green (signature regex). 71/71
+
       JobCard tests pass; full suite 2485 passed pre-rebase. tsc/eslint/build clean.
+
       Refactor ZERO source changes. Cross-section DRY: 2-site progressbar dup
+
       (JobCard ink / JobsRollupTable oxblood) DEFERRED (below threshold + out of scope).
 
+
       WORKTREE mode. Slot section-build-log-overhaul-2.2 from origin/main 7c4e95d,
+
       rebased onto 592c783 during release as peers build-log-overhaul-2.3 + styling-
+
       overhaul-8.2 landed concurrently. Rebase session-yaml resolver DROPPED this
+
       completed_sections entry — manually restored at FIN-23 per never-halt rule.
+
       Phase 2 now COMPLETE (2.1 PhaseStepper + 2.2 JobCard + 2.3 normalize lib all
+
       shipped). Next blo: Phase 3 (Composed UI blocks) — 3.1 Hero onward.
+
+      '
+  - id: styling-overhaul-8.3
+    name: Dev-only /thumb-preview route
+    completed_at: '2026-06-09'
+    commit_hash: pending
+    commit_message: 'Add /thumb-preview dev route with 29 tests (styling-overhaul-8.3)'
+    tests: 29
+    files_new: 5
+    files_modified: 0
+    pushed: false
+    posture: dev-only-rsc-page
+    notes: |
+      Third section of phase 8 (Asset Pipeline). Dev-only YouTube-thumbnail
+      composer: src/app/(internal)/thumb-preview/page.tsx renders a 1280x720
+      brand composition (BrushstrokeSeam direction=left + decorative next/image
+      floatbg + tier/series header + single h1 DropAccent size=thumbnail +
+      fabled10x.com footer) driven by ?title&series&tier&accent&photo. Gated by
+      `if (process.env.NODE_ENV !== 'development') return notFound();` (FIRST
+      NODE_ENV gate in the repo) + export const dynamic='force-dynamic'. Sibling
+      index/page.tsx lists copy-pasteable example URLs + accent legend, same gate.
+      Shared glyphs.ts (ALLOWED_GLYPHS: AccentGlyph[] + toAccentGlyph via
+      find ?? default — NO `as` cast) imported by both pages. (internal) route
+      group adds no URL segment (serves /thumb-preview + /thumb-preview/index,
+      both build as f Dynamic). Page writes only var() tokens -> forbidden-patterns
+      sentinel green with NO new SKIP_PATHS entry.
+
+      29 tests across 2 new test files (13 functional, 4 security, 2 permission,
+      4 edge, 1 error, 3 a11y, 2 infra; contract + data_integrity N/A — no API,
+      no models). Two corrections over plan pseudocode: default photo
+      /hero/floatbg.png (marble-column.jpg absent) and decorative <Image> needs
+      alt='' AND aria-hidden='true'. ZERO production refactor change. Full suite
+      2518 passed | 60 skipped (+29). Implementation audit ui-only, 0 orphans.
+
+      WORKTREE mode. Slot section-styling-overhaul-8.3 from origin/main e343e52,
+      rebased onto 592c783 during release as build-log-overhaul-2.2/2.3 landed
+      concurrently. Resolver dropped this completed_sections entry — manually
+      restored at FIN-23 per never-halt rule.
   - id: styling-overhaul-8.2
     name: Dynamic og:images
     completed_at: '2026-06-10'
