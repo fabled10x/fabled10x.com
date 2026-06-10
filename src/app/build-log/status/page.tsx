@@ -10,6 +10,7 @@ import {
   getJobsRollup,
 } from '@/lib/build-log/pipeline-state';
 import { getLiveWorktrees } from '@/lib/build-log/worktree-state';
+import { extractSectionId } from '@/lib/build-log/normalize';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,12 +49,6 @@ const jsonLd = {
     url: 'https://fabled10x.com',
   },
 };
-
-function extractSectionId(
-  entry: string | { section: string; completedAt?: string },
-): string {
-  return typeof entry === 'string' ? entry : entry.section;
-}
 
 export default async function StatusPage() {
   const [session, knowledge, rollup, liveWorktrees] = await Promise.all([

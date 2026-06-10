@@ -156,7 +156,7 @@ this job composes. No prerequisite job is pending.
 | 1.4 | Schema additions — `concurrentJobs?` on `SessionStatus`, discriminated `CompletedSectionEntry` union | 1 - Foundation utilities | S    | Shipped |
 | 2.1 | `<PhaseStepper>` primitive — horizontal dot/line stepper for the 7 pipeline phases       | 2 - Display primitives         | M    | Shipped |
 | 2.2 | Enriched `<JobCard>` — progress bar + last-activity timestamp + live-dot indicator       | 2 - Display primitives         | M    | Planned |
-| 2.3 | `normalize` lib — `extractSectionId(entry)` + `toEntry(raw)` discriminated-union accessor | 2 - Display primitives         | S    | Planned |
+| 2.3 | `normalize` lib — `extractSectionId(entry)` + `toEntry(raw)` discriminated-union accessor | 2 - Display primitives         | S    | Shipped |
 | 3.1 | `<Hero>` block — "right now" sentence + three stat tiles + `id="current"` anchor          | 3 - Composed UI blocks         | M    | Planned |
 | 3.2 | `<PipelineExplainer>` block — "what is this?" copy + stepper legend in `<details open>`  | 3 - Composed UI blocks         | S    | Planned |
 | 3.3 | `<RecentActivity>` block — top-5 expanded section cards + compact tail (cap 25 + show-older) | 3 - Composed UI blocks      | L    | Planned |

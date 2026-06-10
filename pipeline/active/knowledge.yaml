@@ -6898,3 +6898,54 @@ styling-overhaul-8.2:
       purpose: Brand og:image composition builder (marble panel + brushstroke clip
         + Cinzel title + oxblood accent), static-TTF font loader, and title-length->fontSize
         scaler. scaleTitle buckets <=24:72, 25-40:60, 41-60:50, >60:42.
+build-log-overhaul-2.3:
+  completed_at: '2026-06-10'
+  patterns_established:
+    - description: 'normalize lib — pure shape-normalizers over the raw SessionStatus.completedSections
+        union. extractSectionId(entry) preserved from the inline status/page.tsx helper;
+        toEntry(raw) collapses string | snake_case-object into the 1.4 discriminated
+        CompletedSectionEntry union (kind tag, camelCase keys). The single choke point
+        for completed-section YAML-shape decisions.'
+      file: src/lib/build-log/normalize.ts
+      reusable_for: 'bpd 3.3 RecentActivity (consumes toEntry to drill into completed
+        sections without typeof guards); any future consumer needing a typed completed-section.'
+    - description: 'Source-grep integration test asserting a consumer swapped an inline
+        helper for a shared import: regex matches `import { ... extractSectionId ... }
+        from ''@/lib/build-log/normalize''` AND not.toMatch(/function\s+extractSectionId/).
+        REPO_ROOT = path.resolve(__dirname, ''../../../..'') so it resolves inside worktree
+        slots (same lesson as derive-live-status 1.3 + PhaseStepper 2.1).'
+      file: src/lib/build-log/__tests__/normalize.test.ts
+      reusable_for: 'Any section that extracts an inline helper to a lib module and must
+        prove the consumer now imports it instead of redefining it.'
+  gotchas:
+    - 'commit_hash String() coercion: SessionStatus.completedSections raw object types
+      commit_hash as string | number (YAML coerces all-digit/float-looking short hashes
+      to numbers — confirmed by 1.4 which widened the schema after a live 68914.0 hash
+      broke z.string()). DetailedCompletedSection.commitHash is string. toEntry MUST
+      coerce: commitHash: raw.commit_hash != null ? String(raw.commit_hash) : undefined.
+      Direct assignment (as the phase-2 plan draft wrote it) is a tsc error. Locked by
+      edge_input_toEntry_numeric_commit_hash_coerced. 3.3 GitHub-link builder inherits this.'
+    - 'toEntry spreads undefined optionals freely: { kind:''detailed'', id } for a sparse
+      { section } input deep-equals the full object literal with undefined-valued keys,
+      because Vitest toEqual ignores undefined-valued properties. No conditional field
+      omission needed.'
+  reusable_utilities:
+    - function: extractSectionId
+      file: src/lib/build-log/normalize.ts
+      purpose: '2-line typeof discriminator — returns the string entry directly or entry.section
+        for objects. Now the canonical home (status/page.tsx imports it). NOTE: a SECOND
+        copy still lives in src/lib/build-log/pipeline-state.ts by intentional planning
+        decision (knowledge.yaml intentional_two_line_helper_duplication) — bpd 2.3 scope
+        was status/page.tsx only; the pipeline-state.ts dup is deferred, not a drift.'
+    - function: toEntry
+      file: src/lib/build-log/normalize.ts
+      purpose: 'Normalizes a raw completedSections entry (string | snake_case object) into
+        the discriminated CompletedSectionEntry union. camelCases keys, String()-coerces
+        commit_hash, tags kind:''minimal''|''detailed''.'
+  cross_section_cleanup_opportunities_carried_forward:
+    - target: src/lib/build-log/pipeline-state.ts (extractSectionId)
+      description: 'Duplicate 2-line extractSectionId now that normalize.ts exists as a
+        canonical home. Kept duplicated per intentional_two_line_helper_duplication +
+        bpd-2.3 plan scope. Re-evaluate if a 3rd consumer surfaces or pipeline-state.ts
+        is otherwise touched.'
+      priority: low

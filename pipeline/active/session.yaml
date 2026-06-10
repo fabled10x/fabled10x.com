@@ -61,6 +61,36 @@ completed_sections:
       Phase 8 now 2/4 (8.1 favicon + 8.2 og:images). Next: styling-overhaul-8.3
       (dev-only /thumb-preview route) — reuses buildOgComposition/loadOgFonts at
       1280x720; then 8.4 (design-system doc finalize).
+  - id: build-log-overhaul-2.3
+    name: normalize lib
+    completed_at: '2026-06-10'
+    commit_hash: pending
+    commit_message: 'Add normalize lib with 15 tests (build-log-overhaul-2.3)'
+    tests: 15
+    files_new: 1
+    files_modified: 1
+    pushed: false
+    posture: pure-lib
+    notes: |
+      Third section of build-log-overhaul Phase 2 (Display primitives), completing
+      the normalizer that 1.4's discriminated CompletedSectionEntry union references.
+      NEW src/lib/build-log/normalize.ts: two pure functions — extractSectionId(entry)
+      (preserved verbatim from the inline helper in status/page.tsx) and toEntry(raw)
+      (collapses string | snake_case-object completedSections entries into the kind-
+      tagged CompletedSectionEntry union; camelCases keys; String()-coerces commit_hash
+      because YAML parses all-digit short hashes as numbers per 1.4's gotcha). MODIFIED
+      src/app/build-log/status/page.tsx to import extractSectionId from the lib instead
+      of defining it inline (one-cycle change before /status is deleted in 4.2). NO
+      API/schema/hooks/serializers/components — security/permission/contract/a11y all N/A.
+      15 tests (1 new file): 5 unit, 2 integration (incl. source-grep proving the import
+      swap), 2 infra (purity sentinels), 3 edge (incl. numeric commit_hash coercion),
+      1 error-recovery, 2 data-integrity. Zero-source-change refactor — green impl already
+      minimal + idiomatic. Build clean (loader_build_incompat did NOT manifest — no loaders
+      touched). Full suite 2459 passed | 60 skipped | 0 failed (preflight 2444 → +15 exact).
+      DEFERRED: extractSectionId still duplicated in pipeline-state.ts by intentional
+      planning decision (plan scoped 2.3 to status/page.tsx only). Ran as a concurrent_jobs
+      section; global current_section pointer (styling-overhaul-8.2) intentionally untouched.
+      Next blo: 2.2 (enriched JobCard) — last Phase 2 section.
   - id: build-log-overhaul-2.1
     name: PhaseStepper primitive
     completed_at: '2026-06-10'
