@@ -41,8 +41,12 @@ describe('Header', () => {
   // ─── Unit: brand mark ──────────────────────────────────────────────
 
   it('unit_header_renders_logo_component', () => {
+    // 9.7: the mark is the HeaderLogo composite; its accessible name is
+    // carried by the wrapping link, announced once as "Fabled 10X".
     render(<Header />);
-    expect(screen.getByLabelText('Fabled 10X')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Fabled 10X' }),
+    ).toBeInTheDocument();
   });
 
   it('unit_header_home_link_wraps_logo', () => {
@@ -190,8 +194,13 @@ describe('Header', () => {
   });
 
   it('a11y_header_logo_accessible_name', () => {
+    // 9.7: exactly one accessible-named element — the home link. The pfp is
+    // decorative (alt="") and Logo's inner parts are aria-hidden, so the
+    // name is announced once, not duplicated.
     render(<Header />);
-    expect(screen.getByLabelText('Fabled 10X')).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'Fabled 10X' }),
+    ).toHaveLength(1);
   });
 
   it('a11y_header_nav_list', () => {
@@ -285,9 +294,12 @@ describe('Header', () => {
     expect(banner.className).toMatch(/\bbg-marble-texture\b/);
   });
 
-  it('unit_header_logo_size_md_explicit', () => {
-    // Source-grep: <Logo size="md" /> is invoked explicitly, not by default
-    expect(HEADER_SOURCE).toMatch(/<Logo\s+size=["']md["']\s*\/>/);
+  it('unit_header_renders_headerlogo_composite', () => {
+    // 9.7: Header delegates its mark to the HeaderLogo composite (pfp +
+    // <Logo size="sm">), not an inline typed Logo. The composite itself is
+    // locked in HeaderLogo.test.tsx.
+    expect(HEADER_SOURCE).toMatch(/<HeaderLogo\s*\/>/);
+    expect(HEADER_SOURCE).not.toMatch(/<Logo\b/);
   });
 
   it('unit_header_nav_items_exported_as_const', () => {
@@ -456,13 +468,15 @@ describe('Header', () => {
   // infrastructure (source-grep + globals.css resolution)
 
   it('infra_header_uses_brand_barrel_import', () => {
-    // Marble + Logo must come from the brand barrel, not individual files
+    // Marble must come from the brand barrel, not an individual file. The
+    // typed Logo no longer lives in Header (9.7) — it moved into the
+    // HeaderLogo composite — so Header imports Marble alone.
     expect(HEADER_SOURCE).toMatch(
-      /import\s*\{[^}]*\bMarble\b[^}]*\bLogo\b[^}]*\}\s*from\s*['"]@\/components\/brand['"]/,
+      /import\s*\{[^}]*\bMarble\b[^}]*\}\s*from\s*['"]@\/components\/brand['"]/,
     );
-    // Negative: no individual-file imports
+    // Negative: no individual-file imports, and no stray Logo import here
     expect(HEADER_SOURCE).not.toMatch(/from\s+['"]@\/components\/brand\/Marble['"]/);
-    expect(HEADER_SOURCE).not.toMatch(/from\s+['"]@\/components\/brand\/Logo['"]/);
+    expect(HEADER_SOURCE).not.toMatch(/\bLogo\b/);
   });
 
   it('infra_header_no_legacy_palette_tokens', () => {

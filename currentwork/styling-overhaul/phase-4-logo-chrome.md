@@ -133,6 +133,48 @@ re-renders the lockup via `ImageResponse` using the local font files in
 | NEW    | `src/components/brand/Logo.tsx` |
 | NEW    | `public/logo.svg` |
 
+### Amendment (added by Phase 9.7): Header surface uses a composite lockup
+
+After Phase 4.2 shipped, a navbar UI/UX audit found that the Header surface
+in particular benefits from a **composite mark** — the channel pfp on the
+left plus the small `<Logo>` on the right — even though every other surface
+keeps the typed Logo alone.
+
+**Why the composite only in the Header:**
+
+- **YouTube channel-recognition.** A visitor arriving from a YouTube
+  end-screen recognizes the circular avatar instantly; the typed wordmark
+  alone delays recognition by a beat. The Header is the only surface where
+  that beat matters — it's the first thing every cross-platform visitor
+  sees on the brand site.
+- **The phase-4.1 reproducibility argument still holds everywhere else.**
+  og:images, email, third-party newsletter, Footer, favicon — every
+  non-Header surface is exactly where the typed Logo earns its design
+  budget. The composite would re-raster poorly in those rendering paths
+  (`ImageResponse`, email clients, print). Those surfaces stay typed-only.
+- **No new primitive.** The composite is a thin Header-local wrapper
+  (`src/components/site/HeaderLogo.tsx`) that consumes the existing
+  `<Logo>` at `size="sm"`. The Logo primitive doesn't change.
+
+**Accessibility:** The wrapper carries a single
+`aria-label="Fabled 10X"`. The pfp uses `alt=""` (decorative). The Logo's
+internal spans remain `aria-hidden="true"`. Screen readers announce the
+name once.
+
+**Decision boundary** (so a future contributor doesn't reopen this):
+
+| Surface | Mark |
+|---------|------|
+| `Header` (chrome on every public page) | **Composite** — pfp + `<Logo size="sm">` |
+| `Footer` | `<Logo size="sm">` alone |
+| og:images (root + per-episode + per-case) | typed lockup via `ImageResponse` |
+| Favicon | typed `{10x}` mark |
+| Email / third-party newsletter | `public/logo.svg` |
+| Print / PDF | `public/logo.svg` |
+
+The composite primitive ships in Phase 9.7 alongside the responsive
+Header (9.5) and a11y polish (9.6); see `phase-9-a11y-polish.md`.
+
 ---
 
 ## Feature 4.2: Header restyle

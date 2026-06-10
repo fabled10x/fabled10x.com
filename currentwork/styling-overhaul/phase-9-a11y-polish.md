@@ -1,13 +1,16 @@
 # Phase 9: A11y, Responsive, Polish
 
-**Total Size: M + M + M + S**
+**Total Size: M + M + M + S + L + M + S**
 **Prerequisites: Phases 1–8 complete (every component / page / asset is brand-correct)**
 **New Types: None**
-**New Files: `src/__tests__/brand/contrast.test.ts`, `src/__tests__/brand/legibility.test.ts`**
+**New Files: `src/__tests__/brand/contrast.test.ts`, `src/__tests__/brand/legibility.test.ts`, `src/components/site/MobileNavDrawer.tsx`, `src/components/site/SkipLink.tsx`**
 
 Phase 9 is the regression-guard + final sweep pass. Three sentinels lock the
 brand's hardest-to-eyeball constraints (mobile legibility, WCAG contrast,
-reduce-motion / forced-colors / 200% zoom) and a final sweep walks every
+reduce-motion / forced-colors / 200% zoom), three Header-targeted features
+(9.5–9.7) close gaps the Phase 4.2 desktop-only restyle left open
+(responsive collapse / mobile drawer, skip-link + touch-target + focus
+management, composite pfp+wordmark lockup), and a final sweep walks every
 page, runs every check, and lights the green.
 
 ---
@@ -37,6 +40,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EditorialCard } from '@/components/brand/EditorialCard';
 import { Logo } from '@/components/brand/Logo';
+import { Header } from '@/components/site/Header';
 
 // Minimum effective character height (in pixels) at each viewport.
 // Derived from the WCAG "reading text" 16px floor scaled to the viewport's
@@ -46,6 +50,10 @@ const VIEWPORT_TARGETS = [
   { name: 'youtube-thumb-small', width: 480, height: 270, minHeadlineCh: 24 },
   { name: 'mobile-viewport', width: 360, height: 640, minHeadlineCh: 22 },
 ];
+
+// Mobile viewport widths where the Header must collapse cleanly: no horizontal
+// scrollbar and the disclosure trigger must meet the touch-target floor.
+const HEADER_MOBILE_WIDTHS = [320, 360];
 
 interface ComputedSize {
   fontSize: number;     // px
@@ -89,6 +97,38 @@ describe('brand legibility sentinel', () => {
     // Just asserting we render; favicon legibility is visually verified.
     expect(container.firstChild).not.toBeNull();
   });
+
+  // Added by 9.5/9.6 — Header must stay usable at small viewports.
+  for (const width of HEADER_MOBILE_WIDTHS) {
+    it(`Header fits at ${width}px without horizontal overflow`, () => {
+      Object.defineProperty(window, 'innerWidth', { value: width, configurable: true });
+      const { container } = render(
+        <div style={{ width }}>
+          <Header />
+        </div>
+      );
+      const header = container.querySelector('header');
+      expect(header).not.toBeNull();
+      // scrollWidth must not exceed clientWidth — i.e. no horizontal scroll.
+      expect((header as HTMLElement).scrollWidth).toBeLessThanOrEqual(width);
+    });
+
+    it(`Header disclosure trigger meets 44px touch-target floor at ${width}px`, () => {
+      Object.defineProperty(window, 'innerWidth', { value: width, configurable: true });
+      const { container } = render(
+        <div style={{ width }}>
+          <Header />
+        </div>
+      );
+      const trigger = container.querySelector('[aria-controls="primary-nav-drawer"]');
+      expect(trigger).not.toBeNull();
+      const cs = window.getComputedStyle(trigger as HTMLElement);
+      const minH = parseFloat(cs.minHeight);
+      const minW = parseFloat(cs.minWidth);
+      expect(minH).toBeGreaterThanOrEqual(44);
+      expect(minW).toBeGreaterThanOrEqual(44);
+    });
+  }
 });
 ```
 
@@ -405,6 +445,24 @@ npm run build       # standalone output succeeds; no Tailwind purge warnings
 - Emulate `forced-colors: active` — pages remain readable
 - Browser zoom 200% — no horizontal scrollbar
 
+**Header-specific responsive + a11y walk** (added by 9.5/9.6/9.7):
+
+- Resize browser to 320, 360, 768, 1024 — Header layout flips between
+  hamburger and horizontal nav at the 768 (`md`) boundary; no overlap
+  with logo lockup; no horizontal scrollbar at any size ≥ 320.
+- Keyboard-only walk: Tab from page load — first stop is the
+  skip-to-content link (visible only on focus); Enter lands `<main>`.
+- Keyboard walk continued: Shift+Tab → logo composite is reachable; Tab
+  through every nav link in source order; on mobile, Tab reaches the
+  disclosure trigger, Enter opens the drawer, focus moves into the drawer,
+  Tab cycles drawer items only (no escape), Esc closes drawer and
+  restores focus to the trigger.
+- Touch-target check: with DevTools device emulation at 360×640, every
+  interactive in the Header (logo, trigger, drawer items) measures
+  ≥ 44 × 44 CSS pixels.
+- Header logo composite renders pfp + `<Logo size="sm">` with one
+  combined `aria-label="Fabled 10X"` (screen reader announces once).
+
 **Regression fix loop:**
 
 Any failure → identify the section ID owning the violated rule → file a
@@ -431,10 +489,481 @@ itself should be quick (15-30 min) once the work is right.
 
 ---
 
+## Feature 9.5: Responsive Header + mobile drawer
+
+**Complexity: L** — Phase 4.2 shipped a desktop-only Header (6-item horizontal
+flex, no breakpoint, no disclosure). 9.5 closes the responsive gap: below the
+`md` (768px) breakpoint the nav list collapses behind a hamburger trigger that
+opens a Marble-surface drawer; the trigger and drawer participate in a
+project-wide z-index scale shipped as part of this section. Header behavior on
+scroll is **static** — the brand call is "editorial pages don't follow you,"
+documented once here so the question stops recurring.
+
+### Problem
+
+`Header.tsx:35` renders `<ul className="flex items-center gap-(--space-5)">`
+with 6 all-caps labels (Episodes, Cases, Build Log, Cohorts, Products, About).
+At 360×640 — the most-common phone viewport, already a Phase 9.1 target — the
+row overflows horizontally. There is no breakpoint, no disclosure pattern, no
+trigger, no drawer, and no z-index scale to layer the drawer over page content
+when it does ship. Sticky vs static is also undefined, so every future page
+re-asks the question.
+
+### Implementation
+
+**MODIFY** `src/app/globals.css` — add a z-index token block (no project-wide
+scale exists today; Header is the first surface that needs to layer above page
+content and future overlays):
+
+```css
+@theme inline {
+  /* Project-wide stacking order. Higher = closer to the viewer.
+     Page content is z-auto. Header sits above page content but below any
+     overlay; the mobile-nav drawer sits above the header overlay so the
+     trigger remains coherent during the open transition. */
+  --z-header: 40;
+  --z-overlay: 50;
+  --z-drawer: 60;
+}
+```
+
+**NEW** `src/components/site/MobileNavDrawer.tsx` — disclosure pattern,
+client component (uses `useState` for open state and `useEffect` for
+body-scroll-lock + Esc handler). Focus-trap and focus-restoration belong to
+**Feature 9.6** (separate concern, layered on top of this primitive):
+
+```tsx
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { NavLink } from './NavLink';
+
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+interface MobileNavDrawerProps {
+  items: readonly NavItem[];
+}
+
+export function MobileNavDrawer({ items }: MobileNavDrawerProps) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="md:hidden">
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-expanded={open}
+        aria-controls="primary-nav-drawer"
+        aria-label={open ? 'Close menu' : 'Open menu'}
+        onClick={() => setOpen((v) => !v)}
+        className="
+          inline-flex items-center justify-center
+          min-h-11 min-w-11
+          text-(--pair-text-on-marble)
+          transition-colors duration-150
+          hover:text-(--color-oxblood)
+        "
+      >
+        <span aria-hidden="true" className="label">
+          {open ? '×' : '≡'}
+        </span>
+      </button>
+
+      {open ? (
+        <div
+          id="primary-nav-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Primary navigation"
+          className="
+            fixed inset-x-0 top-0 bottom-0
+            z-(--z-drawer)
+            bg-(--color-marble) bg-marble-texture
+            border-b border-(--edge-color)
+            flex flex-col
+          "
+        >
+          <div className="flex items-center justify-end px-(--space-5) py-(--space-4)">
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+              className="
+                inline-flex items-center justify-center
+                min-h-11 min-w-11
+                text-(--pair-text-on-marble)
+                hover:text-(--color-oxblood)
+              "
+            >
+              <span aria-hidden="true" className="label">×</span>
+            </button>
+          </div>
+          <nav aria-label="Primary" className="px-(--space-5) py-(--space-5)">
+            <ul className="flex flex-col gap-(--space-4)">
+              {items.map((item) => (
+                <li key={item.href}>
+                  <NavLink
+                    href={item.href}
+                    className="label inline-flex items-center min-h-11"
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+```
+
+**MODIFY** `src/components/site/Header.tsx` — wrap the existing `<nav>` in a
+`hidden md:block` and mount the drawer as a sibling under `md`. The desktop
+markup from Phase 4.2 is preserved; below `md` the drawer takes over.
+
+```tsx
+import { Marble } from '@/components/brand';
+import { Container } from './Container';
+import { NavLink } from './NavLink';
+import { MobileNavDrawer } from './MobileNavDrawer';
+import { HeaderLogo } from './HeaderLogo';  // composite mark from 9.7
+
+const NAV_ITEMS = [
+  { href: '/episodes', label: 'Episodes' },
+  { href: '/cases', label: 'Cases' },
+  { href: '/build-log', label: 'Build Log' },
+  { href: '/cohorts', label: 'Cohorts' },
+  { href: '/products', label: 'Products' },
+  { href: '/about', label: 'About' },
+] as const;
+
+export function Header() {
+  return (
+    <Marble
+      as="header"
+      edge="none"
+      className="
+        border-b border-(--edge-color) bg-marble-texture
+        z-(--z-header) relative
+      "
+    >
+      <Container className="flex items-center justify-between py-(--space-4)">
+        <HeaderLogo />
+        <nav aria-label="Primary" className="hidden md:block">
+          <ul className="flex items-center gap-(--space-5)">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.href}>
+                <NavLink href={item.href} className="label">
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <MobileNavDrawer items={NAV_ITEMS} />
+      </Container>
+    </Marble>
+  );
+}
+```
+
+### Design Decisions
+
+- **`md` breakpoint (768px), not `sm` (640px).** Six 7–9-character all-caps
+  labels at the `.label` utility size measure ~520–560px combined. At 640px
+  with Container padding (`px-(--space-5)` = ~20px each side) plus the
+  composite logo (~120px), the row exceeds available width before reaching
+  the `sm` breakpoint. `md` is the first breakpoint where the desktop nav
+  actually fits without compression.
+- **Static, not sticky.** A sticky header tells the user "you're being
+  followed"; the brand wants editorial calm. If a future surface genuinely
+  needs scroll-context UI (e.g., a long manuscript page wanting a
+  Back-to-Top), build that affordance per-page, not in chrome.
+- **No scroll-aware shadow / blur.** Same brand call. Phase 3 forbade UI
+  shadows; reintroducing one on scroll would be a brand regression. Color
+  shift only (the existing `--edge-color` rule).
+- **Drawer is a `<div role="dialog" aria-modal>`, not a `<dialog>` element.**
+  Native `<dialog>` brings UA styling we'd need to undo and `showModal()`
+  needs more imperative wiring; the brand has no design budget for that
+  complexity. ARIA roles + body-scroll-lock + Esc handler cover the
+  behavior, focus-trap arrives in 9.6.
+- **Project-wide z-index scale.** Three tokens cover the realistic
+  composition (header / overlay / drawer). If a future modal, toast, or
+  command palette ships, it picks one of those three slots — not a new
+  number — so stacking remains coherent.
+- **`'×'` and `'≡'` glyphs instead of SVG icons.** Per the no-icon-clutter
+  brand discipline (Phase 4.3 used `→` for the LLL link by the same rule).
+  Typeface glyphs sit inline with `.label` and respect Inter's letterforms.
+- **Drawer covers Marble surface to top of viewport.** Editorial drawers
+  are full surfaces, not slide-ins; full-surface treatment also avoids any
+  shadow/scrim affordance (a scrim would be a UI-shadow regression).
+
+### Files
+
+| Action | File |
+|--------|------|
+| MODIFY | `src/app/globals.css` (add z-index tokens) |
+| MODIFY | `src/components/site/Header.tsx` |
+| NEW    | `src/components/site/MobileNavDrawer.tsx` |
+
+---
+
+## Feature 9.6: Header a11y polish — skip link + touch targets + focus management
+
+**Complexity: M** — Three small, independent a11y wins that the Phase 4.2
+restyle left out: a skip-to-content link as the first focusable element on
+every page, a 44-CSS-pixel touch-target floor enforced via a brand utility
+token, and a focus-trap + focus-restoration cycle around the mobile drawer
+shipped in 9.5.
+
+### Problem
+
+- **No skip-link.** Keyboard users tab through Header (logo + 6 nav items)
+  before reaching `<main>` on every page navigation. Standard pattern,
+  absent from `Header.tsx` and from every page-level layout.
+- **Touch targets not measured.** `Header.tsx:24-33` (logo link) renders at
+  40×40, just below the WCAG 2.5.5 floor. NavLink touch padding is
+  whatever Inter's small-caps height happens to compute to — not a
+  decision.
+- **Drawer focus management absent.** 9.5 ships open/close + Esc + scroll-lock
+  but does not trap focus inside the open drawer nor restore focus to the
+  trigger on close. Without that, a screen reader can tab past the drawer
+  into the background content (which is hidden by `overflow:hidden` but not
+  inert).
+
+### Implementation
+
+**NEW** `src/components/site/SkipLink.tsx`:
+
+```tsx
+import Link from 'next/link';
+
+export function SkipLink() {
+  return (
+    <a
+      href="#main"
+      className="
+        sr-only focus:not-sr-only
+        focus:absolute focus:top-(--space-2) focus:left-(--space-2)
+        focus:z-(--z-overlay)
+        focus:bg-(--color-ink) focus:text-(--color-marble)
+        focus:px-(--space-3) focus:py-(--space-2)
+        focus:label
+      "
+    >
+      Skip to content
+    </a>
+  );
+}
+```
+
+**MODIFY** `src/app/layout.tsx` — render `<SkipLink>` immediately inside
+`<body>` (before `<Header>`) so it's the first focusable element. Add
+`id="main"` to the `<main>` wrapper.
+
+**MODIFY** `src/app/globals.css` — add a `--tap` token expressing the
+touch-target floor:
+
+```css
+@theme inline {
+  --tap-min: 2.75rem;  /* 44px @ 16px root — WCAG 2.5.5 floor */
+}
+```
+
+**MODIFY** `src/components/site/Header.tsx` — apply `min-h-(--tap-min)` to
+the logo link and every NavLink wrapper. (Desktop nav already inherits via
+the `.label` utility's vertical rhythm in most viewports; this makes the
+floor explicit.)
+
+**MODIFY** `src/components/site/MobileNavDrawer.tsx` — add focus-trap +
+focus-restoration:
+
+```tsx
+// In the existing component, on open:
+useEffect(() => {
+  if (!open) return;
+  const previouslyFocused = document.activeElement as HTMLElement | null;
+  const drawer = document.getElementById('primary-nav-drawer');
+  const focusables = drawer?.querySelectorAll<HTMLElement>(
+    'a[href], button:not([disabled])'
+  );
+  const first = focusables?.[0];
+  const last = focusables?.[focusables.length - 1];
+  first?.focus();
+
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab' || !first || !last) return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  document.addEventListener('keydown', onKey);
+
+  return () => {
+    document.removeEventListener('keydown', onKey);
+    previouslyFocused?.focus();
+  };
+}, [open]);
+```
+
+### Design Decisions
+
+- **Skip-link uses `sr-only focus:not-sr-only` Tailwind utilities** so it
+  occupies zero space until focused. On focus it renders as an Ink button
+  in the top-left corner — readable, branded, and inside the `--z-overlay`
+  stacking band so it sits above the Header's `--z-header`.
+- **`--tap-min` is a brand token, not an ad-hoc `min-h-11` everywhere.**
+  Centralizing it means the day WCAG 2.5.8 (or some future spec) raises
+  the floor, one token changes.
+- **Focus-trap is hand-rolled, not a library.** The brand discipline forbids
+  Headless UI / Radix; ~20 lines of Tab interception is the right size for
+  one disclosure pattern. If a second disclosure appears later, refactor to
+  a `useFocusTrap` hook — premature today.
+- **`previouslyFocused.focus()` on close.** Restoring focus to the trigger
+  closes the keyboard-navigation loop; without it, focus lands on `<body>`
+  and the user starts from the top of the document on the next Tab.
+- **Skip-link uses the Ink-on-Marble CTA pair.** Already validated by the
+  9.2 contrast sentinel (body role, ≥4.5:1). No new pair to certify.
+
+### Files
+
+| Action | File |
+|--------|------|
+| NEW    | `src/components/site/SkipLink.tsx` |
+| MODIFY | `src/app/layout.tsx` (mount SkipLink + add `id="main"`) |
+| MODIFY | `src/app/globals.css` (add `--tap-min` token) |
+| MODIFY | `src/components/site/Header.tsx` (apply tap floor) |
+| MODIFY | `src/components/site/MobileNavDrawer.tsx` (focus-trap) |
+
+---
+
+## Feature 9.7: Header lockup composite (phase-4.1 amendment)
+
+**Complexity: S** — Phase 4.1 shipped a type-set `<Logo>` justified by
+reproducibility across surfaces (Footer, og:image, email). The Header in
+practice picked up a different mark — a circular YouTube channel pfp — which
+contradicted the locked phase-4.1 decision without a written amendment. 9.7
+formalizes the resolution: the Header uses a **composite** lockup of pfp +
+small `<Logo>`; every other surface keeps the typed Logo alone.
+
+### Problem
+
+A visitor arriving from a YouTube end-screen expects to see the same circular
+avatar in the corner — that's channel recognition. The typed Logo doesn't
+deliver it. But pfp-alone in the Header throws away the brand wordmark on
+every page, which is a brand-equity regression and breaks the phase-4.1
+reproducibility justification for og:images / Footer / email (those surfaces
+still need the typed Logo).
+
+A composite mark — pfp left, `<Logo size="sm">` right, single combined
+`aria-label` — keeps both. This section writes the amendment into phase-4.1's
+doc and ships the composite primitive used by `Header.tsx`.
+
+### Implementation
+
+**NEW** `src/components/site/HeaderLogo.tsx` — the composite mark used only in
+the Header surface:
+
+```tsx
+import Image from 'next/image';
+import Link from 'next/link';
+import { Logo } from '@/components/brand/Logo';
+
+export function HeaderLogo() {
+  return (
+    <Link
+      href="/"
+      aria-label="Fabled 10X"
+      className="
+        inline-flex items-center gap-(--space-2)
+        min-h-(--tap-min)
+      "
+    >
+      <Image
+        src="/media/pfp-circle-white.jpg"
+        alt=""
+        width={40}
+        height={40}
+        priority
+        className="rounded-full"
+      />
+      <Logo size="sm" />
+    </Link>
+  );
+}
+```
+
+**MODIFY** `currentwork/styling-overhaul/phase-4-logo-chrome.md` — append a
+"Phase 4.1 Amendment (added by 9.7)" block under Feature 4.1 documenting the
+composite lockup. Footer (4.3) and og:images (Phase 8.2) continue to use
+`<Logo>` alone — the reproducibility justification holds for everywhere
+except the Header surface.
+
+**MODIFY** `src/components/site/Header.tsx` — replace the inline
+`<Link><Image /></Link>` block (and any prior typed-Logo block) with
+`<HeaderLogo />`.
+
+### Design Decisions
+
+- **Composite is Header-only.** Footer is a quiet signature; pfp would
+  shout. og:images and email are surfaces where the pfp would re-raster
+  poorly. The composite is the right composition for the one surface where
+  YouTube channel-recognition matters: the page chrome.
+- **Combined `aria-label` on the wrapper `<Link>`, `aria-hidden` semantics
+  on parts.** Screen readers announce "Fabled 10X, link" once — not
+  "Image, Fabled 10X, link." The `Logo` primitive already wraps its inner
+  parts in `aria-hidden`; the pfp's `alt=""` makes it decorative; the
+  wrapper carries the accessible name.
+- **`gap-(--space-2)` between pfp and wordmark.** Tighter than Container
+  padding (`--space-5`) — the two parts read as one mark, not two adjacent
+  elements.
+- **Logo at `size="sm"` here, not `md`.** The pfp carries presence; the
+  wordmark is the brand signature beside it. `md` would make the lockup
+  too tall and unbalance the row against the nav links.
+- **The amendment lives in phase-4.1, not phase-9.** The composite IS a
+  Phase 4.1 decision, just written down after the fact. Keeping the
+  documentation co-located with the original Logo design decisions means
+  a future contributor reads one block, not two.
+
+### Files
+
+| Action | File |
+|--------|------|
+| NEW    | `src/components/site/HeaderLogo.tsx` |
+| MODIFY | `src/components/site/Header.tsx` (use HeaderLogo) |
+| MODIFY | `currentwork/styling-overhaul/phase-4-logo-chrome.md` (append amendment block) |
+
+---
+
 ## Phase 9 Exit Criteria
 
 - `src/__tests__/brand/legibility.test.ts` ships and passes for all three
-  viewport targets.
+  viewport targets **and** for the two Header mobile-width cases
+  (320, 360) added by 9.5/9.6.
 - `src/__tests__/brand/contrast.test.ts` ships and passes for every
   brand contrast pair.
 - BrushstrokeSeam degrades correctly under `prefers-reduced-motion` and
@@ -446,6 +975,21 @@ itself should be quick (15-30 min) once the work is right.
   regressions.
 - 200% zoom on the three high-stakes pages produces no horizontal
   scrollbar at 320px viewport width.
+- Header behavior: at `<md` the disclosure trigger opens a Marble
+  drawer; Esc closes; body scroll locks while open; focus traps inside
+  the drawer; focus restores to the trigger on close
+  (9.5 + 9.6).
+- Skip-to-content link is the first focusable element on every page and
+  lands `<main>` on Enter (9.6).
+- Every interactive in the Header meets the 44 CSS-pixel touch-target
+  floor via `--tap-min` (9.6).
+- Header logo renders the pfp + `<Logo size="sm">` composite with one
+  combined `aria-label="Fabled 10X"`; Footer / og:images / email
+  surfaces continue to render the typed Logo alone (9.7).
+- Phase 4.1 amendment block exists in
+  `phase-4-logo-chrome.md` documenting why the Header surface composes
+  the pfp with the typed Logo while every other surface does not (9.7).
 - The job is shippable: the editorial brand reset is complete, the
-  sentinels guard against drift, and the design-system doc captures
-  the canonical reference for everything that lands afterward.
+  sentinels guard against drift, the navbar serves every viewport from
+  320px up with documented a11y semantics, and the design-system doc
+  captures the canonical reference for everything that lands afterward.

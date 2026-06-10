@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { Marble, Logo } from '@/components/brand';
+import { Marble } from '@/components/brand';
 import { Container } from './Container';
+import { HeaderLogo } from './HeaderLogo';
 import { NavLink } from './NavLink';
 
 const NAV_ITEMS = [
@@ -20,9 +20,7 @@ export function Header() {
       className="border-b border-(--edge-color) bg-marble-texture"
     >
       <Container className="flex items-center justify-between py-(--space-4)">
-        <Link href="/" className="inline-flex">
-          <Logo size="md" />
-        </Link>
+        <HeaderLogo />
         <nav aria-label="Primary">
           <ul className="flex items-center gap-(--space-5)">
             {NAV_ITEMS.map((item) => (
